@@ -33,6 +33,7 @@ pub(crate) struct Parser {
 }
 impl Parser {
     pub(crate) fn new(tokens: Vec<Token>) -> Self {
+        AST::reset();
         Self { tokens, index: 0 }
     }
 
@@ -72,6 +73,32 @@ impl Parser {
         } else {
             compiler_internal_error!("Can not eat token because there is no token");
         }
+    }
+
+    fn eat_eos(&mut self) -> Result<(), ParserError> {
+        // 用分号可以  xxx; yyy
+        if self.peek_kind() == TokenKind::SemiColon {
+            self.eat(TokenKind::SemiColon)?;
+            return Ok(());
+        }
+
+        if self.peek_kind() == TokenKind::EOF {
+            return Ok(());
+        }
+
+        if let (Some(current), Some(next)) =
+            (self.tokens.get(self.index), self.tokens.get(self.index - 1))
+        {
+            // 换行也允许  xxx \n yyy
+            if current.peek_line() > next.peek_line() {
+                return Ok(());
+            } else {
+                // 不用分号又不换行 xxx yyy 这种形式不允许
+                return Err(self.expect_error("EOS", "; or newline"));
+            }
+        }
+
+        unreachable!()
     }
 
     /*
@@ -155,27 +182,28 @@ impl Parser {
         }
     }
 
-    // sourceElement+
+    // sourceElements: sourceElement+;
     fn parse_source_elements(&mut self) -> Result<Option<ASTNode<SourceElements>>, ParserError> {
         let mut source_elements = SourceElements::new();
 
         while let Some(source_element) = self.parse_source_element()? {
             source_elements.push_source_element(source_element);
+
+            // sourceElement 只可能有两个 follow: { EOF, }(RightBracket) }
+            if self.kind_is(TokenKind::EOF) || self.kind_is(TokenKind::RightBracket) {
+                break;
+            }
         }
 
         match source_elements.is_empty() {
-            true => Ok(None), // if is empty
+            true => Ok(None), // if it is empty
             false => Ok(Some(ASTNode::new(source_elements))),
         }
     }
 
+    // sourceElement: statement;
     fn parse_source_element(&mut self) -> Result<Option<ASTNode<SourceElement>>, ParserError> {
         let mut source_element = SourceElement::new();
-        if self.kind_is(TokenKind::KeyWord(KeyWordKind::Export)) {
-            // 新增 export 结点
-            source_element.add_export();
-            self.eat(TokenKind::KeyWord(KeyWordKind::Export))?
-        }
 
         match self.parse_stat()? {
             Some(stat) => source_element.set_stat(stat),
@@ -195,8 +223,14 @@ impl Parser {
                 Some(import_stat) => Ok(Some(ASTNode::new(Stat::ImportStat(import_stat)))),
                 None => Ok(None),
             },
-            // TokenKind::KeyWord(KeyWordKind::Export) => Ok(Some(self.parse_export_stat()?)),
-            // TokenKind::SemiColon => Ok(Some(self.parse_empty_stat()?)),
+            TokenKind::KeyWord(KeyWordKind::Export) => match self.parse_export_stat()? {
+                Some(export_stat) => Ok(Some(ASTNode::new(Stat::ExportStat(export_stat)))),
+                None => Ok(None),
+            },
+            TokenKind::SemiColon => match self.parse_empty_stat()? {
+                Some(empty_stat) => Ok(Some(ASTNode::new(Stat::EmptyStat(empty_stat)))),
+                None => Ok(None),
+            },
 
             // // abstract class or abstract ?
             // TokenKind::KeyWord(KeyWordKind::Abstract) => match self.lookAhead() {
@@ -253,18 +287,20 @@ impl Parser {
             // todo how to deal with type aliases
             // todo how to deal with enum declarations
             // todo how to deal with exp declarations
-            TokenKind::EOF => {
-                return Ok(None);
+            _ => {
+                Err(self.report_error(&format!("Stat: Unexpected Token {}", self.peek().unwrap())))
             }
-            _ => Err(self.report_error("Stat: Unexpected Token")),
         }
     }
 
     fn parse_block(&mut self) -> Result<Option<ASTNode<Block>>, ParserError> {
         let mut block = Block::new();
         self.eat(TokenKind::LeftBracket)?;
-        while let Some(stat) = self.parse_stat()? {
-            block.push(stat);
+        loop {
+            match self.try_to(&Parser::parse_stat) {
+                Some(stat) => block.push(stat),
+                None => break,
+            }
         }
         self.eat(TokenKind::RightBracket)?;
         Ok(Some(ASTNode::new(block)))
@@ -280,20 +316,26 @@ impl Parser {
         | (Identifier ',')? '{' Import* '}';
     Import: Identifier (As Identifier)?;
     */
-
     fn parse_import_stat(&mut self) -> Result<Option<ASTNode<ImportStat>>, ParserError> {
-        let mut import_stat = ImportStat::new();
+        let mut import_stat = ImportStat::default();
         self.eat(TokenKind::KeyWord(KeyWordKind::Import))?;
+        if let Some(from_block) = self.parse_from_block()? {
+            import_stat.set_from_block(from_block);
+        }
+        Ok(Some(ASTNode::new(import_stat)))
+    }
 
+    fn parse_from_block(&mut self) -> Result<Option<ASTNode<FromBlock>>, ParserError> {
+        let mut from_block = FromBlock::default();
         match self.peek_kind() {
             TokenKind::Multiply => {
-                import_stat.set_all();
+                from_block.set_all();
                 self.eat(TokenKind::Multiply)?;
                 if self.kind_is(TokenKind::KeyWord(KeyWordKind::As)) {
                     self.eat(TokenKind::KeyWord(KeyWordKind::As))?;
                     match self.peek_kind() {
                         TokenKind::Identifier => {
-                            import_stat.set_all_alias(self.peek().unwrap().peek_value().as_str());
+                            from_block.set_all_alias(self.peek().unwrap().peek_value().as_str());
                             self.eat(TokenKind::Identifier)?;
                             if self.kind_is(TokenKind::Comma) {
                                 self.eat(TokenKind::Comma)?;
@@ -306,19 +348,18 @@ impl Parser {
             TokenKind::Identifier | TokenKind::LeftBracket => {
                 if self.kind_is(TokenKind::Identifier) {
                     let import = self.peek().unwrap().peek_value();
-                    import_stat.set_import(import);
+                    from_block.set_imported(import);
                     self.eat(TokenKind::Identifier)?;
 
                     if self.kind_is(TokenKind::Comma) {
                         self.eat(TokenKind::Comma)?;
                     }
                 }
-                // if it be comma, "{a, b as c, ...}"
+                // if it be "{a, b as c, ...}"
                 if self.kind_is(TokenKind::LeftBracket) {
                     self.eat(TokenKind::LeftBracket)?;
                     while self.kind_is(TokenKind::Identifier) {
-                        let import = self.peek().unwrap().peek_value().clone();
-                        let mut alias = None;
+                        let imported = self.peek().unwrap().peek_value().clone();
 
                         self.eat(TokenKind::Identifier)?;
                         match self.kind_is(TokenKind::KeyWord(KeyWordKind::As)) {
@@ -326,8 +367,9 @@ impl Parser {
                                 self.eat(TokenKind::KeyWord(KeyWordKind::As))?;
                                 match self.peek_kind() {
                                     TokenKind::Identifier => {
-                                        alias = Some(self.peek().unwrap().peek_value().as_str());
-                                        import_stat.push_import(&import, alias);
+                                        let mut alias =
+                                            Some(self.peek().unwrap().peek_value().as_str());
+                                        from_block.push_imported_alias(&imported, alias);
                                         self.eat(TokenKind::Identifier)?;
                                     }
                                     _ => {
@@ -338,7 +380,7 @@ impl Parser {
                                 }
                             }
                             false => {
-                                import_stat.push_import(&import, alias);
+                                from_block.push_imported_alias(&imported, None);
                             }
                         }
 
@@ -355,29 +397,64 @@ impl Parser {
         self.eat(TokenKind::KeyWord(KeyWordKind::From))?;
         match self.peek_kind() {
             TokenKind::String => {
-                import_stat.set_from(self.peek().unwrap().peek_value());
+                from_block.set_from_value(self.peek().unwrap().peek_value());
                 self.eat(TokenKind::String)?;
             }
             _ => return Err(self.expect_error("Import Statement", "String Literal")),
         }
 
-        self.eat(TokenKind::SemiColon)?;
-        Ok(Some(ASTNode::new(import_stat)))
+        self.eat_eos()?;
+        Ok(Some(ASTNode::new(from_block)))
     }
 
-    // fn parse_export_stat(&mut self) -> Result<Option<ASTNode<ExportStat>>, ParserError> {
-    //     self.eat(TokenKind::KeyWord(KeyWordKind::Export));
-    //     if self.kind_is(TokenKind::KeyWord(KeyWordKind::Default)) {
-    //         self.eat(TokenKind::KeyWord(KeyWordKind::Default));
-    //     }
-    //     // fromBlock or importAliasDeclaration?
-    //     todo!()
-    // }
+    /*
+        exportStatement: Export Default? (fromBlock | statement);
+    */
+    fn parse_export_stat(&mut self) -> Result<Option<ASTNode<ExportStat>>, ParserError> {
+        let mut export_stat = ExportStat::default();
 
-    // fn parse_empty_stat(&mut self) -> Result<Option<ASTNode<EmptyStat>>, ParserError> {
-    //     self.eat(TokenKind::SemiColon);
-    //     todo!()
-    // }
+        self.eat(TokenKind::KeyWord(KeyWordKind::Export));
+        if self.kind_is(TokenKind::KeyWord(KeyWordKind::Default)) {
+            export_stat.set_default();
+            self.eat(TokenKind::KeyWord(KeyWordKind::Default));
+        }
+
+        // 此处进行 corner case 处理
+        match self.peek_kind() {
+            // 不允许 export [default] export [default] export ... 这样的循环嵌套
+            TokenKind::KeyWord(KeyWordKind::Export) => {
+                return Err(self.report_error("export [default] export?  Damn you !!!"));
+            }
+
+            // 不允许直接 export;
+            TokenKind::SemiColon => {
+                return Err(self.expect_error("Export Stat", "FromBlock or Statement"));
+            }
+            _ => (),
+        }
+
+        // 尝试性地解析 from block
+        if let Some(from_block) = self.try_to(&Parser::parse_from_block) {
+            export_stat.set_from_block(from_block);
+            return Ok(Some(ASTNode::new(export_stat)));
+        }
+
+        // 如果不是 from block, 那么说明一定是 stat
+        // 从而保证进入这里面的 stat 一定不是 export 开头
+        if let Some(stat) = self.parse_stat()? {
+            export_stat.set_stat(stat);
+            self.eat_eos();
+            return Ok(Some(ASTNode::new(export_stat)));
+        }
+
+        // 两个都不是, 出错
+        Err(self.report_error("Expect [FromBlock] or [Statment] but there is no such match"))
+    }
+
+    fn parse_empty_stat(&mut self) -> Result<Option<ASTNode<EmptyStat>>, ParserError> {
+        self.eat(TokenKind::SemiColon);
+        Ok(Some(ASTNode::new(EmptyStat::new())))
+    }
 
     // fn parse_class_declaration(&mut self) -> Result<Option<ASTNode<ClassDecl>>, ParserError> {
     //     if self.kind_is(TokenKind::KeyWord(KeyWordKind::Abstract)) {

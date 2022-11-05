@@ -1,6 +1,4 @@
-// extern crate colored;
-// extern crate lazy_static;
-// extern crate regex;
+// #![allow(warnings, unused)]
 
 #[macro_use]
 extern crate visulize;
@@ -10,7 +8,7 @@ pub mod compiler;
 pub mod error;
 
 // 声明本 crate 的 module tree
-pub mod ast;
+mod ast;
 mod lexer;
-pub mod parser;
+mod parser;
 mod utils;

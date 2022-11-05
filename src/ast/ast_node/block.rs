@@ -1,7 +1,8 @@
+use super::stat::Stat;
+use crate::ast::AST_GRAPH;
 use crate::ast::{visulize::Visualizable, ASTNode};
 
-use super::stat::Stat;
-
+#[derive(Visualizable)]
 pub struct Block {
     stats: Vec<ASTNode<Stat>>,
 }
@@ -12,12 +13,6 @@ impl Block {
 
     pub(crate) fn push(&mut self, stat: ASTNode<Stat>) {
         self.stats.push(stat);
-    }
-}
-
-impl Visualizable for Block {
-    fn draw(&self, id: usize) {
-        todo!()
     }
 }
 

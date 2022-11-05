@@ -1,3 +1,5 @@
+#![allow(warnings, unused)]
+
 extern crate kts;
 
 #[cfg(test)]

@@ -1,8 +1,8 @@
+pub mod ast_node;
 pub mod visulize;
 
 use lazy_static::lazy_static;
 use std::fmt::Display;
-use std::fs::File;
 use std::io;
 use std::process::Command;
 use std::{
@@ -15,6 +15,7 @@ use crate::error::err_exit;
 use crate::lexer::KEYWORD;
 
 use self::ast_node::program::Program;
+use self::ast_node::unknown::Unknown;
 use self::visulize::Visualizable;
 
 lazy_static! {
@@ -53,8 +54,6 @@ impl AST_GRAPH {
 
         let mut writer = BufWriter::new(vis_file);
 
-        // 由于 AST_GRAPH 是全局变量，所以使用前必须要先清除
-        AST_GRAPH.lock().unwrap().clear();
         ast.program.draw();
 
         writer.write_all(b"graph vis {\n")?;
@@ -85,6 +84,10 @@ impl Counter {
         self.0 += 1;
         self.0
     }
+
+    fn reset(&mut self) {
+        self.0 = 0;
+    }
 }
 
 pub struct AST {
@@ -93,6 +96,7 @@ pub struct AST {
 
 impl AST {
     pub fn new(program: ASTNode<Program>) -> AST {
+        AST::reset();
         AST { program }
     }
 
@@ -117,6 +121,11 @@ impl AST {
             false => format!("\t{}[label=\"{}\"]\n", node, desc),
         }
     }
+
+    pub(crate) fn reset() {
+        COUNTER.lock().unwrap().reset();
+        AST_GRAPH.lock().unwrap().clear();
+    }
 }
 
 #[derive(Debug, Default)]
@@ -136,4 +145,11 @@ impl<T: Visualizable> ASTNode<T> {
     }
 }
 
-pub mod ast_node;
+impl ASTNode<Unknown> {
+    pub fn dummy() -> ASTNode<Unknown> {
+        ASTNode {
+            id: 0,
+            kind: Unknown::new(),
+        }
+    }
+}

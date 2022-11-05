@@ -1,23 +1,12 @@
-use visulize::Vis;
+use visulize::Visualizable;
 
 use super::{
-    block::Block,
-    decl::*,
-    exp::ExpSeq,
-    literal::{Identifier, Value},
-    unknown::Unknown,
+    block::Block, decl::*, exp::ExpSeq, identifier::Identifier, literal::Value, unknown::Unknown,
 };
 use crate::{
     ast::{visulize::Visualizable, ASTNode, AST_GRAPH},
-    lexer::token_kind::TokenKind,
+    lexer::token_kind::{KeyWordKind, TokenKind},
 };
-
-// #[macro_export]
-// macro_rules! unknown_stat {
-//     () => {
-//         Stat::Unknown
-//     };
-// }
 
 pub enum Stat {
     ImportStat(ASTNode<ImportStat>),
@@ -32,7 +21,7 @@ pub enum Stat {
 
 impl Default for Stat {
     fn default() -> Self {
-        Stat::Unknown(ASTNode::new(Unknown::new()))
+        Stat::Unknown(ASTNode::dummy())
     }
 }
 
@@ -45,9 +34,18 @@ impl Visualizable for Stat {
                 import_stat.draw();
                 AST_GRAPH::put_edge(id, import_stat.id);
             }
-            Stat::ExportStat(export_stat) => todo!(),
-            Stat::EmptyStat(empty_stat) => todo!(),
-            Stat::Block(block) => todo!(),
+            Stat::ExportStat(export_stat) => {
+                export_stat.draw();
+                AST_GRAPH::put_edge(id, export_stat.id);
+            }
+            Stat::EmptyStat(empty_stat) => {
+                empty_stat.draw();
+                AST_GRAPH::put_edge(id, empty_stat.id);
+            }
+            Stat::Block(block) => {
+                block.draw();
+                AST_GRAPH::put_edge(id, block.id);
+            }
             Stat::FuncDecl(func_decl) => {
                 func_decl.draw();
                 AST_GRAPH::put_edge(id, func_decl.id);
@@ -63,26 +61,49 @@ impl Visualizable for Stat {
     }
 }
 
+#[derive(Visualizable)]
 pub struct ImportStat {
-    all: Option<ASTNode<TokenKind>>,     // *
-    alias: Option<ASTNode<Identifier>>,  // alias of *
-    import: Option<ASTNode<Identifier>>, // import can not be alias
+    import: ASTNode<KeyWordKind>, // import keyword
+    from_block: ASTNode<FromBlock>,
+}
 
-    imports: Vec<ASTNode<ImportAlias>>, // {a as b, c as d, ...}
-    from: ASTNode<Value>,               // String literal
+impl Default for ImportStat {
+    fn default() -> Self {
+        ImportStat {
+            import: ASTNode::new(KeyWordKind::Import),
+            from_block: Default::default(),
+        }
+    }
 }
 
 impl ImportStat {
-    pub fn new() -> Self {
-        ImportStat {
-            all: None,
-            alias: None,
-            import: Default::default(),
-            imports: Vec::new(),
-            from: Default::default(),
+    pub(crate) fn set_from_block(&mut self, from_block: ASTNode<FromBlock>) {
+        self.from_block = from_block
+    }
+}
+
+#[derive(Visualizable)]
+pub struct FromBlock {
+    all: Option<ASTNode<TokenKind>>,        // *
+    alias: Option<ASTNode<Identifier>>,     // alias of *
+    imported: Option<ASTNode<Identifier>>,  // imported can not be alias
+    importeds: Vec<ASTNode<ImportedAlias>>, // {a as b, c as d, ...}
+    from_value: ASTNode<Value>,
+}
+
+impl Default for FromBlock {
+    fn default() -> Self {
+        Self {
+            all: Default::default(),
+            alias: Default::default(),
+            imported: Default::default(),
+            importeds: Default::default(),
+            from_value: Default::default(),
         }
     }
+}
 
+impl FromBlock {
     pub(crate) fn set_all(&mut self) {
         self.all = Some(ASTNode::new(TokenKind::Multiply));
     }
@@ -91,76 +112,79 @@ impl ImportStat {
         self.alias = Some(ASTNode::new(Identifier::new(context)));
     }
 
-    pub(crate) fn set_import(&mut self, import: &str) {
-        self.import = Some(ASTNode::new(Identifier::new(import)));
+    pub(crate) fn set_imported(&mut self, imported: &str) {
+        self.imported = Some(ASTNode::new(Identifier::new(imported)));
     }
 
-    pub(crate) fn push_import(&mut self, import: &str, alias: Option<&str>) {
-        self.imports
-            .push(ASTNode::new(ImportAlias::new(import, alias)));
+    pub(crate) fn push_imported_alias(&mut self, imported: &str, alias: Option<&str>) {
+        self.importeds
+            .push(ASTNode::new(ImportedAlias::new(imported, alias)));
     }
 
-    pub(crate) fn set_from(&mut self, alias: &str) {
-        self.from = ASTNode::new(Value::String(String::from(alias)));
-    }
-}
-
-impl Visualizable for ImportStat {
-    fn draw(&self, id: usize) {
-        AST_GRAPH::put_node(id, "ImportStat");
-
-        self.all.draw(id);
-        self.alias.draw(id);
-        self.import.draw(id);
-        self.imports.draw(id);
-
-        self.from.draw();
-        AST_GRAPH::put_edge(id, self.from.id);
+    pub(crate) fn set_from_value(&mut self, from_value: &str) {
+        self.from_value = ASTNode::new(Value::String(String::from(from_value)));
     }
 }
 
-pub struct ImportAlias {
-    import: ASTNode<Identifier>,
+#[derive(Visualizable)]
+pub struct ImportedAlias {
+    imported: ASTNode<Identifier>,
     alias: Option<ASTNode<Identifier>>,
 }
 
-impl ImportAlias {
-    fn new(import: &str, alias: Option<&str>) -> Self {
+impl ImportedAlias {
+    fn new(imported: &str, alias: Option<&str>) -> Self {
         let alias = match alias {
             Some(alias) => Some(ASTNode::new(Identifier::new(alias))),
             None => None,
         };
 
-        Self {
-            import: ASTNode::new(Identifier::new(import)),
-            alias,
+        let imported = ASTNode::new(Identifier::new(imported));
+
+        Self { imported, alias }
+    }
+}
+
+#[derive(Visualizable)]
+pub struct ExportStat {
+    export: ASTNode<KeyWordKind>,          // export keyword
+    default: Option<ASTNode<KeyWordKind>>, // default keyword
+    from_block: Option<ASTNode<FromBlock>>,
+    stat: Option<Box<ASTNode<Stat>>>,
+}
+
+impl Default for ExportStat {
+    fn default() -> Self {
+        ExportStat {
+            export: ASTNode::new(KeyWordKind::Export),
+            default: None,
+            from_block: None,
+            stat: None,
         }
     }
 }
 
-impl Visualizable for ImportAlias {
-    fn draw(&self, id: usize) {
-        AST_GRAPH::put_node(id, "ImportAlias");
+impl ExportStat {
+    pub(crate) fn set_default(&mut self) {
+        self.default = Some(ASTNode::new(KeyWordKind::Default));
+    }
 
-        self.import.draw();
-        AST_GRAPH::put_edge(id, self.import.id);
+    pub(crate) fn set_from_block(&mut self, from_block: ASTNode<FromBlock>) {
+        self.from_block = Some(from_block);
+    }
 
-        self.alias.draw(id);
+    pub(crate) fn set_stat(&mut self, stat: ASTNode<Stat>) {
+        self.stat = Some(Box::new(stat));
     }
 }
-
-pub struct ExportStat {}
-impl Visualizable for ExportStat {
-    fn draw(&self, id: usize) {
-        todo!()
-    }
-}
+#[derive(Visualizable)]
 pub struct EmptyStat {}
-impl Visualizable for EmptyStat {
-    fn draw(&self, id: usize) {
-        todo!()
+impl EmptyStat {
+    pub(crate) fn new() -> EmptyStat {
+        Self {}
     }
 }
+
 pub struct IfStat {
     exp: ASTNode<ExpSeq>,
     stat: ASTNode<Stat>,

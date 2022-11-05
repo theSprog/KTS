@@ -6,6 +6,7 @@ pub mod clause;
 pub mod decl;
 pub mod eos;
 pub mod exp;
+pub mod identifier;
 pub mod list;
 pub mod literal;
 pub mod parameter;

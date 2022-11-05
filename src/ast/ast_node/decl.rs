@@ -3,11 +3,7 @@ use crate::{
     lexer::token_kind::TokenKind,
 };
 
-use super::{
-    body::FuncBody,
-    call_sig::CallSig,
-    literal::{Identifier, Value},
-};
+use super::{body::FuncBody, call_sig::CallSig, identifier::Identifier, literal::Value};
 
 pub struct ClassDecl {}
 impl Visualizable for ClassDecl {

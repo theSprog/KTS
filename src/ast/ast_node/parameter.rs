@@ -1,6 +1,6 @@
 use crate::ast::{visulize::Visualizable, ASTNode, AST_GRAPH};
 
-use super::{exp::Exp, literal::Identifier};
+use super::{exp::Exp, identifier::Identifier};
 
 pub struct FormalParas {}
 impl Visualizable for FormalParas {

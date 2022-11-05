@@ -26,21 +26,3 @@ impl Visualizable for Value {
     }
 }
 
-#[derive(Default)]
-pub struct Identifier {
-    context: String,
-}
-
-impl Identifier {
-    pub fn new(context: &str) -> Self {
-        Identifier {
-            context: context.to_string(),
-        }
-    }
-}
-
-impl Visualizable for Identifier {
-    fn draw(&self, id: usize) {
-        AST_GRAPH::put_node(id, &self.context);
-    }
-}

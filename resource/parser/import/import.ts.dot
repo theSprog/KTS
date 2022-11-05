@@ -1,0 +1,109 @@
+graph vis {
+	node54[label="Program"]
+	node53[label="SourceElements"]
+	node7[label="SourceElement"]
+	node6[label="Stat"]
+	node5[label="ImportStat"]
+	node1[label="import", color=red]
+	node4[label="FromBlock"]
+	node2[label="Entry"]
+	node4 -- node2
+	node3[label="\"./components/Entry\""]
+	node4 -- node3
+	node5 -- node1
+	node5 -- node4
+	node6 -- node5
+	node7 -- node6
+	node53 -- node7
+	node15[label="SourceElement"]
+	node14[label="Stat"]
+	node13[label="ImportStat"]
+	node8[label="import", color=red]
+	node12[label="FromBlock"]
+	node9[label="*"]
+	node12 -- node9
+	node10[label="das"]
+	node12 -- node10
+	node11[label="\"jquery\""]
+	node12 -- node11
+	node13 -- node8
+	node13 -- node12
+	node14 -- node13
+	node15 -- node14
+	node53 -- node15
+	node23[label="SourceElement"]
+	node22[label="Stat"]
+	node21[label="ImportStat"]
+	node16[label="import", color=red]
+	node20[label="FromBlock"]
+	node18[label="ImportedAlias"]
+	node17[label="Component1"]
+	node18 -- node17
+	node20 -- node18
+	node19[label="\"@angular/core\""]
+	node20 -- node19
+	node21 -- node16
+	node21 -- node20
+	node22 -- node21
+	node23 -- node22
+	node53 -- node23
+	node32[label="SourceElement"]
+	node31[label="Stat"]
+	node30[label="ImportStat"]
+	node24[label="import", color=red]
+	node29[label="FromBlock"]
+	node25[label="aaa"]
+	node29 -- node25
+	node27[label="ImportedAlias"]
+	node26[label="Component2"]
+	node27 -- node26
+	node29 -- node27
+	node28[label="\"@angular/core\""]
+	node29 -- node28
+	node30 -- node24
+	node30 -- node29
+	node31 -- node30
+	node32 -- node31
+	node53 -- node32
+	node39[label="SourceElement"]
+	node38[label="Stat"]
+	node37[label="ImportStat"]
+	node33[label="import", color=red]
+	node36[label="FromBlock"]
+	node34[label="xxx"]
+	node36 -- node34
+	node35[label="\"@angular/core\""]
+	node36 -- node35
+	node37 -- node33
+	node37 -- node36
+	node38 -- node37
+	node39 -- node38
+	node53 -- node39
+	node52[label="SourceElement"]
+	node51[label="Stat"]
+	node50[label="ImportStat"]
+	node40[label="import", color=red]
+	node49[label="FromBlock"]
+	node41[label="zzz"]
+	node49 -- node41
+	node44[label="ImportedAlias"]
+	node43[label="x"]
+	node42[label="y"]
+	node44 -- node42
+	node44 -- node43
+	node49 -- node44
+	node47[label="ImportedAlias"]
+	node46[label="a"]
+	node45[label="b"]
+	node47 -- node45
+	node47 -- node46
+	node49 -- node47
+	node48[label="\"@angular/core\""]
+	node49 -- node48
+	node50 -- node40
+	node50 -- node49
+	node51 -- node50
+	node52 -- node51
+	node53 -- node52
+	node54 -- node53
+}
