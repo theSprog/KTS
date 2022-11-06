@@ -1,4 +1,4 @@
-use crate::ast::{visulize::Visualizable, AST_GRAPH};
+use crate::ast::{visulize::Visualizable, AstGraph};
 
 #[derive(Debug, Default)]
 pub enum Value {
@@ -12,13 +12,13 @@ pub enum Value {
 }
 
 impl Visualizable for Value {
-    fn draw(&self, id: usize) {
+    fn draw(&self, id: usize, graph: &mut AstGraph) {
         match self {
             Value::Number(number) => todo!(),
             Value::Integer(integer) => todo!(),
             Value::String(string) => {
                 let string = format!("\\\"{}\\\"", string);
-                AST_GRAPH::put_node(id, &string);
+                graph.put_node(id, &string);
             }
             Value::Boolean(boolean) => todo!(),
             Value::Null => todo!(),

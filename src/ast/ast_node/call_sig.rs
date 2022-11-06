@@ -1,6 +1,6 @@
-use crate::ast::{visulize::Visualizable, ASTNode, AST_GRAPH};
-
 use super::parameter::*;
+use crate::ast::AstGraph;
+use crate::ast::{visulize::Visualizable, ASTNode};
 
 #[derive(Default, Visualizable)]
 pub struct CallSig {

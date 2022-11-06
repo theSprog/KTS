@@ -1,4 +1,4 @@
-use crate::ast::{visulize::Visualizable, ASTNode};
+use crate::ast::{visulize::Visualizable, ASTNode, AstGraph};
 
 use super::stat::Stat;
 
@@ -7,8 +7,7 @@ pub struct StatList {
 }
 
 impl Visualizable for StatList {
-    fn draw(&self, id: usize) {
+    fn draw(&self, id: usize, graph: &mut AstGraph) {
         todo!()
     }
 }
-

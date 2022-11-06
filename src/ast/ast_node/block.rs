@@ -1,24 +1,20 @@
 use super::stat::Stat;
-use crate::ast::AST_GRAPH;
+use crate::ast::AstGraph;
 use crate::ast::{visulize::Visualizable, ASTNode};
 
-#[derive(Visualizable)]
+#[derive(Visualizable, Default)]
 pub struct Block {
-    stats: Vec<ASTNode<Stat>>,
+    stats: Vec<Box<ASTNode<Stat>>>,
 }
 impl Block {
-    pub(crate) fn new() -> Self {
-        Self { stats: Vec::new() }
-    }
-
     pub(crate) fn push(&mut self, stat: ASTNode<Stat>) {
-        self.stats.push(stat);
+        self.stats.push(Box::new(stat));
     }
 }
 
 pub struct CaseBlock {}
 impl Visualizable for CaseBlock {
-    fn draw(&self, id: usize) {
+    fn draw(&self, id: usize, graph: &mut crate::ast::AstGraph) {
         todo!()
     }
 }

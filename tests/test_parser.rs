@@ -25,6 +25,11 @@ mod test_parser {
         test_parser("resource/parser/export/export.ts");
     }
 
+    #[test]
+    fn test03() {
+        test_parser("resource/parser/class/class.ts");
+    }
+
     // #[test]
     // fn test_temp() {
     //     test_parser("resource/parser/temp/temp.ts");

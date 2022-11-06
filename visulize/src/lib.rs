@@ -16,8 +16,8 @@ pub fn derive(input: TokenStream) -> TokenStream {
 }
 
 fn derive_struct(input: &syn::DataStruct, ident: &Ident) -> TokenStream {
-    let mut childs = Vec::new();
-    let mut draw_pairs = Vec::new();
+    let mut draw_fields = Vec::new();
+    let mut call_fields = Vec::new();
 
     match &input.fields {
         syn::Fields::Named(fields) => {
@@ -36,12 +36,13 @@ fn derive_struct(input: &syn::DataStruct, ident: &Ident) -> TokenStream {
                     for segment in segments.iter() {
                         let cur_type = format!("{}", &segment.ident);
                         if cur_type.eq(&vec) || cur_type.eq(&opt) {
-                            draw_pairs
-                                .push((field.ident.as_ref().unwrap(), Some(format_ident!("id"))));
+                            call_fields.push(field.ident.as_ref().unwrap());
+                            // draw_pairs
+                            //     .push((field.ident.as_ref().unwrap(), Some(format_ident!("id"))));
                         } else {
-                            draw_pairs.push((field.ident.as_ref().unwrap(), None));
-
-                            childs.push(field.ident.as_ref().unwrap());
+                            draw_fields.push(field.ident.as_ref().unwrap());
+                            // draw_pairs.push((field.ident.as_ref().unwrap(), None));
+                            // childs.push(field.ident.as_ref().unwrap());
                         }
                     }
                 }
@@ -52,54 +53,33 @@ fn derive_struct(input: &syn::DataStruct, ident: &Ident) -> TokenStream {
 
     let struct_name_str = format!("{}", ident);
 
-    let mut fields = Vec::new();
-    let mut pass_id = Vec::new();
-    for (field, id) in draw_pairs {
-        println!("{}: {:#?}", field, id);
-        fields.push(field);
-        pass_id.push(id);
-    }
-
     quote! {
         impl Visualizable for #ident {
-            fn draw(&self, id: usize) {
-                AST_GRAPH::put_node(id, #struct_name_str);
+            fn draw(&self, id: usize, graph: &mut AstGraph) {
+                graph.put_node(id, #struct_name_str);
 
-                // // call pairs
-                // #(
-                //     self.#call_pairs_fields.draw();
-                //     AST_GRAPH::put_edge(id, self.#call_pairs_fields.id);
-                // )*
-
-                // // draw pairs
-                // #(
-                //     self.#draw_pairs_fields.draw(id);
-                // )*
-
+                // draw pairs
                 #(
-                    self.#fields.draw(#pass_id);
+                    self.#draw_fields.draw(graph);
+                    graph.put_edge(id, self.#draw_fields.id);
                 )*
 
+                // call pairs
                 #(
-                    AST_GRAPH::put_edge(id, self.#childs.id);
+                    self.#call_fields.draw(id, graph);
                 )*
+
+                // #(
+                //     self.#fields.draw(#pass_id, graph);
+                // )*
+
+                // #(
+                //     graph.put_edge(id, self.#childs.id);
+                // )*
             }
         }
     }
     .into()
-}
-
-fn draw_func(id: Option<Ident>, field: &Ident) -> TokenStream {
-    match id {
-        Some(id) => quote! {
-            self.#field.draw(id);
-        }
-        .into(),
-        None => quote! {
-            self.#field.draw();
-        }
-        .into(),
-    }
 }
 
 fn derive_enum(input: &syn::DataEnum, ident: &Ident) -> TokenStream {

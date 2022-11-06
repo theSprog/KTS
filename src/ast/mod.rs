@@ -3,6 +3,7 @@ pub mod visulize;
 
 use lazy_static::lazy_static;
 use std::fmt::Display;
+use std::fs::File;
 use std::io;
 use std::process::Command;
 use std::{
@@ -20,56 +21,40 @@ use self::visulize::Visualizable;
 
 lazy_static! {
     static ref COUNTER: Mutex<Counter> = Mutex::new(Counter::new());
-    pub static ref AST_GRAPH: Mutex<String> = Mutex::new(String::new());
 }
 
-impl Display for AST_GRAPH {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "AST_GRAPH: {}", self.lock().unwrap())
-    }
+pub struct AstGraph {
+    graph: String,
 }
 
-impl AST_GRAPH {
-    pub fn put_node(id: usize, desc: &str) {
-        AST_GRAPH
-            .lock()
-            .unwrap()
-            .push_str(&AST::label(&AST::node_name(id), desc));
+impl AstGraph {
+    pub fn new(pre_size: usize) -> AstGraph {
+        Self {
+            graph: String::with_capacity(pre_size * 10),
+        }
     }
 
-    fn put_edge(id1: usize, id2: usize) {
-        AST_GRAPH
-            .lock()
-            .unwrap()
-            .push_str(&AST::node_link(&AST::node_name(id1), &AST::node_name(id2)));
+    fn node_link(a: &String, b: &String) -> String {
+        format!("\t{} -- {}\n", a, b)
     }
 
-    fn draw(ast: &AST, to_path: &str) -> io::Result<()> {
-        let vis_file = OpenOptions::new()
-            .write(true)
-            .truncate(true)
-            .create(true)
-            .open(to_path)
-            .unwrap();
-
-        let mut writer = BufWriter::new(vis_file);
-
-        ast.program.draw();
-
+    fn write(&self, writer: &mut BufWriter<File>) -> io::Result<()> {
         writer.write_all(b"graph vis {\n")?;
-        writer.write_all(AST_GRAPH.lock().unwrap().as_bytes())?;
+        writer.write_all(self.graph.as_bytes())?;
         writer.write_all(b"}\n")?;
         writer.flush()?;
-
-        Command::new("dot")
-            .arg("-Tpng")
-            .arg(to_path)
-            .arg("-o")
-            .arg(to_path.replace("dot", "png"))
-            .spawn()
-            .expect("dot command failed to start");
-
         Ok(())
+    }
+
+    pub(crate) fn put_edge(&mut self, father: usize, child: usize) {
+        self.graph.push_str(&AstGraph::node_link(
+            &AST::node_name(father),
+            &AST::node_name(child),
+        ));
+    }
+
+    pub(crate) fn put_node(&mut self, id: usize, desc: &str) {
+        self.graph.push_str(&AST::label(&AST::node_name(id), desc));
     }
 }
 
@@ -92,19 +77,40 @@ impl Counter {
 
 pub struct AST {
     program: ASTNode<Program>,
+    graph: AstGraph,
 }
 
 impl AST {
     pub fn new(program: ASTNode<Program>) -> AST {
-        AST::reset();
-        AST { program }
+        AST {
+            graph: AstGraph::new(program.id * 10),
+            program,
+        }
     }
 
-    pub fn vis(&self, to_path: &str) {
-        match AST_GRAPH::draw(&self, to_path) {
+    pub fn vis(&mut self, to_path: &str) {
+        let mut writer = BufWriter::new(
+            OpenOptions::new()
+                .write(true)
+                .truncate(true)
+                .create(true)
+                .open(to_path)
+                .unwrap(),
+        );
+
+        self.program.draw(&mut self.graph);
+        match self.graph.write(&mut writer) {
             Ok(_) => {}
             Err(err) => err_exit(err),
-        };
+        }
+
+        Command::new("dot")
+            .arg("-Tpng")
+            .arg(to_path)
+            .arg("-o")
+            .arg(to_path.replace("dot", "png"))
+            .spawn()
+            .expect("dot command failed to start");
     }
 
     fn node_name(id: usize) -> String {
@@ -121,11 +127,6 @@ impl AST {
             false => format!("\t{}[label=\"{}\"]\n", node, desc),
         }
     }
-
-    pub(crate) fn reset() {
-        COUNTER.lock().unwrap().reset();
-        AST_GRAPH.lock().unwrap().clear();
-    }
 }
 
 #[derive(Debug, Default)]
@@ -140,8 +141,8 @@ impl<T: Visualizable> ASTNode<T> {
         ASTNode { id: self_id, kind }
     }
 
-    fn draw(&self) {
-        self.kind.draw(self.id)
+    fn draw(&self, graph: &mut AstGraph) {
+        self.kind.draw(self.id, graph)
     }
 }
 

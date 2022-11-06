@@ -1,22 +1,13 @@
 use crate::ast::visulize::Visualizable;
+use crate::ast::AstGraph;
 
+#[derive(Visualizable, Default)]
 pub struct FuncBody {}
-impl Visualizable for FuncBody {
-   fn draw(&self, id: usize) {
-        todo!()
-    }}
+
+#[derive(Visualizable)]
 pub struct TypeBody {}
-impl Visualizable for TypeBody {
-   fn draw(&self, id: usize) {
-        todo!()
-    }}
+
+#[derive(Visualizable)]
 pub struct EnumBody {}
-impl Visualizable for EnumBody {
-   fn draw(&self, id: usize) {
-        todo!()
-    }}
+#[derive(Visualizable)]
 pub struct ArrowFuncBody {}
-impl Visualizable for ArrowFuncBody {
-   fn draw(&self, id: usize) {
-        todo!()
-    }}

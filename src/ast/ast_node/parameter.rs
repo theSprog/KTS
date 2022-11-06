@@ -1,33 +1,21 @@
-use crate::ast::{visulize::Visualizable, ASTNode, AST_GRAPH};
-
 use super::{exp::Exp, identifier::Identifier};
+use crate::ast::AstGraph;
+use crate::ast::{visulize::Visualizable, ASTNode};
 
+#[derive(Visualizable, Default)]
 pub struct FormalParas {}
-impl Visualizable for FormalParas {
-    fn draw(&self, id: usize) {
-        todo!()
-    }
-}
 
+#[derive(Visualizable)]
 pub struct TypeParas {}
-impl Visualizable for TypeParas {
-    fn draw(&self, id: usize) {
-        todo!()
-    }
-}
 
+#[derive(Visualizable)]
 pub struct TypeAnnotation {}
-impl Visualizable for TypeAnnotation {
-    fn draw(&self, id: usize) {
-        todo!()
-    }
-}
 
 // pub enum ParaList {
 //     RestPara(ASTNode<RestPara>),
 //     Paras(ASTNode<Paras>),
 // }
-
+#[derive(Visualizable)]
 pub struct ParaList {
     paras: Vec<ASTNode<Para>>,
     rest_para: Option<ASTNode<RestPara>>,
@@ -49,30 +37,19 @@ impl ParaList {
     }
 }
 
-impl Visualizable for ParaList {
-    fn draw(&self, id: usize) {
-        AST_GRAPH::put_node(id, "ParaList");
-        for para in &self.paras {
-            AST_GRAPH::put_edge(id, para.id);
-            para.draw();
-        }
-        if let Some(rest_para) = &self.rest_para {
-            AST_GRAPH::put_edge(id, rest_para.id);
-            rest_para.draw();
-        }
-    }
-}
-
+// #[derive(Visualizable)]
 pub struct RestPara {
     exp: Exp,
-    type_annotation: Option<TypeAnnotation>,
+    type_annotation: Option<ASTNode<TypeAnnotation>>,
 }
+
 impl Visualizable for RestPara {
-    fn draw(&self, id: usize) {
-        AST_GRAPH::put_node(id, "RestPara");
+    fn draw(&self, id: usize, graph: &mut AstGraph) {
+        todo!()
     }
 }
 
+#[derive(Visualizable)]
 pub struct Para {
     para_name: ASTNode<Identifier>,
 }
@@ -86,13 +63,5 @@ impl Para {
 
     pub(crate) fn set_para_name(&mut self, para_name: &str) {
         self.para_name = ASTNode::new(Identifier::new(para_name));
-    }
-}
-
-impl Visualizable for Para {
-    fn draw(&self, id: usize) {
-        AST_GRAPH::put_node(id, "Para");
-        AST_GRAPH::put_edge(id, self.para_name.id);
-        self.para_name.draw();
     }
 }

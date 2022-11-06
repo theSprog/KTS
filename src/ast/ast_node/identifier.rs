@@ -1,4 +1,4 @@
-use crate::ast::{visulize::Visualizable, AST_GRAPH};
+use crate::ast::{visulize::Visualizable, AstGraph};
 
 #[derive(Default)]
 pub struct Identifier {
@@ -16,7 +16,10 @@ impl Identifier {
 }
 
 impl Visualizable for Identifier {
-    fn draw(&self, id: usize) {
-        AST_GRAPH::put_node(id, &self.context);
+    fn draw(&self, id: usize, graph: &mut AstGraph) {
+        graph.put_node(id, &self.context);
     }
+    // fn draw(&self, id: usize) {
+    //     AST_GRAPH::put_node(id, &self.context);
+    // }
 }

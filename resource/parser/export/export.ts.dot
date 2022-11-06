@@ -1,101 +1,97 @@
 graph vis {
-	node50[label="Program"]
-	node49[label="SourceElements"]
-	node14[label="SourceElement"]
-	node13[label="Stat"]
-	node12[label="ExportStat"]
-	node1[label="export", color=red]
-	node11[label="FromBlock"]
-	node4[label="ImportedAlias"]
-	node3[label="variable1"]
-	node2[label="name1"]
-	node4 -- node2
-	node4 -- node3
-	node11 -- node4
-	node7[label="ImportedAlias"]
-	node6[label="variable2"]
-	node5[label="name2"]
-	node7 -- node5
-	node7 -- node6
-	node11 -- node7
-	node9[label="ImportedAlias"]
-	node8[label="nameN"]
-	node9 -- node8
-	node11 -- node9
-	node10[label="\"abc mod\""]
-	node11 -- node10
-	node12 -- node11
-	node12 -- node1
-	node13 -- node12
-	node14 -- node13
-	node49 -- node14
-	node27[label="SourceElement"]
-	node26[label="Stat"]
-	node25[label="ExportStat"]
-	node15[label="export", color=red]
-	node16[label="default", color=red]
-	node25 -- node16
-	node24[label="FromBlock"]
-	node18[label="ImportedAlias"]
-	node17[label="name1"]
-	node18 -- node17
-	node24 -- node18
-	node20[label="ImportedAlias"]
-	node19[label="name2"]
-	node20 -- node19
-	node24 -- node20
-	node22[label="ImportedAlias"]
-	node21[label="nameN"]
-	node22 -- node21
-	node24 -- node22
-	node23[label="\"xxx\""]
-	node24 -- node23
-	node25 -- node24
-	node25 -- node15
-	node26 -- node25
-	node27 -- node26
-	node49 -- node27
-	node34[label="SourceElement"]
-	node33[label="Stat"]
-	node32[label="ExportStat"]
-	node28[label="export", color=red]
-	node31[label="FromBlock"]
-	node29[label="*"]
-	node31 -- node29
-	node30[label="\"abc mod\""]
-	node31 -- node30
-	node32 -- node31
-	node32 -- node28
-	node33 -- node32
-	node34 -- node33
-	node49 -- node34
-	node40[label="SourceElement"]
-	node39[label="Stat"]
-	node38[label="ExportStat"]
-	node35[label="export", color=red]
-	node37[label="Stat"]
-	node36[label="Block"]
-	node37 -- node36
-	node38 -- node37
-	node38 -- node35
-	node39 -- node38
-	node40 -- node39
-	node49 -- node40
-	node48[label="SourceElement"]
-	node47[label="Stat"]
-	node46[label="ExportStat"]
-	node41[label="export", color=red]
-	node45[label="Stat"]
-	node44[label="Block"]
-	node43[label="Stat"]
-	node42[label="EmptyStat"]
-	node43 -- node42
-	node44 -- node43
-	node45 -- node44
-	node46 -- node45
-	node46 -- node41
-	node47 -- node46
-	node48 -- node47
-	node49 -- node48
-	node50 -- node49
+	node126[label="Program"]
+	node125[label="SourceElements"]
+	node68[label="SourceElement"]
+	node67[label="Stat"]
+	node66[label="ExportStat"]
+	node55[label="export", color=red]
+	node66 -- node55
+	node65[label="FromBlock"]
+	node64[label="\"abc mod\""]
+	node65 -- node64
+	node58[label="ImportedAlias"]
+	node57[label="variable1"]
+	node58 -- node57
+	node56[label="name1"]
+	node58 -- node56
+	node65 -- node58
+	node61[label="ImportedAlias"]
+	node60[label="variable2"]
+	node61 -- node60
+	node59[label="name2"]
+	node61 -- node59
+	node65 -- node61
+	node63[label="ImportedAlias"]
+	node62[label="nameN"]
+	node63 -- node62
+	node65 -- node63
+	node66 -- node65
+	node67 -- node66
+	node68 -- node67
+	node125 -- node68
+	node81[label="SourceElement"]
+	node80[label="Stat"]
+	node79[label="ExportStat"]
+	node69[label="export", color=red]
+	node79 -- node69
+	node70[label="default", color=red]
+	node79 -- node70
+	node78[label="FromBlock"]
+	node77[label="\"xxx\""]
+	node78 -- node77
+	node72[label="ImportedAlias"]
+	node71[label="name1"]
+	node72 -- node71
+	node78 -- node72
+	node74[label="ImportedAlias"]
+	node73[label="name2"]
+	node74 -- node73
+	node78 -- node74
+	node76[label="ImportedAlias"]
+	node75[label="nameN"]
+	node76 -- node75
+	node78 -- node76
+	node79 -- node78
+	node80 -- node79
+	node81 -- node80
+	node125 -- node81
+	node88[label="SourceElement"]
+	node87[label="Stat"]
+	node86[label="ExportStat"]
+	node82[label="export", color=red]
+	node86 -- node82
+	node85[label="FromBlock"]
+	node84[label="\"abc mod\""]
+	node85 -- node84
+	node83[label="*"]
+	node85 -- node83
+	node86 -- node85
+	node87 -- node86
+	node88 -- node87
+	node125 -- node88
+	node100[label="SourceElement"]
+	node99[label="Stat"]
+	node97[label="ExportStat"]
+	node89[label="export", color=red]
+	node97 -- node89
+	node94[label="Stat"]
+	node93[label="EmptyStat"]
+	node94 -- node93
+	node97 -- node94
+	node99 -- node97
+	node100 -- node99
+	node125 -- node100
+	node124[label="SourceElement"]
+	node123[label="Stat"]
+	node122[label="ExportStat"]
+	node101[label="export", color=red]
+	node122 -- node101
+	node120[label="Stat"]
+	node119[label="EmptyStat"]
+	node120 -- node119
+	node122 -- node120
+	node123 -- node122
+	node124 -- node123
+	node125 -- node124
+	node126 -- node125
 }

@@ -1,10 +1,11 @@
+use crate::ast::AstGraph;
 use visulize::Visualizable;
 
 use super::{
     block::Block, decl::*, exp::ExpSeq, identifier::Identifier, literal::Value, unknown::Unknown,
 };
 use crate::{
-    ast::{visulize::Visualizable, ASTNode, AST_GRAPH},
+    ast::{visulize::Visualizable, ASTNode},
     lexer::token_kind::{KeyWordKind, TokenKind},
 };
 
@@ -13,6 +14,8 @@ pub enum Stat {
     ExportStat(ASTNode<ExportStat>),
     EmptyStat(ASTNode<EmptyStat>),
     Block(ASTNode<Block>),
+    ClassDecl(ASTNode<ClassDecl>),
+    AbsDecl(ASTNode<AbsDecl>),
     FuncDecl(ASTNode<FuncDecl>),
     FuncExpDecl(ASTNode<FuncExpDecl>),
     GenFuncDecl(ASTNode<GenFuncDecl>),
@@ -26,36 +29,43 @@ impl Default for Stat {
 }
 
 impl Visualizable for Stat {
-    fn draw(&self, id: usize) {
-        AST_GRAPH::put_node(id, "Stat");
+    fn draw(&self, id: usize, graph: &mut AstGraph) {
+        graph.put_node(id, "Stat");
 
         match self {
             Stat::ImportStat(import_stat) => {
-                import_stat.draw();
-                AST_GRAPH::put_edge(id, import_stat.id);
+                import_stat.draw(graph);
+                graph.put_edge(id, import_stat.id);
             }
             Stat::ExportStat(export_stat) => {
-                export_stat.draw();
-                AST_GRAPH::put_edge(id, export_stat.id);
+                export_stat.draw(graph);
+                graph.put_edge(id, export_stat.id);
             }
             Stat::EmptyStat(empty_stat) => {
-                empty_stat.draw();
-                AST_GRAPH::put_edge(id, empty_stat.id);
+                empty_stat.draw(graph);
+                graph.put_edge(id, empty_stat.id);
             }
             Stat::Block(block) => {
-                block.draw();
-                AST_GRAPH::put_edge(id, block.id);
+                block.draw(graph);
+                graph.put_edge(id, block.id);
             }
+
+            Stat::ClassDecl(class_decl) => {
+                class_decl.draw(graph);
+                graph.put_edge(id, class_decl.id);
+            }
+            Stat::AbsDecl(abs_decl) => todo!(),
+
             Stat::FuncDecl(func_decl) => {
-                func_decl.draw();
-                AST_GRAPH::put_edge(id, func_decl.id);
+                func_decl.draw(graph);
+                graph.put_edge(id, func_decl.id);
             }
             Stat::FuncExpDecl(func_exp_decl) => todo!(),
             Stat::GenFuncDecl(gen_func_decl) => todo!(),
 
             Stat::Unknown(unknow) => {
-                unknow.draw();
-                AST_GRAPH::put_edge(id, unknow.id);
+                unknow.draw(graph);
+                graph.put_edge(id, unknow.id);
             }
         }
     }
@@ -63,14 +73,14 @@ impl Visualizable for Stat {
 
 #[derive(Visualizable)]
 pub struct ImportStat {
-    import: ASTNode<KeyWordKind>, // import keyword
+    import_kw: ASTNode<KeyWordKind>,
     from_block: ASTNode<FromBlock>,
 }
 
 impl Default for ImportStat {
     fn default() -> Self {
         ImportStat {
-            import: ASTNode::new(KeyWordKind::Import),
+            import_kw: ASTNode::new(KeyWordKind::Import),
             from_block: Default::default(),
         }
     }
@@ -147,7 +157,7 @@ impl ImportedAlias {
 
 #[derive(Visualizable)]
 pub struct ExportStat {
-    export: ASTNode<KeyWordKind>,          // export keyword
+    export_kw: ASTNode<KeyWordKind>,
     default: Option<ASTNode<KeyWordKind>>, // default keyword
     from_block: Option<ASTNode<FromBlock>>,
     stat: Option<Box<ASTNode<Stat>>>,
@@ -156,7 +166,7 @@ pub struct ExportStat {
 impl Default for ExportStat {
     fn default() -> Self {
         ExportStat {
-            export: ASTNode::new(KeyWordKind::Export),
+            export_kw: ASTNode::new(KeyWordKind::Export),
             default: None,
             from_block: None,
             stat: None,
@@ -185,16 +195,13 @@ impl EmptyStat {
     }
 }
 
+#[derive(Visualizable)]
 pub struct IfStat {
     exp: ASTNode<ExpSeq>,
     stat: ASTNode<Stat>,
     else_stat: Option<ASTNode<Stat>>,
 }
-impl Visualizable for IfStat {
-    fn draw(&self, id: usize) {
-        todo!()
-    }
-}
+
 // pub struct IterStat {}
 // impl Visualizable for IterStat {}
 // pub struct ContinueStat {}
