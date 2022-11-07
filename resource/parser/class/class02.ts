@@ -4,4 +4,8 @@ abstract class C extends B implements X {
     }
 
     private static readonly ident?;
+
+    private static async func() {
+
+    }
 }

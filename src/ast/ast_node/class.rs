@@ -5,6 +5,7 @@ use crate::lexer::token_kind::KeyWordKind;
 use crate::lexer::token_kind::TokenKind;
 
 use super::body::FuncBody;
+use super::call_sig::CallSig;
 use super::decl::AbsDecl;
 use super::decorator::Decorators;
 use super::exp::Exp;
@@ -119,15 +120,25 @@ pub enum PropertyMemberDecl {
 
 #[derive(Visualizable, Default)]
 pub struct PropertyDeclExp {
-    property_base: ASTNode<PropertyBase>,
+    access_modifier: Option<ASTNode<AccessModifier>>,
+    static_: Option<ASTNode<KeyWordKind>>,
+    readonly: Option<ASTNode<KeyWordKind>>,
     identifier: ASTNode<Identifier>,
     question_mark: Option<ASTNode<TokenKind>>,
     type_annotation: Option<ASTNode<TypeAnnotation>>,
     initializer: Option<ASTNode<Exp>>,
 }
 impl PropertyDeclExp {
-    pub(crate) fn set_property_base(&mut self, property_base: ASTNode<PropertyBase>) {
-        self.property_base = property_base;
+    pub(crate) fn set_access_modifier(&mut self, access_modifier: ASTNode<AccessModifier>) {
+        self.access_modifier = Some(access_modifier);
+    }
+
+    pub(crate) fn set_static(&mut self) {
+        self.static_ = Some(ASTNode::new(KeyWordKind::Static));
+    }
+
+    pub(crate) fn set_readonly(&mut self) {
+        self.readonly = Some(ASTNode::new(KeyWordKind::ReadOnly));
     }
 
     pub(crate) fn set_identifier(&mut self, identifier: &str) {
@@ -147,42 +158,17 @@ impl PropertyDeclExp {
     }
 }
 
-#[derive(Visualizable)]
-pub struct MethodDeclExp {
-    async_: Option<ASTNode<KeyWordKind>>,
-}
-
-#[derive(Visualizable)]
-pub struct GetterSetterDeclExp {}
-
-// #[derive(Visualizable, Default)]
-// pub struct PropertyMemberDecl {
-//     property_base: ASTNode<PropertyBase>,
-//     decorators: Option<ASTNode<Decorators>>,
-//     abstract_decl: Option<ASTNode<AbsDecl>>,
-// }
-// impl PropertyMemberDecl {
-//     pub(crate) fn set_property_base(&mut self, property_base: ASTNode<PropertyBase>) {
-//         self.property_base = property_base
-//     }
-
-//     pub(crate) fn set_parse_decorators(&mut self, decorators: ASTNode<Decorators>) {
-//         todo!()
-//     }
-
-//     pub(crate) fn set_abstract(&mut self, abstract_decl: ASTNode<AbsDecl>) {
-//         todo!()
-//     }
-// }
-
 #[derive(Visualizable, Default)]
-pub struct PropertyBase {
+pub struct MethodDeclExp {
     access_modifier: Option<ASTNode<AccessModifier>>,
     static_: Option<ASTNode<KeyWordKind>>,
-    readonly: Option<ASTNode<KeyWordKind>>,
+    async_: Option<ASTNode<KeyWordKind>>,
+    identifier: ASTNode<Identifier>,
+    call_signature: ASTNode<CallSig>,
+    func_body: Option<ASTNode<FuncBody>>,
 }
 
-impl PropertyBase {
+impl MethodDeclExp {
     pub(crate) fn set_access_modifier(&mut self, access_modifier: ASTNode<AccessModifier>) {
         self.access_modifier = Some(access_modifier);
     }
@@ -191,8 +177,94 @@ impl PropertyBase {
         self.static_ = Some(ASTNode::new(KeyWordKind::Static));
     }
 
-    pub(crate) fn set_readonly(&mut self) {
-        self.readonly = Some(ASTNode::new(KeyWordKind::ReadOnly));
+    pub(crate) fn set_async(&mut self) {
+        self.async_ = Some(ASTNode::new(KeyWordKind::Async));
+    }
+
+    pub(crate) fn set_identifier(&mut self, identifier: &str) {
+        self.identifier = ASTNode::new(Identifier::new(identifier));
+    }
+
+    pub(crate) fn set_call_sig(&mut self, call_signature: ASTNode<CallSig>) {
+        self.call_signature = call_signature;
+    }
+
+    pub(crate) fn set_func_body(&mut self, func_body: ASTNode<FuncBody>) {
+        self.func_body = Some(func_body);
+    }
+}
+
+#[derive(Visualizable)]
+pub struct GetterSetterDeclExp {
+    access_modifier: Option<ASTNode<AccessModifier>>,
+    static_: Option<ASTNode<KeyWordKind>>,
+    accesser: ASTNode<Accesser>,
+}
+impl GetterSetterDeclExp {
+    pub(crate) fn new(
+        access_modifier: Option<ASTNode<AccessModifier>>,
+        static_: bool,
+        accesser: ASTNode<Accesser>,
+    ) -> Self {
+        Self {
+            access_modifier,
+            static_: match static_ {
+                true => Some(ASTNode::new(KeyWordKind::Static)),
+                false => None,
+            },
+            accesser,
+        }
+    }
+}
+
+#[derive(Visualizable)]
+pub enum Accesser {
+    SetAccessor(SetAccesser),
+    GetAccessor(GetAccesser),
+}
+
+#[derive(Visualizable, Default)]
+pub struct SetAccesser {
+    identifier: ASTNode<Identifier>,
+    parameter: ASTNode<Identifier>,
+    type_annotation: Option<ASTNode<TypeAnnotation>>,
+    func_body: ASTNode<FuncBody>,
+}
+impl SetAccesser {
+    pub(crate) fn set_identifier(&mut self, identifier: &str) {
+        self.identifier = ASTNode::new(Identifier::new(identifier));
+    }
+
+    pub(crate) fn set_parameter(&mut self, identifier: &str) {
+        self.parameter = ASTNode::new(Identifier::new(identifier));
+    }
+
+    pub(crate) fn set_type_annotation(&mut self, type_annotation: ASTNode<TypeAnnotation>) {
+        self.type_annotation = Some(type_annotation);
+    }
+
+    pub(crate) fn set_func_body(&mut self, func_body: ASTNode<FuncBody>) {
+        self.func_body = func_body;
+    }
+}
+
+#[derive(Visualizable, Default)]
+pub struct GetAccesser {
+    identifier: ASTNode<Identifier>,
+    type_annotation: Option<ASTNode<TypeAnnotation>>,
+    func_body: ASTNode<FuncBody>,
+}
+impl GetAccesser {
+    pub(crate) fn set_identifier(&mut self, identifier: &str) {
+        self.identifier = ASTNode::new(Identifier::new(identifier));
+    }
+
+    pub(crate) fn set_type_annotation(&mut self, type_annotation: ASTNode<TypeAnnotation>) {
+        self.type_annotation = Some(type_annotation);
+    }
+
+    pub(crate) fn set_func_body(&mut self, func_body: ASTNode<FuncBody>) {
+        self.func_body = func_body;
     }
 }
 

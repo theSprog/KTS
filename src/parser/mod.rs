@@ -146,7 +146,7 @@ impl Parser {
     }
 
     // 注意，该函数在 extract 的同时也会 eat Token
-    fn extact_identifier(&mut self) -> String {
+    fn extact_identifier(&mut self) -> Result<String, ParserError> {
         let ident = match self.peek_kind() {
             TokenKind::Identifier => {
                 self.eat(TokenKind::Identifier);
@@ -156,13 +156,16 @@ impl Parser {
                     .peek_value()
                     .as_str()
             }
-            _ => compiler_internal_error!(format!(
-                "Current token kind {} is not a identifier",
-                self.peek_kind()
-            )),
+            _ => {
+                return Err(self.report_error(&format!(
+                    "Line[{}] Current token kind {} is not a identifier",
+                    self.peek().unwrap().peek_line(),
+                    self.peek_kind()
+                )))
+            }
         };
 
-        String::from(ident)
+        Ok(String::from(ident))
     }
 
     fn peek_kind(&self) -> TokenKind {
@@ -347,7 +350,7 @@ impl Parser {
                     self.eat(TokenKind::KeyWord(KeyWordKind::As))?;
                     match self.peek_kind() {
                         TokenKind::Identifier => {
-                            from_block.set_all_alias(&self.extact_identifier());
+                            from_block.set_all_alias(&self.extact_identifier()?);
                             if self.kind_is(TokenKind::Comma) {
                                 self.eat(TokenKind::Comma)?;
                             }
@@ -358,7 +361,7 @@ impl Parser {
             }
             TokenKind::Identifier | TokenKind::LeftBracket => {
                 if self.kind_is(TokenKind::Identifier) {
-                    from_block.set_imported(&self.extact_identifier());
+                    from_block.set_imported(&self.extact_identifier()?);
 
                     if self.kind_is(TokenKind::Comma) {
                         self.eat(TokenKind::Comma)?;
@@ -368,7 +371,7 @@ impl Parser {
                 if self.kind_is(TokenKind::LeftBracket) {
                     self.eat(TokenKind::LeftBracket)?;
                     while self.kind_is(TokenKind::Identifier) {
-                        let imported = self.extact_identifier();
+                        let imported = self.extact_identifier()?;
 
                         // self.eat(TokenKind::Identifier)?;
                         match self.kind_is(TokenKind::KeyWord(KeyWordKind::As)) {
@@ -378,7 +381,7 @@ impl Parser {
                                     TokenKind::Identifier => {
                                         from_block.push_imported_alias(
                                             &imported,
-                                            Some(&self.extact_identifier()),
+                                            Some(&self.extact_identifier()?),
                                         );
                                     }
                                     _ => {
@@ -480,7 +483,7 @@ impl Parser {
         self.eat(TokenKind::KeyWord(KeyWordKind::Class));
         match self.peek_kind() {
             TokenKind::Identifier => {
-                class_decl.set_class_name(&self.extact_identifier());
+                class_decl.set_class_name(&self.extact_identifier()?);
             }
             _ => return Err(self.expect_error("ClassDecl Stat", "Identifer(class name)")),
         }
@@ -530,7 +533,7 @@ impl Parser {
 
         match self.peek_kind() {
             TokenKind::Identifier => {
-                type_ref.set_type_name(&self.extact_identifier());
+                type_ref.set_type_name(&self.extact_identifier()?);
                 if self.kind_is(TokenKind::LessThan) {
                     type_ref.set_type_generic(self.parse_type_generic()?);
                 }
@@ -568,9 +571,11 @@ impl Parser {
         constructorDeclaration
         | propertyMemberDeclaration
         | indexMemberDeclaration;
+
+    constructorDeclaration 第一个是访问修饰符, 第二个必定是 constructor 关键字
+    indexMemberDeclaration  以 [ 开头
     */
     fn parse_class_element(&mut self) -> Result<ASTNode<ClassElement>, ParserError> {
-        // let mut class_element = ClassElement::default();
         match self.peek_kind() {
             // constructorDeclaration
             TokenKind::KeyWord(KeyWordKind::Constructor) => Ok(ASTNode::new(
@@ -580,7 +585,8 @@ impl Parser {
             // propertyMemberDeclaration
             TokenKind::KeyWord(KeyWordKind::Async)
             | TokenKind::KeyWord(KeyWordKind::Static)
-            | TokenKind::KeyWord(KeyWordKind::ReadOnly) => Ok(ASTNode::new(
+            | TokenKind::KeyWord(KeyWordKind::ReadOnly)
+            | TokenKind::KeyWord(KeyWordKind::Abstract) => Ok(ASTNode::new(
                 ClassElement::PropertyMemberDecl(self.parse_property_member_decl()?),
             )),
 
@@ -644,15 +650,16 @@ impl Parser {
     }
 
     /*
-    propertyMemberDeclaration
-    : propertyMemberBase propertyName '?'? typeAnnotation? initializer? SemiColon
-    | propertyMemberBase propertyName callSignature ( ('{' functionBody '}') | SemiColon)
-    | propertyMemberBase (getAccessor | setAccessor)
-    | abstractDeclaration
+    propertyMemberDeclaration:
+
+    accessibilityModifier? Static? ReadOnly? Identifier '?'? typeAnnotation? '=' singleExpression? SemiColon #
+        PropertyDeclarationExpression
+    | accessibilityModifier? Static? Async? Identifier callSignature ( ('{' functionBody '}') | SemiColon )													# MethodDeclarationExpression
+    | accessibilityModifier? Static? (getAccessor | setAccessor)	# GetterSetterDeclarationExpression
+    | abstractDeclaration								# AbstractMemberDeclaration;
     ;
     */
     fn parse_property_member_decl(&mut self) -> Result<ASTNode<PropertyMemberDecl>, ParserError> {
-        // let mut property_member_decl = PropertyMemberDecl::default();
         let member_decl: PropertyMemberDecl;
 
         match self.peek_kind() {
@@ -693,13 +700,25 @@ impl Parser {
     }
 
     /*
-    propertyMemberBase propertyName '?'? typeAnnotation? initializer? SemiColon
+    accessibilityModifier? Static? ReadOnly? Identifier '?'? typeAnnotation? '=' singleExpression? SemiColon
     */
     fn parse_property_decl_exp(&mut self) -> Result<ASTNode<PropertyDeclExp>, ParserError> {
         let mut property_decl_exp = PropertyDeclExp::default();
 
-        property_decl_exp.set_property_base(self.parse_property_base()?);
-        property_decl_exp.set_identifier(&self.extact_identifier());
+        if let Some(access_modifier) = self.try_to(&Parser::parse_access_modifier) {
+            property_decl_exp.set_access_modifier(access_modifier);
+        }
+
+        if self.kind_is(TokenKind::KeyWord(KeyWordKind::Static)) {
+            self.eat(TokenKind::KeyWord(KeyWordKind::Static));
+            property_decl_exp.set_static();
+        }
+        if self.kind_is(TokenKind::KeyWord(KeyWordKind::ReadOnly)) {
+            self.eat(TokenKind::KeyWord(KeyWordKind::ReadOnly));
+            property_decl_exp.set_readonly();
+        }
+
+        property_decl_exp.set_identifier(&self.extact_identifier()?);
 
         if self.kind_is(TokenKind::QuestionMark) {
             property_decl_exp.set_question_mark();
@@ -720,12 +739,101 @@ impl Parser {
         Ok(ASTNode::new(property_decl_exp))
     }
 
+    /*
+    accessibilityModifier? Static? Async? Identifier callSignature ( ('{' functionBody '}') | SemiColon )
+        */
     fn parse_method_decl_exp(&mut self) -> Result<ASTNode<MethodDeclExp>, ParserError> {
-        todo!()
+        let mut method_decl_exp = MethodDeclExp::default();
+
+        if let Some(access_modifier) = self.try_to(&Parser::parse_access_modifier) {
+            method_decl_exp.set_access_modifier(access_modifier);
+        }
+
+        if self.kind_is(TokenKind::KeyWord(KeyWordKind::Static)) {
+            self.eat(TokenKind::KeyWord(KeyWordKind::Static));
+            method_decl_exp.set_static();
+        }
+        if self.kind_is(TokenKind::KeyWord(KeyWordKind::Async)) {
+            self.eat(TokenKind::KeyWord(KeyWordKind::Async));
+            method_decl_exp.set_async();
+        }
+
+        method_decl_exp.set_identifier(&self.extact_identifier()?);
+        method_decl_exp.set_call_sig(self.parse_call_signature()?);
+
+        match self.peek_kind() {
+            TokenKind::LeftBracket => {
+                self.eat(TokenKind::LeftBracket)?;
+                method_decl_exp.set_func_body(self.parse_func_body()?);
+                self.eat(TokenKind::RightBracket)?;
+            }
+            TokenKind::SemiColon => return Ok(ASTNode::new(method_decl_exp)),
+            _ => {
+                return Err(self.expect_error("Method Declaration Expression", "{ funcbody } or ;"));
+            }
+        }
+
+        Ok(ASTNode::new(method_decl_exp))
     }
 
+    /*
+    accessibilityModifier? Static? (getAccessor | setAccessor)
+    */
     fn parse_gettersetter_decl_exp(&mut self) -> Result<ASTNode<GetterSetterDeclExp>, ParserError> {
-        todo!()
+        // it is ugly, but it is necessary
+        let mut access_modifier_ = None;
+        let mut static_ = false;
+        if let Some(access_modifier) = self.try_to(&Parser::parse_access_modifier) {
+            access_modifier_ = Some(access_modifier);
+        }
+        if self.kind_is(TokenKind::KeyWord(KeyWordKind::Static)) {
+            static_ = true;
+            self.eat(TokenKind::KeyWord(KeyWordKind::Static));
+        }
+
+        let getter_setter_decl_exp =
+            GetterSetterDeclExp::new(access_modifier_, static_, self.parse_accesser()?);
+        Ok(ASTNode::new(getter_setter_decl_exp))
+    }
+
+    fn parse_accesser(&mut self) -> Result<ASTNode<Accesser>, ParserError> {
+        match self.peek_kind() {
+            TokenKind::KeyWord(KeyWordKind::Get) => {
+                let mut accesser = GetAccesser::default();
+                self.eat(TokenKind::KeyWord(KeyWordKind::Get))?;
+                accesser.set_identifier(&self.extact_identifier()?);
+                self.eat(TokenKind::LeftParen)?;
+                self.eat(TokenKind::RightParen)?;
+                if self.kind_is(TokenKind::Colon) {
+                    accesser.set_type_annotation(self.parse_type_annotation()?);
+                }
+                self.eat(TokenKind::LeftBracket)?;
+                accesser.set_func_body(self.parse_func_body()?);
+                self.eat(TokenKind::RightBracket)?;
+                Ok(ASTNode::new(Accesser::GetAccessor(accesser)))
+            }
+            TokenKind::KeyWord(KeyWordKind::Set) => {
+                let mut accesser = SetAccesser::default();
+                self.eat(TokenKind::KeyWord(KeyWordKind::Set))?;
+                accesser.set_identifier(&self.extact_identifier()?);
+                self.eat(TokenKind::LeftParen)?;
+                accesser.set_parameter(&self.extact_identifier()?);
+                if self.kind_is(TokenKind::Colon) {
+                    accesser.set_type_annotation(self.parse_type_annotation()?);
+                }
+                self.eat(TokenKind::RightParen)?;
+                self.eat(TokenKind::LeftBracket)?;
+                accesser.set_func_body(self.parse_func_body()?);
+                self.eat(TokenKind::RightBracket)?;
+                Ok(ASTNode::new(Accesser::SetAccessor(accesser)))
+            }
+            _ => {
+                return Err(self.expect_error(
+                    "Getter/Setter Declaration Expression",
+                    "{ getAccessor | setAccessor }",
+                ));
+            }
+        }
     }
 
     fn parse_index_member_decl(&mut self) -> Result<ASTNode<IndexMemberDecl>, ParserError> {
@@ -888,22 +996,14 @@ impl Parser {
     //     ('{' functionBody '}')
     //     | SemiColon
     // );
-    fn parse_func_declaration(&mut self) -> Result<Option<ASTNode<FuncDecl>>, ParserError> {
+    fn parse_func_declaration(&mut self) -> Result<ASTNode<FuncDecl>, ParserError> {
         let mut func_decl = FuncDecl::default();
 
         // 函数声明
         self.eat(TokenKind::KeyWord(KeyWordKind::Function))?;
-        let func_name = self.peek().unwrap().peek_value();
-        func_decl.set_func_name(func_name);
-        self.eat(TokenKind::Identifier)?;
+        func_decl.set_func_name(&self.extact_identifier()?);
 
-        match self.parse_call_signature()? {
-            Some(call_sig) => func_decl.set_call_sig(call_sig),
-            None => {
-                return Err(self.report_error("FuncDecl: Expect Call Signature, Unexpected token"))
-            }
-        }
-
+        func_decl.set_call_sig(self.parse_call_signature()?);
         if self.kind_is(TokenKind::SemiColon) {
             self.eat(TokenKind::SemiColon)?;
         } else {
@@ -912,12 +1012,12 @@ impl Parser {
             self.eat(TokenKind::RightBracket)?;
         }
 
-        Ok(Some(ASTNode::new(func_decl)))
+        Ok(ASTNode::new(func_decl))
     }
 
     // functionExpressionDeclaration:
     // Function_ '(' formalParameterList? ')' typeAnnotation? '{' functionBody '}';
-    fn parse_func_exp_declaration(&mut self) -> Result<Option<ASTNode<FuncExpDecl>>, ParserError> {
+    fn parse_func_exp_declaration(&mut self) -> Result<ASTNode<FuncExpDecl>, ParserError> {
         todo!()
     }
 
@@ -925,7 +1025,7 @@ impl Parser {
     callSignature:
         typeParameters? '(' parameterList? ')' typeAnnotation?;
     */
-    fn parse_call_signature(&mut self) -> Result<Option<ASTNode<CallSig>>, ParserError> {
+    fn parse_call_signature(&mut self) -> Result<ASTNode<CallSig>, ParserError> {
         let mut call_sig = CallSig::new();
         if self.kind_is(TokenKind::LessThan) {
             call_sig.set_type_paras(self.parse_type_paras()?);
@@ -944,7 +1044,7 @@ impl Parser {
             call_sig.set_type_annotation(self.parse_type_annotation()?);
         }
 
-        Ok(Some(ASTNode::new(call_sig)))
+        Ok(ASTNode::new(call_sig))
     }
 
     /*
@@ -967,9 +1067,7 @@ impl Parser {
     生成器函数声明
     Function_ '*' Identifier? '(' formalParameterList? ')' '{' functionBody '}'
      */
-    fn parse_generator_func_declaration(
-        &mut self,
-    ) -> Result<Option<ASTNode<GenFuncDecl>>, ParserError> {
+    fn parse_generator_func_declaration(&mut self) -> Result<ASTNode<GenFuncDecl>, ParserError> {
         self.eat(TokenKind::KeyWord(KeyWordKind::Function))?;
         self.eat(TokenKind::Multiply)?;
         if self.kind_is(TokenKind::Identifier) {
@@ -997,7 +1095,7 @@ impl Parser {
 
         if self.kind_is(TokenKind::Ellipsis) {
             self.eat(TokenKind::Ellipsis)?;
-            formal_paras.set_last_para_arg(&self.extact_identifier());
+            formal_paras.set_last_para_arg(&self.extact_identifier()?);
         } else {
             loop {
                 let formal_parameter_arg = self.parse_formal_parameter_arg()?;
@@ -1007,7 +1105,7 @@ impl Parser {
                         self.eat(TokenKind::Comma)?;
                         if self.kind_is(TokenKind::Ellipsis) {
                             self.eat(TokenKind::Ellipsis)?;
-                            formal_paras.set_last_para_arg(&self.extact_identifier());
+                            formal_paras.set_last_para_arg(&self.extact_identifier()?);
                             break;
                         }
                     }
@@ -1046,7 +1144,7 @@ impl Parser {
             _ => (),
         }
 
-        formal_para.set_identifier(&self.extact_identifier());
+        formal_para.set_identifier(&self.extact_identifier()?);
 
         if self.kind_is(TokenKind::QuestionMark) {
             formal_para.set_question_mark();
@@ -1151,34 +1249,6 @@ impl Parser {
 
     fn parse_decorators(&mut self) -> Result<ASTNode<Decorators>, ParserError> {
         Err(self.unsupported_error("decorators"))
-    }
-
-    /*
-    propertyMemberBase:
-        Async? accessibilityModifier? Static? ReadOnly?;
-    */
-    fn parse_property_base(&mut self) -> Result<ASTNode<PropertyBase>, ParserError> {
-        let mut property_base = PropertyBase::default();
-
-        match self.peek_kind() {
-            TokenKind::KeyWord(KeyWordKind::Public)
-            | TokenKind::KeyWord(KeyWordKind::Private)
-            | TokenKind::KeyWord(KeyWordKind::Protected) => {
-                property_base.set_access_modifier(self.parse_access_modifier()?)
-            }
-            _ => (),
-        }
-
-        if self.kind_is(TokenKind::KeyWord(KeyWordKind::Static)) {
-            property_base.set_static();
-            self.eat(TokenKind::KeyWord(KeyWordKind::Static))?;
-        }
-        if self.kind_is(TokenKind::KeyWord(KeyWordKind::ReadOnly)) {
-            property_base.set_readonly();
-            self.eat(TokenKind::KeyWord(KeyWordKind::ReadOnly))?;
-        }
-
-        Ok(ASTNode::new(property_base))
     }
 
     fn parse_access_modifier(&mut self) -> Result<ASTNode<AccessModifier>, ParserError> {
