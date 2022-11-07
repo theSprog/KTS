@@ -27,11 +27,12 @@ mod test_parser {
 
     #[test]
     fn test03() {
-        test_parser("resource/parser/class/class.ts");
+        test_parser("resource/parser/class/class01.ts");
+        test_parser("resource/parser/class/class02.ts");
     }
 
-    // #[test]
-    // fn test_temp() {
-    //     test_parser("resource/parser/temp/temp.ts");
-    // }
+    #[test]
+    fn test_temp() {
+        test_parser("resource/parser/temp/temp.ts");
+    }
 }

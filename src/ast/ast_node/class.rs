@@ -46,23 +46,18 @@ impl Implement {
 pub struct ClassTail {
     class_elements: Vec<ASTNode<ClassElement>>,
 }
+
 impl ClassTail {
     pub(crate) fn push_class_element(&mut self, class_element: ASTNode<ClassElement>) {
         self.class_elements.push(class_element)
     }
 }
 
-// #[derive(Visualizable, Default)]
+#[derive(Visualizable)]
 pub enum ClassElement {
     ConstructorDecl(ASTNode<ConstructorDecl>),
     PropertyMemberDecl(ASTNode<PropertyMemberDecl>),
     IndexMemberDecl(ASTNode<IndexMemberDecl>),
-}
-
-impl Visualizable for ClassElement {
-    fn draw(&self, id: usize, graph: &mut AstGraph) {
-        todo!()
-    }
 }
 
 #[derive(Visualizable)]

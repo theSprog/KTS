@@ -35,7 +35,7 @@ lazy_static! {
         map.insert("switch", TokenKind::KeyWord(KeyWordKind::Switch));
         map.insert("while", TokenKind::KeyWord(KeyWordKind::While));
         map.insert("debugger", TokenKind::KeyWord(KeyWordKind::Debugger));
-        map.insert("function", TokenKind::KeyWord(KeyWordKind::Function_));
+        map.insert("function", TokenKind::KeyWord(KeyWordKind::Function));
         map.insert("this", TokenKind::KeyWord(KeyWordKind::This));
         map.insert("with", TokenKind::KeyWord(KeyWordKind::With));
         map.insert("default", TokenKind::KeyWord(KeyWordKind::Default));

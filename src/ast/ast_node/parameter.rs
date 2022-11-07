@@ -1,9 +1,54 @@
+use super::type_ref::Type;
 use super::{exp::Exp, identifier::Identifier};
 use crate::ast::AstGraph;
 use crate::ast::{visulize::Visualizable, ASTNode};
+use crate::lexer::token_kind::{KeyWordKind, TokenKind};
 
 #[derive(Visualizable, Default)]
-pub struct FormalParas {}
+pub struct FormalParas {
+    formal_paras: Vec<ASTNode<FormalPara>>,
+    last_para_arg: Option<ASTNode<Identifier>>,
+}
+
+impl FormalParas {
+    pub(crate) fn push_formal_para(&mut self, formal_para: ASTNode<FormalPara>) {
+        self.formal_paras.push(formal_para);
+    }
+
+    pub(crate) fn set_last_para_arg(&mut self, last_para_arg: &str) {
+        self.last_para_arg = Some(ASTNode::new(Identifier::new(last_para_arg)));
+    }
+}
+
+#[derive(Visualizable, Default)]
+pub struct FormalPara {
+    decorator: Option<ASTNode<TokenKind>>,
+    access_modifier: Option<ASTNode<KeyWordKind>>,
+    identifier: ASTNode<Identifier>,
+    question_mark: Option<ASTNode<TokenKind>>,
+    _type: Option<ASTNode<Type>>,
+}
+
+impl FormalPara {
+    pub(crate) fn set_decorator(&mut self) {
+        self.decorator = Some(ASTNode::new(TokenKind::At));
+    }
+
+    pub(crate) fn set_access_modifier(&mut self, access_modifier: KeyWordKind) {
+        self.access_modifier = Some(ASTNode::new(access_modifier));
+    }
+    pub(crate) fn set_identifier(&mut self, ident_str: &str) {
+        self.identifier = ASTNode::new(Identifier::new(ident_str));
+    }
+
+    pub(crate) fn set_question_mark(&mut self) {
+        self.decorator = Some(ASTNode::new(TokenKind::QuestionMark));
+    }
+
+    pub(crate) fn set_type(&mut self, _type: ASTNode<Type>) {
+        self._type = Some(_type);
+    }
+}
 
 #[derive(Visualizable)]
 pub struct TypeParas {}

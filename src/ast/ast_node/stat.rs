@@ -9,6 +9,7 @@ use crate::{
     lexer::token_kind::{KeyWordKind, TokenKind},
 };
 
+#[derive(Visualizable)]
 pub enum Stat {
     ImportStat(ASTNode<ImportStat>),
     ExportStat(ASTNode<ExportStat>),
@@ -25,49 +26,6 @@ pub enum Stat {
 impl Default for Stat {
     fn default() -> Self {
         Stat::Unknown(ASTNode::dummy())
-    }
-}
-
-impl Visualizable for Stat {
-    fn draw(&self, id: usize, graph: &mut AstGraph) {
-        graph.put_node(id, "Stat");
-
-        match self {
-            Stat::ImportStat(import_stat) => {
-                import_stat.draw(graph);
-                graph.put_edge(id, import_stat.id);
-            }
-            Stat::ExportStat(export_stat) => {
-                export_stat.draw(graph);
-                graph.put_edge(id, export_stat.id);
-            }
-            Stat::EmptyStat(empty_stat) => {
-                empty_stat.draw(graph);
-                graph.put_edge(id, empty_stat.id);
-            }
-            Stat::Block(block) => {
-                block.draw(graph);
-                graph.put_edge(id, block.id);
-            }
-
-            Stat::ClassDecl(class_decl) => {
-                class_decl.draw(graph);
-                graph.put_edge(id, class_decl.id);
-            }
-            Stat::AbsDecl(abs_decl) => todo!(),
-
-            Stat::FuncDecl(func_decl) => {
-                func_decl.draw(graph);
-                graph.put_edge(id, func_decl.id);
-            }
-            Stat::FuncExpDecl(func_exp_decl) => todo!(),
-            Stat::GenFuncDecl(gen_func_decl) => todo!(),
-
-            Stat::Unknown(unknow) => {
-                unknow.draw(graph);
-                graph.put_edge(id, unknow.id);
-            }
-        }
     }
 }
 
@@ -103,10 +61,10 @@ pub struct FromBlock {
 
 impl Default for FromBlock {
     fn default() -> Self {
-        Self {
-            all: Default::default(),
-            alias: Default::default(),
-            imported: Default::default(),
+        FromBlock {
+            all: None,
+            alias: None,
+            imported: None,
             importeds: Default::default(),
             from_value: Default::default(),
         }
@@ -201,26 +159,35 @@ pub struct IfStat {
     stat: ASTNode<Stat>,
     else_stat: Option<ASTNode<Stat>>,
 }
+#[derive(Visualizable)]
+pub struct IterStat {}
 
-// pub struct IterStat {}
-// impl Visualizable for IterStat {}
-// pub struct ContinueStat {}
-// impl Visualizable for ContinueStat {}
-// pub struct BreakStat {}
-// impl Visualizable for BreakStat {}
-// pub struct ReturnStat {}
-// impl Visualizable for ReturnStat {}
-// pub struct YieldStat {}
-// impl Visualizable for YieldStat {}
-// pub struct WithStat {}
-// impl Visualizable for WithStat {}
-// pub struct LabelledStat {}
-// impl Visualizable for LabelledStat {}
-// pub struct SwitchStat {}
-// impl Visualizable for SwitchStat {}
-// pub struct ThrowStat {}
-// impl Visualizable for ThrowStat {}
-// pub struct TryStat {}
-// impl Visualizable for TryStat {}
-// pub struct DebuggerStat {}
-// impl Visualizable for DebuggerStat {}
+#[derive(Visualizable)]
+pub struct ContinueStat {}
+
+#[derive(Visualizable)]
+pub struct BreakStat {}
+
+#[derive(Visualizable)]
+pub struct ReturnStat {}
+
+#[derive(Visualizable)]
+pub struct YieldStat {}
+
+#[derive(Visualizable)]
+pub struct WithStat {}
+
+#[derive(Visualizable)]
+pub struct LabelledStat {}
+
+#[derive(Visualizable)]
+pub struct SwitchStat {}
+
+#[derive(Visualizable)]
+pub struct ThrowStat {}
+
+#[derive(Visualizable)]
+pub struct TryStat {}
+
+#[derive(Visualizable)]
+pub struct DebuggerStat {}

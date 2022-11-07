@@ -9,13 +9,15 @@ pub struct SourceElements {
     source_elements: Vec<ASTNode<SourceElement>>,
 }
 
-impl SourceElements {
-    pub(crate) fn new() -> SourceElements {
+impl Default for SourceElements {
+    fn default() -> Self {
         Self {
             source_elements: Vec::new(),
         }
     }
+}
 
+impl SourceElements {
     pub(crate) fn push_source_element(&mut self, source_element: ASTNode<SourceElement>) {
         self.source_elements.push(source_element);
     }

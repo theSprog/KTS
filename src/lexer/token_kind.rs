@@ -59,7 +59,7 @@ pub enum KeyWordKind {
     Switch,      // switch
     While,       // while
     Debugger,    // debugger
-    Function_,   // function
+    Function,   // function
     This,        // this
     With,        // with
     Default,     // default
@@ -130,7 +130,7 @@ impl Visualizable for KeyWordKind {
             KeyWordKind::Switch => graph.put_node(id, "switch"),
             KeyWordKind::While => graph.put_node(id, "while"),
             KeyWordKind::Debugger => graph.put_node(id, "debugger"),
-            KeyWordKind::Function_ => graph.put_node(id, "function_"),
+            KeyWordKind::Function => graph.put_node(id, "function"),
             KeyWordKind::This => graph.put_node(id, "this"),
             KeyWordKind::With => graph.put_node(id, "with"),
             KeyWordKind::Default => graph.put_node(id, "default"),
@@ -203,7 +203,7 @@ impl Display for KeyWordKind {
             KeyWordKind::Switch => token_string!(f, "keyworld-switch"),
             KeyWordKind::While => token_string!(f, "keyworld-while"),
             KeyWordKind::Debugger => token_string!(f, "keyworld-debugger"),
-            KeyWordKind::Function_ => token_string!(f, "keyworld-function"),
+            KeyWordKind::Function => token_string!(f, "keyworld-function"),
             KeyWordKind::This => token_string!(f, "keyworld-this"),
             KeyWordKind::With => token_string!(f, "keyworld-with"),
             KeyWordKind::Default => token_string!(f, "keyworld-default"),

@@ -48,20 +48,14 @@ impl Visualizable for AbsDecl {
         todo!()
     }
 }
+
+#[derive(Visualizable, Default)]
 pub struct FuncDecl {
     func_name: ASTNode<Identifier>,
     call_sig: ASTNode<CallSig>,
     func_body: Option<ASTNode<FuncBody>>,
 }
 impl FuncDecl {
-    pub(crate) fn new() -> Self {
-        Self {
-            func_name: Default::default(),
-            call_sig: Default::default(),
-            func_body: None,
-        }
-    }
-
     pub(crate) fn set_func_name(&mut self, func_name: &str) {
         self.func_name = ASTNode::new(Identifier::new(func_name));
     }
@@ -72,23 +66,6 @@ impl FuncDecl {
 
     pub(crate) fn set_func_body(&mut self, func_body: ASTNode<FuncBody>) {
         self.func_body = Some(func_body);
-    }
-}
-
-impl Visualizable for FuncDecl {
-    fn draw(&self, id: usize, graph: &mut AstGraph) {
-        graph.put_node(id, "FuncDecl");
-
-        graph.put_edge(id, self.func_name.id);
-        self.func_name.draw(graph);
-
-        graph.put_edge(id, self.call_sig.id);
-        self.call_sig.draw(graph);
-
-        if let Some(func_body) = &self.func_body {
-            graph.put_edge(id, func_body.id);
-            func_body.draw(graph)
-        }
     }
 }
 

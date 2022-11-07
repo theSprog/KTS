@@ -143,7 +143,10 @@ impl Parser {
                     .peek_value()
                     .as_str()
             }
-            _ => compiler_internal_error!("Current token kind is not a identifier"),
+            _ => compiler_internal_error!(format!(
+                "Current token kind {} is not a identifier",
+                self.peek_kind()
+            )),
         };
 
         String::from(ident)
@@ -188,21 +191,21 @@ impl Parser {
         Ok(AST::new(self.parse_program()?))
     }
 
-    fn parse_program(&mut self) -> Result<ASTNode<Program>, ParserError> {
+    fn parse_program(&mut self) -> Result<Program, ParserError> {
         let mut programe = Program::new();
 
         match self.kind_is(TokenKind::EOF) {
-            true => Ok(ASTNode::new(programe)),
+            true => Ok(programe),
             false => {
                 programe.set_source_elements(self.parse_source_elements()?);
-                Ok(ASTNode::new(programe))
+                Ok(programe)
             }
         }
     }
 
     // sourceElements: sourceElement+;
     fn parse_source_elements(&mut self) -> Result<ASTNode<SourceElements>, ParserError> {
-        let mut source_elements = SourceElements::new();
+        let mut source_elements = SourceElements::default();
 
         loop {
             let source_element = self.parse_source_element()?;
@@ -562,7 +565,6 @@ impl Parser {
         | indexMemberDeclaration;
     */
     fn parse_class_element(&mut self) -> Result<ASTNode<ClassElement>, ParserError> {
-        // todotodotodotodotodotodotodot
         // let mut class_element = ClassElement::default();
         match self.peek_kind() {
             // constructorDeclaration
@@ -572,6 +574,7 @@ impl Parser {
 
             // decoratorList propertyMemberDeclaration
             TokenKind::At => Ok(ASTNode::new(ClassElement::PropertyMemberDecl(
+                // now thing todo
                 self.parse_property_member_decl()?,
             ))),
 
@@ -619,23 +622,30 @@ impl Parser {
         match self.peek_kind() {
             TokenKind::KeyWord(KeyWordKind::Public) => {
                 cons_decl.set_access(KeyWordKind::Public);
+                self.eat(TokenKind::KeyWord(KeyWordKind::Public))?;
             }
             TokenKind::KeyWord(KeyWordKind::Private) => {
                 cons_decl.set_access(KeyWordKind::Private);
+                self.eat(TokenKind::KeyWord(KeyWordKind::Private))?;
             }
             TokenKind::KeyWord(KeyWordKind::Protected) => {
                 cons_decl.set_access(KeyWordKind::Protected);
+                self.eat(TokenKind::KeyWord(KeyWordKind::Protected))?;
             }
             _ => (),
         }
 
         self.eat(TokenKind::KeyWord(KeyWordKind::Constructor))?;
+
         self.eat(TokenKind::LeftParen)?;
         if !self.kind_is(TokenKind::RightParen) {
             cons_decl.set_formal_paras(self.parse_formal_parameters()?);
         }
         self.eat(TokenKind::RightParen)?;
+
+        self.eat(TokenKind::LeftBracket)?;
         cons_decl.set_func_body(self.parse_func_body()?);
+        self.eat(TokenKind::RightBracket)?;
         Ok(ASTNode::new(cons_decl))
     }
 
@@ -803,12 +813,11 @@ impl Parser {
     //     ('{' functionBody '}')
     //     | SemiColon
     // );
-    // 需要区分到底是表达式声明还是函数声明
     fn parse_func_declaration(&mut self) -> Result<Option<ASTNode<FuncDecl>>, ParserError> {
-        let mut func_decl = FuncDecl::new();
+        let mut func_decl = FuncDecl::default();
 
         // 函数声明
-        self.eat(TokenKind::KeyWord(KeyWordKind::Function_))?;
+        self.eat(TokenKind::KeyWord(KeyWordKind::Function))?;
         let func_name = self.peek().unwrap().peek_value();
         func_decl.set_func_name(func_name);
         self.eat(TokenKind::Identifier)?;
@@ -869,24 +878,37 @@ impl Parser {
         Ok(Some(ASTNode::new(call_sig)))
     }
 
-    // sourceElements?
+    /*
+    functionBody
+        : sourceElements?
+        ;
+    */
     fn parse_func_body(&mut self) -> Result<ASTNode<FuncBody>, ParserError> {
-        // try to
-        let source_elements = self.parse_source_elements()?;
-        todo!()
+        let mut func_body = FuncBody::default();
+
+        if self.kind_is(TokenKind::RightBracket) {
+            return Ok(ASTNode::new(func_body));
+        }
+        func_body.set_func_body(self.parse_source_elements()?);
+        Ok(ASTNode::new(func_body))
     }
 
-    // Function_ '*' Identifier? '(' formalParameterList? ')' '{' functionBody '}'
+    /*
+    生成器函数声明
+    Function_ '*' Identifier? '(' formalParameterList? ')' '{' functionBody '}'
+     */
     fn parse_generator_func_declaration(
         &mut self,
     ) -> Result<Option<ASTNode<GenFuncDecl>>, ParserError> {
-        self.eat(TokenKind::KeyWord(KeyWordKind::Function_))?;
+        self.eat(TokenKind::KeyWord(KeyWordKind::Function))?;
         self.eat(TokenKind::Multiply)?;
         if self.kind_is(TokenKind::Identifier) {
             todo!()
         }
         self.eat(TokenKind::LeftParen)?;
-        let formal_parameters = self.parse_formal_parameters()?;
+        if !self.kind_is(TokenKind::RightParen) {
+            let formal_parameters = self.parse_formal_parameters()?;
+        }
         self.eat(TokenKind::RightParen)?;
 
         self.eat(TokenKind::LeftBracket)?;
@@ -901,15 +923,72 @@ impl Parser {
         | lastFormalParameterArg;
     */
     fn parse_formal_parameters(&mut self) -> Result<ASTNode<FormalParas>, ParserError> {
-        todo!()
+        let mut formal_paras = FormalParas::default();
+
+        if self.kind_is(TokenKind::Ellipsis) {
+            self.eat(TokenKind::Ellipsis)?;
+            formal_paras.set_last_para_arg(&self.extact_identifier());
+        } else {
+            loop {
+                let formal_parameter_arg = self.parse_formal_parameter_arg()?;
+                formal_paras.push_formal_para(formal_parameter_arg);
+                match self.peek_kind() {
+                    TokenKind::Comma => {
+                        self.eat(TokenKind::Comma)?;
+                        if self.kind_is(TokenKind::Ellipsis) {
+                            self.eat(TokenKind::Ellipsis)?;
+                            formal_paras.set_last_para_arg(&self.extact_identifier());
+                            break;
+                        }
+                    }
+                    _ => break,
+                }
+            }
+        }
+
+        Ok(ASTNode::new(formal_paras))
     }
 
     /*
     formalParameterArg:
         decorator? accessibilityModifier? Identifier '?'? typeAnnotation?;
     */
-    fn parse_formal_parameter_arg(&mut self) -> Result<ASTNode<FormalParas>, ParserError> {
-        todo!()
+    fn parse_formal_parameter_arg(&mut self) -> Result<ASTNode<FormalPara>, ParserError> {
+        let mut formal_para = FormalPara::default();
+        if self.kind_is(TokenKind::At) {
+            formal_para.set_decorator();
+            self.eat(TokenKind::At)?;
+        }
+
+        match self.peek_kind() {
+            TokenKind::KeyWord(KeyWordKind::Public) => {
+                formal_para.set_access_modifier(KeyWordKind::Public);
+                self.eat(TokenKind::KeyWord(KeyWordKind::Public))?;
+            }
+            TokenKind::KeyWord(KeyWordKind::Private) => {
+                formal_para.set_access_modifier(KeyWordKind::Private);
+                self.eat(TokenKind::KeyWord(KeyWordKind::Private))?;
+            }
+            TokenKind::KeyWord(KeyWordKind::Protected) => {
+                formal_para.set_access_modifier(KeyWordKind::Protected);
+                self.eat(TokenKind::KeyWord(KeyWordKind::Protected))?;
+            }
+            _ => (),
+        }
+
+        formal_para.set_identifier(&self.extact_identifier());
+
+        if self.kind_is(TokenKind::QuestionMark) {
+            formal_para.set_question_mark();
+            self.eat(TokenKind::QuestionMark)?;
+        }
+
+        if self.kind_is(TokenKind::Colon) {
+            self.eat(TokenKind::QuestionMark)?;
+            formal_para.set_type(self.parse_type()?);
+        }
+
+        Ok(ASTNode::new(formal_para))
     }
 
     // // singleExpression (',' singleExpression)*
@@ -997,7 +1076,11 @@ impl Parser {
         }
     }
 
-    // fn parse_eos(&mut self) -> Result<Option<ASTNode<EOS>>, ParserError> {
+    fn parse_type(&mut self) -> Result<ASTNode<Type>, ParserError> {
+        todo!()
+    }
+
+    // fn parse_eos(&mut self) -> Result<ASTNode<EOS>, ParserError> {
     //     if self.kind_is(TokenKind::SemiColon) {
     //         self.eat(TokenKind::SemiColon);
     //     } else if self.kind_is(TokenKind::EOF) {

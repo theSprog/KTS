@@ -28,9 +28,9 @@ pub struct AstGraph {
 }
 
 impl AstGraph {
-    pub fn new(pre_size: usize) -> AstGraph {
+    pub fn new() -> AstGraph {
         Self {
-            graph: String::with_capacity(pre_size * 10),
+            graph: String::new(),
         }
     }
 
@@ -69,21 +69,17 @@ impl Counter {
         self.0 += 1;
         self.0
     }
-
-    fn reset(&mut self) {
-        self.0 = 0;
-    }
 }
 
 pub struct AST {
-    program: ASTNode<Program>,
+    program: Program,
     graph: AstGraph,
 }
 
 impl AST {
-    pub fn new(program: ASTNode<Program>) -> AST {
+    pub fn new(program: Program) -> AST {
         AST {
-            graph: AstGraph::new(program.id * 10),
+            graph: AstGraph::new(),
             program,
         }
     }
@@ -141,8 +137,9 @@ impl<T: Visualizable> ASTNode<T> {
         ASTNode { id: self_id, kind }
     }
 
-    fn draw(&self, graph: &mut AstGraph) {
-        self.kind.draw(self.id, graph)
+    fn draw(&self, father_id: usize, graph: &mut AstGraph) {
+        graph.put_edge(father_id, self.id);
+        self.kind.draw(self.id, graph);
     }
 }
 
