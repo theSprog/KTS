@@ -55,24 +55,23 @@ pub struct TypeParas {}
 
 #[derive(Visualizable)]
 pub struct TypeAnnotation {}
+impl TypeAnnotation {
+    pub(crate) fn new(type_annotation: ASTNode<TypeAnnotation>) -> TypeAnnotation {
+        todo!()
+    }
+}
 
 // pub enum ParaList {
 //     RestPara(ASTNode<RestPara>),
 //     Paras(ASTNode<Paras>),
 // }
-#[derive(Visualizable)]
+#[derive(Visualizable, Default)]
 pub struct ParaList {
     paras: Vec<ASTNode<Para>>,
     rest_para: Option<ASTNode<RestPara>>,
 }
 
 impl ParaList {
-    pub fn new() -> Self {
-        ParaList {
-            paras: Vec::new(),
-            rest_para: None,
-        }
-    }
     pub(crate) fn push_para(&mut self, para: ASTNode<Para>) {
         self.paras.push(para);
     }

@@ -3,6 +3,7 @@ pub mod error;
 use crate::ast::ast_node::call_sig;
 use crate::ast::ast_node::call_sig::CallSig;
 
+use crate::ast::ast_node::decorator::Decorators;
 use crate::ast::ast_node::eos::EOS;
 use crate::ast::ast_node::program::Program;
 
@@ -19,7 +20,7 @@ use crate::ast::ast_node::decl::*;
 use crate::ast::ast_node::exp::*;
 use crate::ast::ast_node::list::*;
 use crate::ast::ast_node::parameter::*;
-use crate::ast::ast_node::source_elements::*;
+use crate::ast::ast_node::source_element::*;
 use crate::ast::ast_node::stat::*;
 use crate::ast::ast_node::type_ref::*;
 
@@ -64,6 +65,11 @@ impl Parser {
         ))
     }
 
+    fn unsupported_error(&mut self, unsupported: &str) -> ParserError {
+        let cur = self.peek().unwrap();
+        self.report_error(&format!("Sorry, but now {} is not supported", unsupported))
+    }
+
     fn eat(&mut self, kind: TokenKind) -> Result<(), ParserError> {
         if let Some(token) = self.peek() {
             match token.peek_kind() == kind {
@@ -71,7 +77,14 @@ impl Parser {
                     self.index += 1;
                     Ok(())
                 }
-                false => Err(self.expect_error("Eat", &kind.to_string())),
+                false => match kind {
+                    TokenKind::SemiColon => Err(self.report_error(&format!(
+                        "you might forgot ';' in the end of line[{}]",
+                        self.tokens.get(self.index - 1).unwrap().peek_line()
+                    ))),
+
+                    _ => Err(self.expect_error("Eat", &kind.to_string())),
+                },
             }
         } else {
             compiler_internal_error!("Can not eat token because there is no token");
@@ -208,8 +221,8 @@ impl Parser {
         let mut source_elements = SourceElements::default();
 
         loop {
-            let source_element = self.parse_source_element()?;
-            source_elements.push_source_element(source_element);
+            let source_element = self.parse_stat()?;
+            source_elements.push_stat(source_element);
 
             // sourceElement 只可能有两个 follow: { EOF, }(RightBracket) }
             if self.kind_is(TokenKind::EOF) || self.kind_is(TokenKind::RightBracket) {
@@ -217,14 +230,6 @@ impl Parser {
             }
         }
         Ok(ASTNode::new(source_elements))
-    }
-
-    // sourceElement: statement;
-    fn parse_source_element(&mut self) -> Result<ASTNode<SourceElement>, ParserError> {
-        let mut source_element = SourceElement::new();
-
-        source_element.set_stat(self.parse_stat()?);
-        Ok(ASTNode::new(source_element))
     }
 
     fn parse_stat(&mut self) -> Result<ASTNode<Stat>, ParserError> {
@@ -536,7 +541,7 @@ impl Parser {
     }
 
     fn parse_type_generic(&mut self) -> Result<ASTNode<TypeGeneric>, ParserError> {
-        Err(self.report_error("Sorry, but type generic is not supported"))
+        Err(self.unsupported_error("type generic"))
     }
 
     fn parse_class_tail(&mut self) -> Result<ASTNode<ClassTail>, ParserError> {
@@ -561,7 +566,7 @@ impl Parser {
     /*
     classElement:
         constructorDeclaration
-        | decoratorList? propertyMemberDeclaration
+        | propertyMemberDeclaration
         | indexMemberDeclaration;
     */
     fn parse_class_element(&mut self) -> Result<ASTNode<ClassElement>, ParserError> {
@@ -571,12 +576,6 @@ impl Parser {
             TokenKind::KeyWord(KeyWordKind::Constructor) => Ok(ASTNode::new(
                 ClassElement::ConstructorDecl(self.parse_cons_decl()?),
             )),
-
-            // decoratorList propertyMemberDeclaration
-            TokenKind::At => Ok(ASTNode::new(ClassElement::PropertyMemberDecl(
-                // now thing todo
-                self.parse_property_member_decl()?,
-            ))),
 
             // propertyMemberDeclaration
             TokenKind::KeyWord(KeyWordKind::Async)
@@ -619,19 +618,14 @@ impl Parser {
     */
     fn parse_cons_decl(&mut self) -> Result<ASTNode<ConstructorDecl>, ParserError> {
         let mut cons_decl = ConstructorDecl::default();
+
         match self.peek_kind() {
-            TokenKind::KeyWord(KeyWordKind::Public) => {
-                cons_decl.set_access(KeyWordKind::Public);
-                self.eat(TokenKind::KeyWord(KeyWordKind::Public))?;
+            TokenKind::KeyWord(KeyWordKind::Public)
+            | TokenKind::KeyWord(KeyWordKind::Private)
+            | TokenKind::KeyWord(KeyWordKind::Protected) => {
+                cons_decl.set_access_modifier(self.parse_access_modifier()?)
             }
-            TokenKind::KeyWord(KeyWordKind::Private) => {
-                cons_decl.set_access(KeyWordKind::Private);
-                self.eat(TokenKind::KeyWord(KeyWordKind::Private))?;
-            }
-            TokenKind::KeyWord(KeyWordKind::Protected) => {
-                cons_decl.set_access(KeyWordKind::Protected);
-                self.eat(TokenKind::KeyWord(KeyWordKind::Protected))?;
-            }
+
             _ => (),
         }
 
@@ -649,7 +643,88 @@ impl Parser {
         Ok(ASTNode::new(cons_decl))
     }
 
+    /*
+    propertyMemberDeclaration
+    : propertyMemberBase propertyName '?'? typeAnnotation? initializer? SemiColon
+    | propertyMemberBase propertyName callSignature ( ('{' functionBody '}') | SemiColon)
+    | propertyMemberBase (getAccessor | setAccessor)
+    | abstractDeclaration
+    ;
+    */
     fn parse_property_member_decl(&mut self) -> Result<ASTNode<PropertyMemberDecl>, ParserError> {
+        // let mut property_member_decl = PropertyMemberDecl::default();
+        let member_decl: PropertyMemberDecl;
+
+        match self.peek_kind() {
+            TokenKind::KeyWord(KeyWordKind::Abstract) => {
+                // abstractDeclaration
+                return Ok(ASTNode::new(PropertyMemberDecl::AbsMemberDecl(
+                    self.parse_abstract_declaration()?,
+                )));
+            }
+
+            _ => {
+                if let Some(property_decl_exp) = self.try_to(&Parser::parse_property_decl_exp) {
+                    return Ok(ASTNode::new(PropertyMemberDecl::PropertyDeclExp(
+                        property_decl_exp,
+                    )));
+                }
+
+                if let Some(method_declaration_exp) = self.try_to(&Parser::parse_method_decl_exp) {
+                    return Ok(ASTNode::new(PropertyMemberDecl::MethodDeclExp(
+                        method_declaration_exp,
+                    )));
+                }
+
+                if let Some(gettersetter_decl_exp) =
+                    self.try_to(&Parser::parse_gettersetter_decl_exp)
+                {
+                    return Ok(ASTNode::new(PropertyMemberDecl::GetterSetterDeclExp(
+                        gettersetter_decl_exp,
+                    )));
+                }
+
+                Err(self.expect_error(
+                    "Property Member Decl",
+                    "PropertyDeclExp or MethodDeclExp or GetterSetterDeclExp or AbsMemberDecl",
+                ))
+            }
+        }
+    }
+
+    /*
+    propertyMemberBase propertyName '?'? typeAnnotation? initializer? SemiColon
+    */
+    fn parse_property_decl_exp(&mut self) -> Result<ASTNode<PropertyDeclExp>, ParserError> {
+        let mut property_decl_exp = PropertyDeclExp::default();
+
+        property_decl_exp.set_property_base(self.parse_property_base()?);
+        property_decl_exp.set_identifier(&self.extact_identifier());
+
+        if self.kind_is(TokenKind::QuestionMark) {
+            property_decl_exp.set_question_mark();
+            self.eat(TokenKind::QuestionMark)?;
+        }
+
+        if self.kind_is(TokenKind::Colon) {
+            property_decl_exp.set_type_annotation(self.parse_type_annotation()?);
+        }
+
+        if self.kind_is(TokenKind::Assign) {
+            self.eat(TokenKind::Assign)?;
+            property_decl_exp.set_initializer(self.parse_single_exp()?);
+        }
+
+        self.eat(TokenKind::SemiColon);
+
+        Ok(ASTNode::new(property_decl_exp))
+    }
+
+    fn parse_method_decl_exp(&mut self) -> Result<ASTNode<MethodDeclExp>, ParserError> {
+        todo!()
+    }
+
+    fn parse_gettersetter_decl_exp(&mut self) -> Result<ASTNode<GetterSetterDeclExp>, ParserError> {
         todo!()
     }
 
@@ -860,19 +935,13 @@ impl Parser {
             TokenKind::Ellipsis
             | TokenKind::Identifier
             | TokenKind::LeftBracket
-            | TokenKind::LeftBrace => match self.parse_para_list()? {
-                Some(para_list) => call_sig.set_para_list(para_list),
-                None => return Err(self.report_error("CallSig: Unexpected token")),
-            },
+            | TokenKind::LeftBrace => call_sig.set_para_list(self.parse_para_list()?),
             _ => (), // nothing to do
         }
         self.eat(TokenKind::RightParen)?;
         if self.kind_is(TokenKind::Colon) {
             self.eat(TokenKind::Colon)?;
-            match self.parse_type_annotation()? {
-                Some(type_annotation) => call_sig.set_type_annotation(type_annotation),
-                None => return Err(self.report_error("CallSig: Unexpected token")),
-            }
+            call_sig.set_type_annotation(self.parse_type_annotation()?);
         }
 
         Ok(Some(ASTNode::new(call_sig)))
@@ -882,6 +951,7 @@ impl Parser {
     functionBody
         : sourceElements?
         ;
+    functionBody 左右必是被 { } 包围
     */
     fn parse_func_body(&mut self) -> Result<ASTNode<FuncBody>, ParserError> {
         let mut func_body = FuncBody::default();
@@ -991,38 +1061,41 @@ impl Parser {
         Ok(ASTNode::new(formal_para))
     }
 
-    // // singleExpression (',' singleExpression)*
-    // fn parse_exp_seq(&mut self) -> Result<Option<ASTNode<ExpSeq>>, ParserError> {
-    //     let single_exp = self.parse_single_exp()?;
-    //     while self.kind_is(TokenKind::Comma) {
-    //         self.eat(TokenKind::Comma);
-    //         let single_exp_other = self.parse_single_exp()?;
-    //     }
-    //     todo!()
-    // }
+    // singleExpression (',' singleExpression)*
+    fn parse_exp_seq(&mut self) -> Result<ASTNode<ExpSeq>, ParserError> {
+        let mut exp_seq = ExpSeq::default();
+        loop {
+            let single_exp = self.parse_single_exp()?;
+            exp_seq.push_exp(single_exp);
+            if !self.kind_is(TokenKind::Comma) {
+                return Ok(ASTNode::new(exp_seq));
+            }
 
-    fn parse_single_exp(&self) -> Result<Option<ASTNode<Exp>>, ParserError> {
+            self.eat(TokenKind::Comma)?;
+        }
+    }
+
+    fn parse_single_exp(&self) -> Result<ASTNode<Exp>, ParserError> {
         // TODO: this is first to deal with
+
         todo!()
     }
 
     fn parse_type_paras(&mut self) -> Result<ASTNode<TypeParas>, ParserError> {
-        Err(self.report_error("Sorry, but type paras is not supported"))
+        Err(self.unsupported_error("type paras"))
     }
 
-    fn parse_para_list(&mut self) -> Result<Option<ASTNode<ParaList>>, ParserError> {
+    fn parse_para_list(&mut self) -> Result<ASTNode<ParaList>, ParserError> {
+        let mut para_list = ParaList::default();
+
         match self.peek_kind() {
-            TokenKind::Ellipsis => match self.parse_rest_para()? {
-                Some(rest_para) => {
-                    let mut para_list = ParaList::new();
-                    para_list.set_rest_para(rest_para);
-                    Ok(Some(ASTNode::new(para_list)))
-                }
-                None => Ok(None),
-            },
+            TokenKind::Ellipsis => {
+                let rest_para = self.parse_rest_para()?;
+                para_list.set_rest_para(rest_para);
+                Ok(ASTNode::new(para_list))
+            }
             TokenKind::Identifier | TokenKind::LeftBracket | TokenKind::LeftBrace => {
-                let mut para_list = ParaList::new();
-                while let Some(para) = self.parse_para()? {
+                while let para = self.parse_para()? {
                     para_list.push_para(para);
                     match self.peek_kind() == TokenKind::Comma {
                         true => {
@@ -1034,35 +1107,31 @@ impl Parser {
                 }
 
                 if self.peek_kind() == TokenKind::Ellipsis {
-                    let rest_para = match self.parse_rest_para()? {
-                        Some(rest_para) => rest_para,
-                        None => return Err(self.report_error("")),
-                    };
-                    para_list.set_rest_para(rest_para);
+                    para_list.set_rest_para(self.parse_rest_para()?);
                 }
 
-                Ok(Some(ASTNode::new(para_list)))
+                Ok(ASTNode::new(para_list))
             }
-            _ => Err(self.report_error("ParaList: Unexpected Token")),
+            _ => Err(self.expect_error("ParaList", "Identifier or Ellipsis")),
         }
     }
 
-    fn parse_type_annotation(&self) -> Result<Option<ASTNode<TypeAnnotation>>, ParserError> {
+    fn parse_type_annotation(&self) -> Result<ASTNode<TypeAnnotation>, ParserError> {
         todo!()
     }
 
-    fn parse_rest_para(&self) -> Result<Option<ASTNode<RestPara>>, ParserError> {
+    fn parse_rest_para(&self) -> Result<ASTNode<RestPara>, ParserError> {
         todo!()
     }
 
-    fn parse_para(&mut self) -> Result<Option<ASTNode<Para>>, ParserError> {
+    fn parse_para(&mut self) -> Result<ASTNode<Para>, ParserError> {
         match self.peek_kind() {
             TokenKind::Identifier => {
                 let mut para = Para::new();
                 let para_name = self.peek().unwrap().peek_value();
                 para.set_para_name(para_name);
                 self.eat(TokenKind::Identifier)?;
-                Ok(Some(ASTNode::new(para)))
+                Ok(ASTNode::new(para))
             }
             TokenKind::LeftBracket => {
                 // 太复杂，不考虑
@@ -1078,6 +1147,56 @@ impl Parser {
 
     fn parse_type(&mut self) -> Result<ASTNode<Type>, ParserError> {
         todo!()
+    }
+
+    fn parse_decorators(&mut self) -> Result<ASTNode<Decorators>, ParserError> {
+        Err(self.unsupported_error("decorators"))
+    }
+
+    /*
+    propertyMemberBase:
+        Async? accessibilityModifier? Static? ReadOnly?;
+    */
+    fn parse_property_base(&mut self) -> Result<ASTNode<PropertyBase>, ParserError> {
+        let mut property_base = PropertyBase::default();
+
+        match self.peek_kind() {
+            TokenKind::KeyWord(KeyWordKind::Public)
+            | TokenKind::KeyWord(KeyWordKind::Private)
+            | TokenKind::KeyWord(KeyWordKind::Protected) => {
+                property_base.set_access_modifier(self.parse_access_modifier()?)
+            }
+            _ => (),
+        }
+
+        if self.kind_is(TokenKind::KeyWord(KeyWordKind::Static)) {
+            property_base.set_static();
+            self.eat(TokenKind::KeyWord(KeyWordKind::Static))?;
+        }
+        if self.kind_is(TokenKind::KeyWord(KeyWordKind::ReadOnly)) {
+            property_base.set_readonly();
+            self.eat(TokenKind::KeyWord(KeyWordKind::ReadOnly))?;
+        }
+
+        Ok(ASTNode::new(property_base))
+    }
+
+    fn parse_access_modifier(&mut self) -> Result<ASTNode<AccessModifier>, ParserError> {
+        match self.peek_kind() {
+            TokenKind::KeyWord(KeyWordKind::Public) => {
+                self.eat(TokenKind::KeyWord(KeyWordKind::Public))?;
+                Ok(ASTNode::new(AccessModifier::Public))
+            }
+            TokenKind::KeyWord(KeyWordKind::Private) => {
+                self.eat(TokenKind::KeyWord(KeyWordKind::Private))?;
+                Ok(ASTNode::new(AccessModifier::Private))
+            }
+            TokenKind::KeyWord(KeyWordKind::Protected) => {
+                self.eat(TokenKind::KeyWord(KeyWordKind::Protected))?;
+                Ok(ASTNode::new(AccessModifier::Protected))
+            }
+            _ => Err(self.expect_error("Access Modifier", "public or protected or private")),
+        }
     }
 
     // fn parse_eos(&mut self) -> Result<ASTNode<EOS>, ParserError> {

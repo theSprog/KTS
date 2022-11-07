@@ -2,10 +2,38 @@ use crate::ast::ASTNode;
 use crate::ast::AstGraph;
 use crate::ast::Visualizable;
 use crate::lexer::token_kind::KeyWordKind;
+use crate::lexer::token_kind::TokenKind;
 
 use super::body::FuncBody;
+use super::decl::AbsDecl;
+use super::decorator::Decorators;
+use super::exp::Exp;
+use super::identifier::Identifier;
 use super::parameter::FormalParas;
+use super::parameter::TypeAnnotation;
 use super::type_ref::*;
+
+pub enum AccessModifier {
+    Public,
+    Protected,
+    Private,
+}
+
+impl Visualizable for AccessModifier {
+    fn draw(&self, father_id: usize, graph: &mut AstGraph) {
+        match self {
+            AccessModifier::Public => {
+                graph.put_node(father_id, "public");
+            }
+            AccessModifier::Protected => {
+                graph.put_node(father_id, "protected");
+            }
+            AccessModifier::Private => {
+                graph.put_node(father_id, "private");
+            }
+        }
+    }
+}
 
 #[derive(Visualizable, Default)]
 pub struct ClassHeritage {
@@ -60,26 +88,16 @@ pub enum ClassElement {
     IndexMemberDecl(ASTNode<IndexMemberDecl>),
 }
 
-#[derive(Visualizable)]
+#[derive(Visualizable, Default)]
 pub struct ConstructorDecl {
-    access_modifier: ASTNode<KeyWordKind>,
+    access_modifier: Option<ASTNode<AccessModifier>>,
     formal_paras: ASTNode<FormalParas>,
     func_body: ASTNode<FuncBody>,
 }
 
-impl Default for ConstructorDecl {
-    fn default() -> Self {
-        Self {
-            access_modifier: ASTNode::new(KeyWordKind::Public),
-            formal_paras: Default::default(),
-            func_body: Default::default(),
-        }
-    }
-}
-
 impl ConstructorDecl {
-    pub(crate) fn set_access(&mut self, access_modifier: KeyWordKind) {
-        self.access_modifier = ASTNode::new(access_modifier);
+    pub(crate) fn set_access_modifier(&mut self, access_modifier: ASTNode<AccessModifier>) {
+        self.access_modifier = Some(access_modifier);
     }
 
     pub(crate) fn set_formal_paras(&mut self, formal_paras: ASTNode<FormalParas>) {
@@ -91,8 +109,92 @@ impl ConstructorDecl {
     }
 }
 
+#[derive(Visualizable)]
+pub enum PropertyMemberDecl {
+    PropertyDeclExp(ASTNode<PropertyDeclExp>),
+    MethodDeclExp(ASTNode<MethodDeclExp>),
+    GetterSetterDeclExp(ASTNode<GetterSetterDeclExp>),
+    AbsMemberDecl(ASTNode<AbsDecl>),
+}
+
 #[derive(Visualizable, Default)]
-pub struct PropertyMemberDecl {}
+pub struct PropertyDeclExp {
+    property_base: ASTNode<PropertyBase>,
+    identifier: ASTNode<Identifier>,
+    question_mark: Option<ASTNode<TokenKind>>,
+    type_annotation: Option<ASTNode<TypeAnnotation>>,
+    initializer: Option<ASTNode<Exp>>,
+}
+impl PropertyDeclExp {
+    pub(crate) fn set_property_base(&mut self, property_base: ASTNode<PropertyBase>) {
+        self.property_base = property_base;
+    }
+
+    pub(crate) fn set_identifier(&mut self, identifier: &str) {
+        self.identifier = ASTNode::new(Identifier::new(identifier));
+    }
+
+    pub(crate) fn set_question_mark(&mut self) {
+        self.question_mark = Some(ASTNode::new(TokenKind::QuestionMark));
+    }
+
+    pub(crate) fn set_type_annotation(&mut self, type_annotation: ASTNode<TypeAnnotation>) {
+        self.type_annotation = Some(type_annotation);
+    }
+
+    pub(crate) fn set_initializer(&mut self, single_exp: ASTNode<Exp>) {
+        self.initializer = Some(single_exp);
+    }
+}
+
+#[derive(Visualizable)]
+pub struct MethodDeclExp {
+    async_: Option<ASTNode<KeyWordKind>>,
+}
+
+#[derive(Visualizable)]
+pub struct GetterSetterDeclExp {}
+
+// #[derive(Visualizable, Default)]
+// pub struct PropertyMemberDecl {
+//     property_base: ASTNode<PropertyBase>,
+//     decorators: Option<ASTNode<Decorators>>,
+//     abstract_decl: Option<ASTNode<AbsDecl>>,
+// }
+// impl PropertyMemberDecl {
+//     pub(crate) fn set_property_base(&mut self, property_base: ASTNode<PropertyBase>) {
+//         self.property_base = property_base
+//     }
+
+//     pub(crate) fn set_parse_decorators(&mut self, decorators: ASTNode<Decorators>) {
+//         todo!()
+//     }
+
+//     pub(crate) fn set_abstract(&mut self, abstract_decl: ASTNode<AbsDecl>) {
+//         todo!()
+//     }
+// }
+
+#[derive(Visualizable, Default)]
+pub struct PropertyBase {
+    access_modifier: Option<ASTNode<AccessModifier>>,
+    static_: Option<ASTNode<KeyWordKind>>,
+    readonly: Option<ASTNode<KeyWordKind>>,
+}
+
+impl PropertyBase {
+    pub(crate) fn set_access_modifier(&mut self, access_modifier: ASTNode<AccessModifier>) {
+        self.access_modifier = Some(access_modifier);
+    }
+
+    pub(crate) fn set_static(&mut self) {
+        self.static_ = Some(ASTNode::new(KeyWordKind::Static));
+    }
+
+    pub(crate) fn set_readonly(&mut self) {
+        self.readonly = Some(ASTNode::new(KeyWordKind::ReadOnly));
+    }
+}
 
 #[derive(Visualizable, Default)]
 pub struct IndexMemberDecl {}

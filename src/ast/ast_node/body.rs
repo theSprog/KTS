@@ -1,7 +1,7 @@
 use crate::ast::visulize::Visualizable;
 use crate::ast::{ASTNode, AstGraph};
 
-use super::source_elements::SourceElements;
+use super::source_element::SourceElements;
 
 #[derive(Visualizable, Default)]
 pub struct FuncBody {

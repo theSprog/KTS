@@ -1,55 +1,71 @@
 graph vis {
-	node154[label="Program"]
-	node154 -- node153
-	node153[label="SourceElements"]
-	node153 -- node152
-	node152[label="SourceElement"]
-	node152 -- node151
-	node151[label="Stat"]
-	node151 -- node150
-	node150[label="ClassDecl"]
-	node150 -- node127
-	node127[label="abstract", color=red]
-	node150 -- node128
-	node128[label="C"]
-	node150 -- node135
-	node135[label="ClassHeritage"]
-	node135 -- node131
-	node131[label="Extend"]
-	node131 -- node130
-	node130[label="TypeRef"]
-	node130 -- node129
-	node129[label="B"]
-	node135 -- node134
-	node134[label="Implement"]
-	node134 -- node133
-	node133[label="TypeRef"]
-	node133 -- node132
-	node132[label="X"]
-	node150 -- node149
-	node149[label="ClassTail"]
+	node149[label="Program"]
 	node149 -- node148
-	node148[label="ClassElement"]
+	node148[label="SourceElements"]
 	node148 -- node147
-	node147[label="ConstructorDecl"]
-	node147 -- node137
-	node137[label="protected", color=red]
-	node147 -- node145
-	node145[label="FormalParas"]
-	node145 -- node139
-	node139[label="FormalPara"]
-	node139 -- node138
-	node138[label="a"]
-	node145 -- node141
-	node141[label="FormalPara"]
-	node141 -- node140
-	node140[label="b"]
-	node145 -- node143
-	node143[label="FormalPara"]
-	node143 -- node142
-	node142[label="c"]
-	node145 -- node144
-	node144[label="x"]
+	node147[label="Stat"]
 	node147 -- node146
-	node146[label="FuncBody"]
+	node146[label="ClassDecl"]
+	node146 -- node115
+	node115[label="abstract", color=red]
+	node146 -- node116
+	node116[label="C"]
+	node146 -- node123
+	node123[label="ClassHeritage"]
+	node123 -- node119
+	node119[label="Extend"]
+	node119 -- node118
+	node118[label="TypeRef"]
+	node118 -- node117
+	node117[label="B"]
+	node123 -- node122
+	node122[label="Implement"]
+	node122 -- node121
+	node121[label="TypeRef"]
+	node121 -- node120
+	node120[label="X"]
+	node146 -- node145
+	node145[label="ClassTail"]
+	node145 -- node135
+	node135[label="ClassElement"]
+	node135 -- node134
+	node134[label="ConstructorDecl"]
+	node134 -- node124
+	node124[label="protected", color=red]
+	node134 -- node132
+	node132[label="FormalParas"]
+	node132 -- node126
+	node126[label="FormalPara"]
+	node126 -- node125
+	node125[label="a"]
+	node132 -- node128
+	node128[label="FormalPara"]
+	node128 -- node127
+	node127[label="b"]
+	node132 -- node130
+	node130[label="FormalPara"]
+	node130 -- node129
+	node129[label="c"]
+	node132 -- node131
+	node131[label="x"]
+	node134 -- node133
+	node133[label="FuncBody"]
+	node145 -- node144
+	node144[label="ClassElement"]
+	node144 -- node143
+	node143[label="PropertyMemberDecl"]
+	node143 -- node142
+	node142[label="PropertyDeclExp"]
+	node142 -- node139
+	node139[label="PropertyBase"]
+	node139 -- node136
+	node136[label="private", color=red]
+	node139 -- node137
+	node137[label="static", color=red]
+	node139 -- node138
+	node138[label="readonly", color=red]
+	node142 -- node140
+	node140[label="ident"]
+	node142 -- node141
+	node141[label="?"]
 }
