@@ -1,87 +1,87 @@
 graph vis {
-	node142[label="Program"]
-	node142 -- node141
-	node141[label="SourceElements"]
-	node141 -- node140
-	node140[label="Stat"]
-	node140 -- node139
-	node139[label="ClassDecl"]
-	node139 -- node98
-	node98[label="abstract", color=red]
-	node139 -- node99
-	node99[label="C"]
-	node139 -- node106
-	node106[label="ClassHeritage"]
-	node106 -- node102
-	node102[label="Extend"]
-	node102 -- node101
-	node101[label="TypeRef"]
-	node101 -- node100
-	node100[label="B"]
-	node106 -- node105
-	node105[label="Implement"]
-	node105 -- node104
-	node104[label="TypeRef"]
-	node104 -- node103
-	node103[label="X"]
-	node139 -- node138
-	node138[label="ClassTail"]
-	node138 -- node118
-	node118[label="ClassElement"]
-	node118 -- node117
-	node117[label="ConstructorDecl"]
-	node117 -- node107
-	node107[label="protected", color=red]
-	node117 -- node115
-	node115[label="FormalParas"]
-	node115 -- node109
-	node109[label="FormalPara"]
-	node109 -- node108
-	node108[label="a"]
-	node115 -- node111
-	node111[label="FormalPara"]
-	node111 -- node110
-	node110[label="b"]
-	node115 -- node113
-	node113[label="FormalPara"]
-	node113 -- node112
-	node112[label="c"]
+	node156[label="Program"]
+	node156 -- node155
+	node155[label="SourceElements"]
+	node155 -- node154
+	node154[label="Stat"]
+	node154 -- node153
+	node153[label="ClassDecl"]
+	node153 -- node112
+	node112[label="abstract", color=red]
+	node153 -- node113
+	node113[label="C"]
+	node153 -- node120
+	node120[label="ClassHeritage"]
+	node120 -- node116
+	node116[label="Extend"]
+	node116 -- node115
+	node115[label="TypeRef"]
 	node115 -- node114
-	node114[label="x"]
-	node117 -- node116
-	node116[label="FuncBody"]
-	node138 -- node126
-	node126[label="ClassElement"]
-	node126 -- node125
-	node125[label="PropertyMemberDecl"]
+	node114[label="B"]
+	node120 -- node119
+	node119[label="Implement"]
+	node119 -- node118
+	node118[label="TypeRef"]
+	node118 -- node117
+	node117[label="X"]
+	node153 -- node152
+	node152[label="ClassTail"]
+	node152 -- node132
+	node132[label="ClassElement"]
+	node132 -- node131
+	node131[label="ConstructorDecl"]
+	node131 -- node121
+	node121[label="protected", color=red]
+	node131 -- node129
+	node129[label="FormalParas"]
+	node129 -- node123
+	node123[label="FormalPara"]
+	node123 -- node122
+	node122[label="a"]
+	node129 -- node125
+	node125[label="FormalPara"]
 	node125 -- node124
-	node124[label="PropertyDeclExp"]
-	node124 -- node119
-	node119[label="private", color=red]
-	node124 -- node120
-	node120[label="static", color=red]
-	node124 -- node121
-	node121[label="readonly", color=red]
-	node124 -- node122
-	node122[label="ident"]
-	node124 -- node123
-	node123[label="?"]
+	node124[label="b"]
+	node129 -- node127
+	node127[label="FormalPara"]
+	node127 -- node126
+	node126[label="c"]
+	node129 -- node128
+	node128[label="x"]
+	node131 -- node130
+	node130[label="FuncBody"]
+	node152 -- node140
+	node140[label="ClassElement"]
+	node140 -- node139
+	node139[label="PropertyMemberDecl"]
+	node139 -- node138
+	node138[label="PropertyDeclExp"]
+	node138 -- node133
+	node133[label="private", color=red]
+	node138 -- node134
+	node134[label="static", color=red]
+	node138 -- node135
+	node135[label="readonly", color=red]
+	node138 -- node136
+	node136[label="ident"]
 	node138 -- node137
-	node137[label="ClassElement"]
-	node137 -- node136
-	node136[label="PropertyMemberDecl"]
-	node136 -- node135
-	node135[label="MethodDeclExp"]
-	node135 -- node129
-	node129[label="private", color=red]
-	node135 -- node130
-	node130[label="static", color=red]
-	node135 -- node131
-	node131[label="async", color=red]
-	node135 -- node132
-	node132[label="func"]
-	node135 -- node133
-	node133[label="CallSig"]
-	node135 -- node134
-	node134[label="FuncBody"]
+	node137[label="?"]
+	node152 -- node151
+	node151[label="ClassElement"]
+	node151 -- node150
+	node150[label="PropertyMemberDecl"]
+	node150 -- node149
+	node149[label="MethodDeclExp"]
+	node149 -- node143
+	node143[label="private", color=red]
+	node149 -- node144
+	node144[label="static", color=red]
+	node149 -- node145
+	node145[label="async", color=red]
+	node149 -- node146
+	node146[label="func"]
+	node149 -- node147
+	node147[label="CallSig"]
+	node149 -- node148
+	node148[label="FuncBody"]
 }

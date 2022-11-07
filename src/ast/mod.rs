@@ -2,7 +2,6 @@ pub mod ast_node;
 pub mod visulize;
 
 use lazy_static::lazy_static;
-use std::fmt::Display;
 use std::fs::File;
 use std::io;
 use std::process::Command;
@@ -34,10 +33,6 @@ impl AstGraph {
         }
     }
 
-    fn node_link(a: &String, b: &String) -> String {
-        format!("\t{} -- {}\n", a, b)
-    }
-
     fn write(&self, writer: &mut BufWriter<File>) -> io::Result<()> {
         writer.write_all(b"graph vis {\n")?;
         writer.write_all(self.graph.as_bytes())?;
@@ -48,13 +43,29 @@ impl AstGraph {
 
     pub(crate) fn put_edge(&mut self, father: usize, child: usize) {
         self.graph.push_str(&AstGraph::node_link(
-            &AST::node_name(father),
-            &AST::node_name(child),
+            &AstGraph::node_name(father),
+            &AstGraph::node_name(child),
         ));
     }
 
     pub(crate) fn put_node(&mut self, id: usize, desc: &str) {
-        self.graph.push_str(&AST::label(&AST::node_name(id), desc));
+        self.graph
+            .push_str(&AstGraph::label(&AstGraph::node_name(id), desc));
+    }
+
+    fn node_name(id: usize) -> String {
+        format!("node{}", id)
+    }
+
+    fn node_link(a: &String, b: &String) -> String {
+        format!("\t{} -- {}\n", a, b)
+    }
+
+    pub(crate) fn label(node: &str, desc: &str) -> String {
+        match KEYWORD.contains_key(desc) {
+            true => format!("\t{}[label=\"{}\", color=red]\n", node, desc),
+            false => format!("\t{}[label=\"{}\"]\n", node, desc),
+        }
     }
 }
 
@@ -107,21 +118,6 @@ impl AST {
             .arg(to_path.replace("dot", "png"))
             .spawn()
             .expect("dot command failed to start");
-    }
-
-    fn node_name(id: usize) -> String {
-        format!("node{}", id)
-    }
-
-    fn node_link(a: &String, b: &String) -> String {
-        format!("\t{} -- {}\n", a, b)
-    }
-
-    pub(crate) fn label(node: &str, desc: &str) -> String {
-        match KEYWORD.contains_key(desc) {
-            true => format!("\t{}[label=\"{}\", color=red]\n", node, desc),
-            false => format!("\t{}[label=\"{}\"]\n", node, desc),
-        }
     }
 }
 

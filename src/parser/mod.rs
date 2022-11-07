@@ -18,7 +18,6 @@ use crate::ast::ast_node::class::*;
 use crate::ast::ast_node::clause::*;
 use crate::ast::ast_node::decl::*;
 use crate::ast::ast_node::exp::*;
-use crate::ast::ast_node::list::*;
 use crate::ast::ast_node::parameter::*;
 use crate::ast::ast_node::source_element::*;
 use crate::ast::ast_node::stat::*;
@@ -425,10 +424,10 @@ impl Parser {
     fn parse_export_stat(&mut self) -> Result<ASTNode<ExportStat>, ParserError> {
         let mut export_stat = ExportStat::default();
 
-        self.eat(TokenKind::KeyWord(KeyWordKind::Export));
+        self.eat(TokenKind::KeyWord(KeyWordKind::Export))?;
         if self.kind_is(TokenKind::KeyWord(KeyWordKind::Default)) {
             export_stat.set_default();
-            self.eat(TokenKind::KeyWord(KeyWordKind::Default));
+            self.eat(TokenKind::KeyWord(KeyWordKind::Default))?;
         }
 
         // 此处进行 corner case 处理
@@ -454,8 +453,8 @@ impl Parser {
         // 如果不是 from block, 那么说明一定是 stat
         // 之前的 match 保证进入这里面的 stat 一定不是 export 开头
         if let Some(from_block) = self.try_to(&Parser::parse_stat) {
-            export_stat.set_stat(self.parse_stat()?);
-            self.eat_eos();
+            export_stat.set_stat(from_block);
+            self.eat_eos()?;
             return Ok(ASTNode::new(export_stat));
         }
 
@@ -464,7 +463,7 @@ impl Parser {
     }
 
     fn parse_empty_stat(&mut self) -> Result<ASTNode<EmptyStat>, ParserError> {
-        self.eat(TokenKind::SemiColon);
+        self.eat(TokenKind::SemiColon)?;
         Ok(ASTNode::new(EmptyStat::new()))
     }
 
@@ -478,9 +477,9 @@ impl Parser {
         let mut class_decl = ClassDecl::default();
         if self.kind_is(TokenKind::KeyWord(KeyWordKind::Abstract)) {
             class_decl.set_abstract();
-            self.eat(TokenKind::KeyWord(KeyWordKind::Abstract));
+            self.eat(TokenKind::KeyWord(KeyWordKind::Abstract))?;
         }
-        self.eat(TokenKind::KeyWord(KeyWordKind::Class));
+        self.eat(TokenKind::KeyWord(KeyWordKind::Class))?;
         match self.peek_kind() {
             TokenKind::Identifier => {
                 class_decl.set_class_name(&self.extact_identifier()?);
@@ -549,10 +548,10 @@ impl Parser {
 
     fn parse_class_tail(&mut self) -> Result<ASTNode<ClassTail>, ParserError> {
         let mut class_tail = ClassTail::default();
-        self.eat(TokenKind::LeftBracket);
+        self.eat(TokenKind::LeftBracket)?;
 
         if self.kind_is(TokenKind::RightBracket) {
-            self.eat(TokenKind::RightBracket);
+            self.eat(TokenKind::RightBracket)?;
             return Ok(ASTNode::new(class_tail));
         }
 
@@ -560,7 +559,7 @@ impl Parser {
             let class_element = self.parse_class_element()?;
             class_tail.push_class_element(class_element);
             if self.kind_is(TokenKind::RightBracket) {
-                self.eat(TokenKind::RightBracket);
+                self.eat(TokenKind::RightBracket)?;
                 return Ok(ASTNode::new(class_tail));
             }
         }
@@ -660,8 +659,6 @@ impl Parser {
     ;
     */
     fn parse_property_member_decl(&mut self) -> Result<ASTNode<PropertyMemberDecl>, ParserError> {
-        let member_decl: PropertyMemberDecl;
-
         match self.peek_kind() {
             TokenKind::KeyWord(KeyWordKind::Abstract) => {
                 // abstractDeclaration
@@ -710,11 +707,11 @@ impl Parser {
         }
 
         if self.kind_is(TokenKind::KeyWord(KeyWordKind::Static)) {
-            self.eat(TokenKind::KeyWord(KeyWordKind::Static));
+            self.eat(TokenKind::KeyWord(KeyWordKind::Static))?;
             property_decl_exp.set_static();
         }
         if self.kind_is(TokenKind::KeyWord(KeyWordKind::ReadOnly)) {
-            self.eat(TokenKind::KeyWord(KeyWordKind::ReadOnly));
+            self.eat(TokenKind::KeyWord(KeyWordKind::ReadOnly))?;
             property_decl_exp.set_readonly();
         }
 
@@ -734,7 +731,7 @@ impl Parser {
             property_decl_exp.set_initializer(self.parse_single_exp()?);
         }
 
-        self.eat(TokenKind::SemiColon);
+        self.eat(TokenKind::SemiColon)?;
 
         Ok(ASTNode::new(property_decl_exp))
     }
@@ -750,11 +747,11 @@ impl Parser {
         }
 
         if self.kind_is(TokenKind::KeyWord(KeyWordKind::Static)) {
-            self.eat(TokenKind::KeyWord(KeyWordKind::Static));
+            self.eat(TokenKind::KeyWord(KeyWordKind::Static))?;
             method_decl_exp.set_static();
         }
         if self.kind_is(TokenKind::KeyWord(KeyWordKind::Async)) {
-            self.eat(TokenKind::KeyWord(KeyWordKind::Async));
+            self.eat(TokenKind::KeyWord(KeyWordKind::Async))?;
             method_decl_exp.set_async();
         }
 
@@ -788,7 +785,7 @@ impl Parser {
         }
         if self.kind_is(TokenKind::KeyWord(KeyWordKind::Static)) {
             static_ = true;
-            self.eat(TokenKind::KeyWord(KeyWordKind::Static));
+            self.eat(TokenKind::KeyWord(KeyWordKind::Static))?;
         }
 
         let getter_setter_decl_exp =
@@ -841,7 +838,7 @@ impl Parser {
     }
 
     fn parse_abstract_declaration(&mut self) -> Result<ASTNode<AbsDecl>, ParserError> {
-        self.eat(TokenKind::KeyWord(KeyWordKind::Abstract));
+        self.eat(TokenKind::KeyWord(KeyWordKind::Abstract))?;
         todo!()
     }
 
@@ -1193,7 +1190,8 @@ impl Parser {
                 Ok(ASTNode::new(para_list))
             }
             TokenKind::Identifier | TokenKind::LeftBracket | TokenKind::LeftBrace => {
-                while let para = self.parse_para()? {
+                loop {
+                    let para = self.parse_para()?;
                     para_list.push_para(para);
                     match self.peek_kind() == TokenKind::Comma {
                         true => {

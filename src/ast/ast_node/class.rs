@@ -7,7 +7,6 @@ use crate::lexer::token_kind::TokenKind;
 use super::body::FuncBody;
 use super::call_sig::CallSig;
 use super::decl::AbsDecl;
-use super::decorator::Decorators;
 use super::exp::Exp;
 use super::identifier::Identifier;
 use super::parameter::FormalParas;

@@ -11,9 +11,6 @@ impl ExpSeq {
     }
 }
 
+#[derive(Visualizable)]
 pub struct Exp {}
-impl Visualizable for Exp {
-    fn draw(&self, id: usize, graph: &mut crate::ast::AstGraph) {
-        todo!()
-    }
-}
+

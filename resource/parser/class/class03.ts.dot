@@ -1,80 +1,80 @@
 graph vis {
-	node143[label="Program"]
-	node143 -- node142
-	node142[label="SourceElements"]
-	node142 -- node141
-	node141[label="Stat"]
-	node141 -- node140
-	node140[label="ClassDecl"]
-	node140 -- node98
-	node98[label="abstract", color=red]
-	node140 -- node99
-	node99[label="C"]
-	node140 -- node106
-	node106[label="ClassHeritage"]
-	node106 -- node102
-	node102[label="Extend"]
-	node102 -- node101
-	node101[label="TypeRef"]
-	node101 -- node100
-	node100[label="B"]
-	node106 -- node105
-	node105[label="Implement"]
-	node105 -- node104
-	node104[label="TypeRef"]
-	node104 -- node103
-	node103[label="X"]
-	node140 -- node139
-	node139[label="ClassTail"]
-	node139 -- node115
-	node115[label="ClassElement"]
-	node115 -- node114
-	node114[label="PropertyMemberDecl"]
-	node114 -- node113
-	node113[label="GetterSetterDeclExp"]
-	node113 -- node109
-	node109[label="public", color=red]
-	node113 -- node112
-	node112[label="Accesser"]
-	node112[label="GetAccesser"]
-	node112 -- node110
-	node110[label="name"]
-	node112 -- node111
-	node111[label="FuncBody"]
-	node139 -- node125
-	node125[label="ClassElement"]
-	node125 -- node124
-	node124[label="PropertyMemberDecl"]
-	node124 -- node123
-	node123[label="GetterSetterDeclExp"]
-	node123 -- node118
-	node118[label="protected", color=red]
-	node123 -- node122
-	node122[label="Accesser"]
-	node122[label="SetAccesser"]
-	node122 -- node119
-	node119[label="name"]
-	node122 -- node120
-	node120[label="name_param"]
-	node122 -- node121
-	node121[label="FuncBody"]
-	node139 -- node138
-	node138[label="ClassElement"]
-	node138 -- node137
-	node137[label="PropertyMemberDecl"]
-	node137 -- node136
-	node136[label="GetterSetterDeclExp"]
-	node136 -- node130
-	node130[label="private", color=red]
-	node136 -- node135
-	node135[label="static", color=red]
-	node136 -- node134
-	node134[label="Accesser"]
-	node134[label="SetAccesser"]
-	node134 -- node131
-	node131[label="name"]
-	node134 -- node132
-	node132[label="name_param"]
-	node134 -- node133
-	node133[label="FuncBody"]
+	node202[label="Program"]
+	node202 -- node201
+	node201[label="SourceElements"]
+	node201 -- node200
+	node200[label="Stat"]
+	node200 -- node199
+	node199[label="ClassDecl"]
+	node199 -- node157
+	node157[label="abstract", color=red]
+	node199 -- node158
+	node158[label="C"]
+	node199 -- node165
+	node165[label="ClassHeritage"]
+	node165 -- node161
+	node161[label="Extend"]
+	node161 -- node160
+	node160[label="TypeRef"]
+	node160 -- node159
+	node159[label="B"]
+	node165 -- node164
+	node164[label="Implement"]
+	node164 -- node163
+	node163[label="TypeRef"]
+	node163 -- node162
+	node162[label="X"]
+	node199 -- node198
+	node198[label="ClassTail"]
+	node198 -- node174
+	node174[label="ClassElement"]
+	node174 -- node173
+	node173[label="PropertyMemberDecl"]
+	node173 -- node172
+	node172[label="GetterSetterDeclExp"]
+	node172 -- node168
+	node168[label="public", color=red]
+	node172 -- node171
+	node171[label="Accesser"]
+	node171[label="GetAccesser"]
+	node171 -- node169
+	node169[label="name"]
+	node171 -- node170
+	node170[label="FuncBody"]
+	node198 -- node184
+	node184[label="ClassElement"]
+	node184 -- node183
+	node183[label="PropertyMemberDecl"]
+	node183 -- node182
+	node182[label="GetterSetterDeclExp"]
+	node182 -- node177
+	node177[label="protected", color=red]
+	node182 -- node181
+	node181[label="Accesser"]
+	node181[label="SetAccesser"]
+	node181 -- node178
+	node178[label="name"]
+	node181 -- node179
+	node179[label="name_param"]
+	node181 -- node180
+	node180[label="FuncBody"]
+	node198 -- node197
+	node197[label="ClassElement"]
+	node197 -- node196
+	node196[label="PropertyMemberDecl"]
+	node196 -- node195
+	node195[label="GetterSetterDeclExp"]
+	node195 -- node189
+	node189[label="private", color=red]
+	node195 -- node194
+	node194[label="static", color=red]
+	node195 -- node193
+	node193[label="Accesser"]
+	node193[label="SetAccesser"]
+	node193 -- node190
+	node190[label="name"]
+	node193 -- node191
+	node191[label="name_param"]
+	node193 -- node192
+	node192[label="FuncBody"]
 }

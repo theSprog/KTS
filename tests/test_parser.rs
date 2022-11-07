@@ -27,8 +27,8 @@ mod test_parser {
 
     #[test]
     fn test03() {
-        // test_parser("resource/parser/class/class01.ts");
-        // test_parser("resource/parser/class/class02.ts");
+        test_parser("resource/parser/class/class01.ts");
+        test_parser("resource/parser/class/class02.ts");
         test_parser("resource/parser/class/class03.ts");
     }
 

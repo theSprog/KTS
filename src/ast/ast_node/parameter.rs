@@ -56,9 +56,7 @@ pub struct TypeParas {}
 #[derive(Visualizable)]
 pub struct TypeAnnotation {}
 impl TypeAnnotation {
-    pub(crate) fn new(type_annotation: ASTNode<TypeAnnotation>) -> TypeAnnotation {
-        todo!()
-    }
+    
 }
 
 // pub enum ParaList {
@@ -81,16 +79,10 @@ impl ParaList {
     }
 }
 
-// #[derive(Visualizable)]
+#[derive(Visualizable)]
 pub struct RestPara {
     exp: Exp,
     type_annotation: Option<ASTNode<TypeAnnotation>>,
-}
-
-impl Visualizable for RestPara {
-    fn draw(&self, id: usize, graph: &mut AstGraph) {
-        todo!()
-    }
 }
 
 #[derive(Visualizable)]
