@@ -9,14 +9,6 @@ pub struct CallSig {
     type_annotation: Option<ASTNode<TypeAnnotation>>,
 }
 impl CallSig {
-    pub(crate) fn new() -> Self {
-        Self {
-            type_paras: None,
-            para_list: None,
-            type_annotation: None,
-        }
-    }
-
     pub(crate) fn set_type_paras(&mut self, type_paras: ASTNode<TypeParas>) {
         self.type_paras = Some(type_paras);
     }
@@ -29,3 +21,15 @@ impl CallSig {
         self.type_annotation = Some(type_annotation);
     }
 }
+
+#[derive(Default, Visualizable)]
+pub struct PropertySig {}
+
+#[derive(Default, Visualizable)]
+pub struct MethodSig {}
+
+#[derive(Visualizable, Default)]
+pub struct IndexSig {}
+
+#[derive(Visualizable, Default)]
+pub struct ConstructSig {}

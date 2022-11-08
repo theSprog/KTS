@@ -5,13 +5,14 @@ use crate::lexer::token_kind::KeyWordKind;
 use crate::lexer::token_kind::TokenKind;
 
 use super::body::FuncBody;
-use super::call_sig::CallSig;
 use super::decl::AbsDecl;
 use super::exp::Exp;
 use super::identifier::Identifier;
 use super::parameter::FormalParas;
 use super::parameter::TypeAnnotation;
-use super::type_ref::*;
+use super::sig::IndexSig;
+use super::sig::*;
+use super::type_::*;
 
 pub enum AccessModifier {
     Public,
@@ -20,16 +21,16 @@ pub enum AccessModifier {
 }
 
 impl Visualizable for AccessModifier {
-    fn draw(&self, father_id: usize, graph: &mut AstGraph) {
+    fn draw(&self, self_id: usize, graph: &mut AstGraph) {
         match self {
             AccessModifier::Public => {
-                graph.put_node(father_id, "public");
+                graph.put_node(self_id, "public");
             }
             AccessModifier::Protected => {
-                graph.put_node(father_id, "protected");
+                graph.put_node(self_id, "protected");
             }
             AccessModifier::Private => {
-                graph.put_node(father_id, "private");
+                graph.put_node(self_id, "private");
             }
         }
     }
@@ -37,11 +38,11 @@ impl Visualizable for AccessModifier {
 
 #[derive(Visualizable, Default)]
 pub struct ClassHeritage {
-    extends: Option<ASTNode<Extend>>,
+    extends: Option<ASTNode<Extends>>,
     implemented: Option<ASTNode<Implement>>,
 }
 impl ClassHeritage {
-    pub(crate) fn set_extends(&mut self, extend: Extend) {
+    pub(crate) fn set_extends(&mut self, extend: Extends) {
         self.extends = Some(ASTNode::new(extend));
     }
 
@@ -51,10 +52,10 @@ impl ClassHeritage {
 }
 
 #[derive(Visualizable, Default)]
-pub struct Extend {
+pub struct Extends {
     type_ref: ASTNode<TypeRef>,
 }
-impl Extend {
+impl Extends {
     pub(crate) fn new(extend: ASTNode<TypeRef>) -> Self {
         Self { type_ref: extend }
     }
@@ -268,4 +269,11 @@ impl GetAccesser {
 }
 
 #[derive(Visualizable, Default)]
-pub struct IndexMemberDecl {}
+pub struct IndexMemberDecl {
+    index_sig: ASTNode<IndexSig>,
+}
+impl IndexMemberDecl {
+    pub(crate) fn set_index_sig(&mut self, index_sig: ASTNode<IndexSig>) {
+        self.index_sig = index_sig;
+    }
+}

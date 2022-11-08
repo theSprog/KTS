@@ -1,14 +1,15 @@
 use crate::{
     ast::{visulize::Visualizable, ASTNode, AstGraph},
-    lexer::token_kind::{KeyWordKind},
+    lexer::token_kind::KeyWordKind,
 };
 
 use super::{
     body::FuncBody,
-    call_sig::CallSig,
-    class::{ClassHeritage, ClassTail},
+    class::{ClassHeritage, ClassTail, Extends},
     identifier::Identifier,
     parameter::TypeParas,
+    sig::*,
+    type_::*,
 };
 
 #[derive(Visualizable, Default)]
@@ -41,10 +42,67 @@ impl ClassDecl {
     }
 }
 
-pub struct AbsDecl {}
-impl Visualizable for AbsDecl {
-    fn draw(&self, id: usize, graph: &mut AstGraph) {
-        todo!()
+#[derive(Visualizable, Default)]
+pub struct InterfaceDecl {
+    export: Option<ASTNode<KeyWordKind>>,
+    declare: Option<ASTNode<KeyWordKind>>,
+    interface_name: ASTNode<Identifier>,
+    type_paras: Option<ASTNode<TypeParas>>,
+    extends: Vec<ASTNode<Extends>>,
+    object_type: ASTNode<ObjectType>,
+}
+impl InterfaceDecl {
+    pub(crate) fn set_export(&mut self) {
+        self.export = Some(ASTNode::new(KeyWordKind::Export));
+    }
+
+    pub(crate) fn set_declare(&mut self) {
+        self.declare = Some(ASTNode::new(KeyWordKind::Declare));
+    }
+
+    pub(crate) fn set_identifier(&mut self, identifier: &str) {
+        self.interface_name = ASTNode::new(Identifier::new(identifier));
+    }
+
+    pub(crate) fn push_extends(&mut self, extends: ASTNode<Extends>) {
+        self.extends.push(extends);
+    }
+
+    pub(crate) fn set_object_type(&mut self, object_type: ASTNode<ObjectType>) {
+        self.object_type = object_type;
+    }
+
+    pub(crate) fn set_type_paras(&mut self, type_paras: ASTNode<TypeParas>) {
+        self.type_paras = Some(type_paras);
+    }
+}
+
+#[derive(Visualizable, Default)]
+pub struct ObjectType {
+    type_members: Vec<ASTNode<TypeMember>>,
+}
+
+#[derive(Visualizable)]
+pub enum TypeMember {
+    PropertySig(ASTNode<PropertySig>),
+    MethodSig(ASTNode<MethodSig>),
+    CallSig(ASTNode<CallSig>),
+    ConstructSig(ASTNode<ConstructSig>),
+    IndexSig(ASTNode<IndexSig>),
+}
+
+#[derive(Visualizable, Default)]
+pub struct AbsDecl {
+    identifier: ASTNode<Identifier>,
+    call_sig: ASTNode<CallSig>,
+}
+impl AbsDecl {
+    pub(crate) fn set_identifier(&mut self, identifier: &str) {
+        self.identifier = ASTNode::new(Identifier::new(identifier));
+    }
+
+    pub(crate) fn set_call_sig(&mut self, call_sig: ASTNode<CallSig>) {
+        self.call_sig = call_sig;
     }
 }
 
@@ -68,16 +126,11 @@ impl FuncDecl {
     }
 }
 
+#[derive(Visualizable, Default)]
 pub struct FuncExpDecl {}
-impl Visualizable for FuncExpDecl {
-    fn draw(&self, id: usize, graph: &mut AstGraph) {
-        todo!()
-    }
-}
 
+#[derive(Visualizable, Default)]
 pub struct GenFuncDecl {}
-impl Visualizable for GenFuncDecl {
-    fn draw(&self, id: usize, graph: &mut AstGraph) {
-        todo!()
-    }
-}
+
+#[derive(Visualizable, Default)]
+pub struct NamespaceDecl {}

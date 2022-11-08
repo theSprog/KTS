@@ -1,4 +1,4 @@
-use super::type_ref::Type;
+use super::type_::*;
 use super::{exp::Exp, identifier::Identifier};
 use crate::ast::AstGraph;
 use crate::ast::{visulize::Visualizable, ASTNode};
@@ -26,7 +26,7 @@ pub struct FormalPara {
     access_modifier: Option<ASTNode<KeyWordKind>>,
     identifier: ASTNode<Identifier>,
     question_mark: Option<ASTNode<TokenKind>>,
-    _type: Option<ASTNode<Type>>,
+    type_annotation: Option<ASTNode<TypeAnnotation>>,
 }
 
 impl FormalPara {
@@ -45,8 +45,8 @@ impl FormalPara {
         self.decorator = Some(ASTNode::new(TokenKind::QuestionMark));
     }
 
-    pub(crate) fn set_type(&mut self, _type: ASTNode<Type>) {
-        self._type = Some(_type);
+    pub(crate) fn set_type_annotation(&mut self, type_annotation: ASTNode<TypeAnnotation>) {
+        self.type_annotation = Some(type_annotation);
     }
 }
 
@@ -54,9 +54,15 @@ impl FormalPara {
 pub struct TypeParas {}
 
 #[derive(Visualizable)]
-pub struct TypeAnnotation {}
+pub struct TypeAnnotation {
+    type_annotation: ASTNode<Type>,
+}
 impl TypeAnnotation {
-    
+    pub(crate) fn new(type_: ASTNode<Type>) -> Self {
+        Self {
+            type_annotation: type_,
+        }
+    }
 }
 
 // pub enum ParaList {

@@ -1,57 +1,50 @@
 use super::{ASTNode, AstGraph};
 
 pub trait Visualizable {
-    fn draw(&self, father_id: usize, graph: &mut AstGraph);
+    fn draw(&self, self_id: usize, graph: &mut AstGraph);
 }
 
 impl<T: Visualizable> Visualizable for Vec<ASTNode<T>> {
-    fn draw(&self, father_id: usize, graph: &mut AstGraph) {
+    fn draw(&self, self_id: usize, graph: &mut AstGraph) {
         // for node in self {
-        //     node.draw(father_id, graph);
+        //     node.draw(self_id, graph);
         // }
 
         self.into_iter()
-            .for_each(|node| node.draw(father_id, graph));
+            .for_each(|node| node.draw(self_id, graph));
     }
 }
 
 impl<T: Visualizable> Visualizable for Vec<Box<ASTNode<T>>> {
-    fn draw(&self, father_id: usize, graph: &mut AstGraph) {
+    fn draw(&self, self_id: usize, graph: &mut AstGraph) {
         // for node in self {
-        //     node.draw(father_id, graph);
+        //     node.draw(self_id, graph);
         // }
 
         self.into_iter()
-            .for_each(|node| node.draw(father_id, graph));
+            .for_each(|node| node.draw(self_id, graph));
     }
 }
 
 impl<T: Visualizable> Visualizable for Option<ASTNode<T>> {
-    fn draw(&self, father_id: usize, graph: &mut AstGraph) {
-        // match self {
-        //     Some(node) => {
-        //         node.draw(father_id, graph);
-        //     }
-        //     None => (),
-        // }
-
+    fn draw(&self, self_id: usize, graph: &mut AstGraph) {
         if let Some(node) = self {
-            node.draw(father_id, graph);
+            node.draw(self_id, graph);
         }
     }
 }
 
 impl<T: Visualizable> Visualizable for Option<Box<ASTNode<T>>> {
-    fn draw(&self, father_id: usize, graph: &mut AstGraph) {
+    fn draw(&self, self_id: usize, graph: &mut AstGraph) {
         // match self {
         //     Some(nodes) => {
-        //         nodes.draw(father_id, graph);
+        //         nodes.draw(self_id, graph);
         //     }
         //     None => (),
         // }
 
         if let Some(node) = self {
-            node.draw(father_id, graph);
+            node.draw(self_id, graph);
         }
     }
 }

@@ -1,6 +1,6 @@
 pub mod block;
 pub mod body;
-pub mod call_sig;
+pub mod sig;
 pub mod case;
 pub mod class;
 pub mod clause;
@@ -14,6 +14,6 @@ pub mod parameter;
 pub mod program;
 pub mod source_element;
 pub mod stat;
-pub mod type_ref;
+pub mod type_;
 
 pub mod unknown;

@@ -1,10 +1,15 @@
 abstract class C extends B implements X {
-    public get name() {
+    private a: string;
+
+    constructor(a: any) {
+
     }
 
-    protected set name(name_param) {
+    protected set c(d: string[]) {
     }
 
-    private static set name(name_param) {
+    private static set e(f: C[]) {
     }
+
+    // [index: string]: { message: string };
 }

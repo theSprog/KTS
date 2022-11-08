@@ -26,7 +26,11 @@ pub enum Stat {
     EmptyStat(ASTNode<EmptyStat>),
     Block(ASTNode<Block>),
     ClassDecl(ASTNode<ClassDecl>),
+    InterfaceDecl(ASTNode<InterfaceDecl>),
     AbsDecl(ASTNode<AbsDecl>),
+    IfStat(ASTNode<IfStat>),
+    NamespaceDecl(ASTNode<NamespaceDecl>),
+
     FuncDecl(ASTNode<FuncDecl>),
     FuncExpDecl(ASTNode<FuncExpDecl>),
     GenFuncDecl(ASTNode<GenFuncDecl>),
@@ -166,8 +170,8 @@ impl EmptyStat {
 #[derive(Visualizable)]
 pub struct IfStat {
     exp: ASTNode<ExpSeq>,
-    stat: ASTNode<Stat>,
-    else_stat: Option<ASTNode<Stat>>,
+    stat: Box<ASTNode<Stat>>,
+    else_stat: Option<Box<ASTNode<Stat>>>,
 }
 #[derive(Visualizable)]
 pub struct IterStat {}

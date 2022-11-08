@@ -42,11 +42,11 @@ fn derive_struct(input: &syn::DataStruct, ident: &Ident) -> TokenStream {
 
     quote! {
         impl Visualizable for #ident {
-            fn draw(&self, father_id: usize, graph: &mut AstGraph) {
-                graph.put_node(father_id, #struct_name_str);
+            fn draw(&self, self_id: usize, graph: &mut AstGraph) {
+                graph.put_node(self_id, #struct_name_str);
 
                 #(
-                    self.#fields_vec.draw(father_id, graph);
+                    self.#fields_vec.draw(self_id, graph);
                 )*
             }
         }
@@ -69,13 +69,13 @@ fn derive_enum(input: &syn::DataEnum, ident: &Ident) -> TokenStream {
 
     quote!(
         impl Visualizable for #ident {
-            fn draw(&self, father_id: usize, graph: &mut AstGraph) {
-                graph.put_node(father_id, #enum_name_str);
+            fn draw(&self, self_id: usize, graph: &mut AstGraph) {
+                graph.put_node(self_id, #enum_name_str);
 
                 match self {
                     #(
                         #ident::#enum_idents(#enum_snakes) => {
-                            #enum_snakes.draw(father_id, graph);
+                            #enum_snakes.draw(self_id, graph);
                         }
                     )*
                 }

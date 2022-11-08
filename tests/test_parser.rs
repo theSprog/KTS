@@ -30,6 +30,7 @@ mod test_parser {
         test_parser("resource/parser/class/class01.ts");
         test_parser("resource/parser/class/class02.ts");
         test_parser("resource/parser/class/class03.ts");
+        test_parser("resource/parser/class/class04.ts");
     }
 
     #[test]

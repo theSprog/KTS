@@ -95,6 +95,10 @@ impl AST {
         }
     }
 
+    pub fn gen_id() -> usize {
+        COUNTER.lock().unwrap().get_id()
+    }
+
     pub fn vis(&mut self, to_path: &str) {
         let mut writer = BufWriter::new(
             OpenOptions::new()
@@ -129,7 +133,7 @@ pub struct ASTNode<T: Visualizable> {
 
 impl<T: Visualizable> ASTNode<T> {
     pub(crate) fn new(kind: T) -> ASTNode<T> {
-        let self_id = COUNTER.lock().unwrap().get_id();
+        let self_id = AST::gen_id();
         ASTNode { id: self_id, kind }
     }
 

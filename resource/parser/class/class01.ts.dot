@@ -11,7 +11,7 @@ graph vis {
 	node62 -- node60
 	node60[label="ClassHeritage"]
 	node60 -- node52
-	node52[label="Extend"]
+	node52[label="Extends"]
 	node52 -- node51
 	node51[label="TypeRef"]
 	node51 -- node50
