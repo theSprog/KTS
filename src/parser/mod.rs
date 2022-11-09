@@ -932,10 +932,9 @@ impl Parser {
     indexMemberDeclaration: indexSignature SemiColon;
     */
     fn parse_index_member_decl(&mut self) -> Result<ASTNode<IndexMemberDecl>, ParserError> {
-        let mut index_member_decl = IndexMemberDecl::default();
-        index_member_decl.set_index_sig(self.parse_index_sig()?);
+        let index_sig =  self.parse_index_sig()?;
         self.eat(TokenKind::SemiColon)?;
-        Ok(ASTNode::new(index_member_decl))
+        Ok(ASTNode::new(IndexMemberDecl::new(index_sig)))
     }
 
     /*
@@ -943,7 +942,26 @@ impl Parser {
         '[' Identifier ':' (Number | String) ']' typeAnnotation;
     */
     fn parse_index_sig(&mut self) -> Result<ASTNode<IndexSig>, ParserError> {
-        Err(self.unsupported_error("Index Signature"))
+        let mut type_ = None;
+        self.eat(TokenKind::LeftBrace)?;
+        let index_name = &self.extact_identifier()?;
+        self.eat(TokenKind::Colon)?;
+        match self.peek_kind() {
+            TokenKind::KeyWord(KeyWordKind::Number) => {
+                type_ = Some(ASTNode::new(PredefinedType::Number));
+                self.eat(TokenKind::KeyWord(KeyWordKind::Number))?;
+            }
+            TokenKind::KeyWord(KeyWordKind::String) => {
+                type_ = Some(ASTNode::new(PredefinedType::String));
+                self.eat(TokenKind::KeyWord(KeyWordKind::String))?;
+            }
+            _ => {
+                return Err(self.expect_error("Index Signature", "Number or String"))
+            }
+        };
+        self.eat(TokenKind::RightBrace)?;
+        let type_annotation = self.parse_type_annotation()?;
+        Ok(ASTNode::new(IndexSig::new(index_name, type_, type_annotation)))
     }
 
     /*

@@ -1,6 +1,6 @@
 graph vis {
-	node64[label="Program"]
-	node64 -- node16
+	node17[label="Program"]
+	node17 -- node16
 	node16[label="SourceElements"]
 	node16 -- node15
 	node15[label="Stat"]

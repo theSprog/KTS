@@ -1,6 +1,6 @@
 use super::identifier::Identifier;
 use super::parameter::*;
-use super::type_::Type;
+use super::type_::{PredefinedType, Type};
 use crate::ast::AstGraph;
 use crate::ast::{visulize::Visualizable, ASTNode};
 use crate::lexer::token_kind::{KeyWordKind, TokenKind};
@@ -76,8 +76,25 @@ impl MethodSig {
     }
 }
 
-#[derive(Visualizable, Default)]
-pub struct IndexSig {}
+#[derive(Visualizable)]
+pub struct IndexSig {
+    index_name: ASTNode<Identifier>,
+    type_: Option<ASTNode<PredefinedType>>,
+    type_annotation: ASTNode<TypeAnnotation>,
+}
+impl IndexSig {
+    pub(crate) fn new(
+        index_name: &str,
+        type_: Option<ASTNode<PredefinedType>>,
+        type_annotation: ASTNode<TypeAnnotation>,
+    ) -> Self {
+        Self {
+            index_name: ASTNode::new(Identifier::new(index_name)),
+            type_,
+            type_annotation,
+        }
+    }
+}
 
 #[derive(Visualizable, Default)]
 pub struct ConstructSig {

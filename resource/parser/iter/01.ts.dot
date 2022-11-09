@@ -1,61 +1,61 @@
 graph vis {
-	node365[label="Program"]
-	node365 -- node364
-	node364[label="SourceElements"]
-	node364 -- node363
-	node363[label="Stat"]
-	node363 -- node362
-	node362[label="IterStat"]
-	node362 -- node361
-	node361[label="DoStat"]
-	node361 -- node353
+	node356[label="Program"]
+	node356 -- node354
+	node354[label="SourceElements"]
+	node354 -- node353
 	node353[label="Stat"]
 	node353 -- node352
-	node352[label="Block"]
-	node352 -- node343
-	node343[label="Stat"]
-	node343 -- node342
-	node342[label="ExpSeq"]
-	node342 -- node337
-	node337[label="Exp"]
-	node337 -- node336
-	node336[label="1"]
-	node342 -- node339
-	node339[label="Exp"]
-	node339 -- node338
-	node338[label="2"]
-	node342 -- node341
-	node341[label="Exp"]
-	node341 -- node340
-	node340[label="3"]
+	node352[label="IterStat"]
 	node352 -- node351
-	node351[label="Stat"]
+	node351[label="DoStat"]
+	node351 -- node338
+	node338[label="Stat"]
+	node338 -- node337
+	node337[label="Block"]
+	node337 -- node316
+	node316[label="Stat"]
+	node316 -- node315
+	node315[label="ExpSeq"]
+	node315 -- node310
+	node310[label="Exp"]
+	node310 -- node309
+	node309[label="1"]
+	node315 -- node312
+	node312[label="Exp"]
+	node312 -- node311
+	node311[label="2"]
+	node315 -- node314
+	node314[label="Exp"]
+	node314 -- node313
+	node313[label="3"]
+	node337 -- node326
+	node326[label="Stat"]
+	node326 -- node325
+	node325[label="ExpSeq"]
+	node325 -- node318
+	node318[label="Exp"]
+	node318 -- node317
+	node317[label="4"]
+	node325 -- node322
+	node322[label="Exp"]
+	node322 -- node320
+	node320[label="5"]
+	node325 -- node324
+	node324[label="Exp"]
+	node324 -- node323
+	node323[label="6"]
 	node351 -- node350
 	node350[label="ExpSeq"]
 	node350 -- node345
 	node345[label="Exp"]
 	node345 -- node344
-	node344[label="4"]
+	node344[label="7"]
 	node350 -- node347
 	node347[label="Exp"]
 	node347 -- node346
-	node346[label="5"]
+	node346[label="8"]
 	node350 -- node349
 	node349[label="Exp"]
 	node349 -- node348
-	node348[label="6"]
-	node361 -- node360
-	node360[label="ExpSeq"]
-	node360 -- node355
-	node355[label="Exp"]
-	node355 -- node354
-	node354[label="7"]
-	node360 -- node357
-	node357[label="Exp"]
-	node357 -- node356
-	node356[label="8"]
-	node360 -- node359
-	node359[label="Exp"]
-	node359 -- node358
-	node358[label="9"]
+	node348[label="9"]
 }

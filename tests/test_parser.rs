@@ -35,8 +35,8 @@ mod test_parser {
 
     #[test]
     fn test_interface() {
-        test_parser("resource/parser/interface/01.ts");
-        test_parser("resource/parser/interface/02.ts");
+        // test_parser("resource/parser/interface/01.ts");
+        // test_parser("resource/parser/interface/02.ts");
         test_parser("resource/parser/interface/03.ts");
     }
 

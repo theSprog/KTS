@@ -268,12 +268,12 @@ impl GetAccesser {
     }
 }
 
-#[derive(Visualizable, Default)]
+#[derive(Visualizable)]
 pub struct IndexMemberDecl {
     index_sig: ASTNode<IndexSig>,
 }
 impl IndexMemberDecl {
-    pub(crate) fn set_index_sig(&mut self, index_sig: ASTNode<IndexSig>) {
-        self.index_sig = index_sig;
+    pub(crate) fn new(index_sig: ASTNode<IndexSig>) -> Self {
+        Self { index_sig }
     }
 }
