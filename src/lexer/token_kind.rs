@@ -1,7 +1,7 @@
 use std::fmt::{Display, Formatter};
 
 use crate::ast::visulize::Visualizable;
-use crate::ast::{AstGraph};
+use crate::ast::AstGraph;
 
 macro_rules! token_string {
     // macth like arm for macro
@@ -59,7 +59,7 @@ pub enum KeyWordKind {
     Switch,      // switch
     While,       // while
     Debugger,    // debugger
-    Function,   // function
+    Function,    // function
     This,        // this
     With,        // with
     Default,     // default

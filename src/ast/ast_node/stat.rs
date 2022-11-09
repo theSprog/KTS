@@ -2,7 +2,7 @@ use crate::ast::AstGraph;
 use visulize::Visualizable;
 
 use super::{
-    block::Block, decl::*, exp::ExpSeq, identifier::Identifier, literal::Value, unknown::Unknown,
+    block::Block, decl::*, exp::ExpSeq, identifier::Identifier, literal::Literal, unknown::Unknown,
 };
 use crate::{
     ast::{visulize::Visualizable, ASTNode},
@@ -28,8 +28,9 @@ pub enum Stat {
     ClassDecl(ASTNode<ClassDecl>),
     InterfaceDecl(ASTNode<InterfaceDecl>),
     AbsDecl(ASTNode<AbsDecl>),
-    IfStat(ASTNode<IfStat>),
     NamespaceDecl(ASTNode<NamespaceDecl>),
+    IfStat(ASTNode<IfStat>),
+    IterStat(ASTNode<IterStat>),
 
     FuncDecl(ASTNode<FuncDecl>),
     FuncExpDecl(ASTNode<FuncExpDecl>),
@@ -70,7 +71,7 @@ pub struct FromBlock {
     alias: Option<ASTNode<Identifier>>,     // alias of *
     imported: Option<ASTNode<Identifier>>,  // imported can not be alias
     importeds: Vec<ASTNode<ImportedAlias>>, // {a as b, c as d, ...}
-    from_value: ASTNode<Value>,
+    from_value: ASTNode<Literal>,
 }
 
 impl Default for FromBlock {
@@ -104,7 +105,7 @@ impl FromBlock {
     }
 
     pub(crate) fn set_from_value(&mut self, from_value: &str) {
-        self.from_value = ASTNode::new(Value::String(String::from(from_value)));
+        self.from_value = ASTNode::new(Literal::String(String::from(from_value)));
     }
 }
 
@@ -167,14 +168,43 @@ impl EmptyStat {
     }
 }
 
-#[derive(Visualizable)]
+#[derive(Visualizable, Default)]
 pub struct IfStat {
-    exp: ASTNode<ExpSeq>,
+    exp_seq: ASTNode<ExpSeq>,
     stat: Box<ASTNode<Stat>>,
     else_stat: Option<Box<ASTNode<Stat>>>,
 }
+impl IfStat {
+    pub(crate) fn set_exp_seq(&mut self, exp_seq: ASTNode<ExpSeq>) {
+        self.exp_seq = exp_seq;
+    }
+
+    pub(crate) fn set_stat(&mut self, stat: ASTNode<Stat>) {
+        self.stat = Box::new(stat);
+    }
+
+    pub(crate) fn set_else_stat(&mut self, else_stat: ASTNode<Stat>) {
+        self.else_stat = Some(Box::new(else_stat));
+    }
+}
 #[derive(Visualizable)]
-pub struct IterStat {}
+pub enum IterStat {
+    DoStat(ASTNode<DoStat>),
+    WhileStat(ASTNode<WhileStat>),
+    ForVarStat(ASTNode<ForVarStat>),
+    ForInStat(ASTNode<ForInStat>),
+}
+
+#[derive(Visualizable)]
+pub struct DoStat {}
+
+#[derive(Visualizable)]
+pub struct WhileStat {}
+
+#[derive(Visualizable)]
+pub struct ForVarStat {}
+#[derive(Visualizable)]
+pub struct ForInStat {}
 
 #[derive(Visualizable)]
 pub struct ContinueStat {}

@@ -12,5 +12,3 @@ impl SourceElements {
         self.source_elements.push(stat);
     }
 }
-
-

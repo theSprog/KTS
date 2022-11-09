@@ -1,0 +1,89 @@
+graph vis {
+	node226[label="Program"]
+	node226 -- node225
+	node225[label="SourceElements"]
+	node225 -- node224
+	node224[label="Stat"]
+	node224 -- node223
+	node223[label="ClassDecl"]
+	node223 -- node182
+	node182[label="abstract", color=red]
+	node223 -- node183
+	node183[label="C"]
+	node223 -- node190
+	node190[label="ClassHeritage"]
+	node190 -- node186
+	node186[label="Extends"]
+	node186 -- node185
+	node185[label="TypeRef"]
+	node185 -- node184
+	node184[label="B"]
+	node190 -- node189
+	node189[label="Implement"]
+	node189 -- node188
+	node188[label="TypeRef"]
+	node188 -- node187
+	node187[label="X"]
+	node223 -- node222
+	node222[label="ClassTail"]
+	node222 -- node202
+	node202[label="ClassElement"]
+	node202 -- node201
+	node201[label="ConstructorDecl"]
+	node201 -- node191
+	node191[label="protected", color=red]
+	node201 -- node199
+	node199[label="FormalParas"]
+	node199 -- node193
+	node193[label="FormalPara"]
+	node193 -- node192
+	node192[label="a"]
+	node199 -- node195
+	node195[label="FormalPara"]
+	node195 -- node194
+	node194[label="b"]
+	node199 -- node197
+	node197[label="FormalPara"]
+	node197 -- node196
+	node196[label="c"]
+	node199 -- node198
+	node198[label="x"]
+	node201 -- node200
+	node200[label="FuncBody"]
+	node222 -- node210
+	node210[label="ClassElement"]
+	node210 -- node209
+	node209[label="PropertyMemberDecl"]
+	node209 -- node208
+	node208[label="PropertyDeclExp"]
+	node208 -- node203
+	node203[label="private", color=red]
+	node208 -- node204
+	node204[label="static", color=red]
+	node208 -- node205
+	node205[label="readonly", color=red]
+	node208 -- node206
+	node206[label="ident"]
+	node208 -- node207
+	node207[label="?"]
+	node222 -- node221
+	node221[label="ClassElement"]
+	node221 -- node220
+	node220[label="PropertyMemberDecl"]
+	node220 -- node219
+	node219[label="MethodDeclExp"]
+	node219 -- node213
+	node213[label="private", color=red]
+	node219 -- node214
+	node214[label="static", color=red]
+	node219 -- node215
+	node215[label="async", color=red]
+	node219 -- node216
+	node216[label="func"]
+	node219 -- node217
+	node217[label="CallSig"]
+	node217 -- node0
+	node0[label="ParaList"]
+	node219 -- node218
+	node218[label="FuncBody"]
+}

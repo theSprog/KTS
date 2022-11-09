@@ -1,0 +1,125 @@
+graph vis {
+	node294[label="Program"]
+	node294 -- node293
+	node293[label="SourceElements"]
+	node293 -- node292
+	node292[label="Stat"]
+	node292 -- node291
+	node291[label="ClassDecl"]
+	node291 -- node228
+	node228[label="abstract", color=red]
+	node291 -- node229
+	node229[label="C"]
+	node291 -- node236
+	node236[label="ClassHeritage"]
+	node236 -- node232
+	node232[label="Extends"]
+	node232 -- node231
+	node231[label="TypeRef"]
+	node231 -- node230
+	node230[label="B"]
+	node236 -- node235
+	node235[label="Implement"]
+	node235 -- node234
+	node234[label="TypeRef"]
+	node234 -- node233
+	node233[label="X"]
+	node291 -- node290
+	node290[label="ClassTail"]
+	node290 -- node245
+	node245[label="ClassElement"]
+	node245 -- node244
+	node244[label="PropertyMemberDecl"]
+	node244 -- node243
+	node243[label="PropertyDeclExp"]
+	node243 -- node237
+	node237[label="private", color=red]
+	node243 -- node238
+	node238[label="a"]
+	node243 -- node242
+	node242[label="TypeAnnotation"]
+	node242 -- node241
+	node241[label="Type"]
+	node241 -- node240
+	node240[label="PrimaryType"]
+	node240 -- node239
+	node239[label="string", color=red]
+	node290 -- node255
+	node255[label="ClassElement"]
+	node255 -- node254
+	node254[label="ConstructorDecl"]
+	node254 -- node252
+	node252[label="FormalParas"]
+	node252 -- node251
+	node251[label="FormalPara"]
+	node251 -- node246
+	node246[label="a"]
+	node251 -- node250
+	node250[label="TypeAnnotation"]
+	node250 -- node249
+	node249[label="Type"]
+	node249 -- node248
+	node248[label="PrimaryType"]
+	node248 -- node247
+	node247[label="any", color=red]
+	node254 -- node253
+	node253[label="FuncBody"]
+	node290 -- node270
+	node270[label="ClassElement"]
+	node270 -- node269
+	node269[label="PropertyMemberDecl"]
+	node269 -- node268
+	node268[label="GetterSetterDeclExp"]
+	node268 -- node258
+	node258[label="protected", color=red]
+	node268 -- node267
+	node267[label="Accesser"]
+	node267[label="SetAccesser"]
+	node267 -- node259
+	node259[label="c"]
+	node267 -- node260
+	node260[label="d"]
+	node267 -- node265
+	node265[label="TypeAnnotation"]
+	node265 -- node264
+	node264[label="Type"]
+	node264 -- node263
+	node263[label="PrimaryType"]
+	node263 -- node262
+	node262[label="ArrayPredefinedType"]
+	node262 -- node261
+	node261[label="string", color=red]
+	node267 -- node266
+	node266[label="FuncBody"]
+	node290 -- node289
+	node289[label="ClassElement"]
+	node289 -- node288
+	node288[label="PropertyMemberDecl"]
+	node288 -- node287
+	node287[label="GetterSetterDeclExp"]
+	node287 -- node275
+	node275[label="private", color=red]
+	node287 -- node286
+	node286[label="static", color=red]
+	node287 -- node285
+	node285[label="Accesser"]
+	node285[label="SetAccesser"]
+	node285 -- node276
+	node276[label="e"]
+	node285 -- node277
+	node277[label="f"]
+	node285 -- node283
+	node283[label="TypeAnnotation"]
+	node283 -- node282
+	node282[label="Type"]
+	node282 -- node281
+	node281[label="PrimaryType"]
+	node281 -- node280
+	node280[label="ArrayTypeRef"]
+	node280 -- node279
+	node279[label="TypeRef"]
+	node279 -- node278
+	node278[label="C"]
+	node285 -- node284
+	node284[label="FuncBody"]
+}

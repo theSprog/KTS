@@ -1,6 +1,8 @@
 use crate::ast::visulize::Visualizable;
 use crate::ast::{ASTNode, AstGraph};
 
+use super::literal::Literal;
+
 #[derive(Visualizable, Default)]
 pub struct ExpSeq {
     exps: Vec<ASTNode<Exp>>,
@@ -12,5 +14,6 @@ impl ExpSeq {
 }
 
 #[derive(Visualizable)]
-pub struct Exp {}
-
+pub enum Exp {
+    Literal(ASTNode<Literal>),
+}

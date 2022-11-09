@@ -1,7 +1,7 @@
 use crate::ast::{visulize::Visualizable, AstGraph};
 
 #[derive(Debug, Default)]
-pub enum Value {
+pub enum Literal {
     Number(f64),
     Integer(i32),
     String(String),
@@ -11,18 +11,26 @@ pub enum Value {
     Null,
 }
 
-impl Visualizable for Value {
-    fn draw(&self, id: usize, graph: &mut AstGraph) {
+impl Visualizable for Literal {
+    fn draw(&self, self_id: usize, graph: &mut AstGraph) {
         match self {
-            Value::Number(number) => todo!(),
-            Value::Integer(integer) => todo!(),
-            Value::String(string) => {
-                let string = format!("\\\"{}\\\"", string);
-                graph.put_node(id, &string);
+            Literal::Number(number) => {
+                graph.put_node(self_id, &number.to_string());
             }
-            Value::Boolean(boolean) => todo!(),
-            Value::Null => todo!(),
+            Literal::Integer(integer) => {
+                graph.put_node(self_id, &integer.to_string());
+            }
+            Literal::String(string) => {
+                let string = format!("\\\"{}\\\"", string);
+                graph.put_node(self_id, &string);
+            }
+            Literal::Boolean(boolean) => {
+                let boolean_str = if *boolean { "true" } else { "false" };
+                graph.put_node(self_id, boolean_str);
+            }
+            Literal::Null => {
+                graph.put_node(self_id, "null");
+            }
         }
     }
 }
-

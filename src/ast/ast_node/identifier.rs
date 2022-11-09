@@ -16,7 +16,7 @@ impl Identifier {
 }
 
 impl Visualizable for Identifier {
-    fn draw(&self, father_id: usize, graph: &mut AstGraph) {
-        graph.put_node(father_id, &self.context);
+    fn draw(&self, self_id: usize, graph: &mut AstGraph) {
+        graph.put_node(self_id, &self.context);
     }
 }

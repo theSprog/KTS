@@ -81,6 +81,11 @@ impl InterfaceDecl {
 pub struct ObjectType {
     type_members: Vec<ASTNode<TypeMember>>,
 }
+impl ObjectType {
+    pub(crate) fn push_type_member(&mut self, type_member: ASTNode<TypeMember>) {
+        self.type_members.push(type_member);
+    }
+}
 
 #[derive(Visualizable)]
 pub enum TypeMember {

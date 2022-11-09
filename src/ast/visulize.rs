@@ -10,8 +10,7 @@ impl<T: Visualizable> Visualizable for Vec<ASTNode<T>> {
         //     node.draw(self_id, graph);
         // }
 
-        self.into_iter()
-            .for_each(|node| node.draw(self_id, graph));
+        self.into_iter().for_each(|node| node.draw(self_id, graph));
     }
 }
 
@@ -21,8 +20,7 @@ impl<T: Visualizable> Visualizable for Vec<Box<ASTNode<T>>> {
         //     node.draw(self_id, graph);
         // }
 
-        self.into_iter()
-            .for_each(|node| node.draw(self_id, graph));
+        self.into_iter().for_each(|node| node.draw(self_id, graph));
     }
 }
 

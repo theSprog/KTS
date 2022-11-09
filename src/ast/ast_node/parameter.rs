@@ -1,3 +1,5 @@
+use super::class::AccessModifier;
+use super::decorator::Decorators;
 use super::type_::*;
 use super::{exp::Exp, identifier::Identifier};
 use crate::ast::AstGraph;
@@ -91,19 +93,48 @@ pub struct RestPara {
     type_annotation: Option<ASTNode<TypeAnnotation>>,
 }
 
-#[derive(Visualizable)]
+#[derive(Visualizable, Default)]
 pub struct Para {
+    decorators: Option<ASTNode<Decorators>>,
+    access_modifier: Option<ASTNode<AccessModifier>>,
     para_name: ASTNode<Identifier>,
+    question_mark: Option<ASTNode<TokenKind>>,
+    type_annotation: Option<ASTNode<TypeAnnotation>>,
+    initializer: Option<ASTNode<Initializer>>,
 }
 
 impl Para {
-    pub fn new() -> Self {
-        Self {
-            para_name: Default::default(),
-        }
-    }
-
     pub(crate) fn set_para_name(&mut self, para_name: &str) {
         self.para_name = ASTNode::new(Identifier::new(para_name));
+    }
+
+    pub(crate) fn set_decorators(&mut self, decorators: ASTNode<Decorators>) {
+        self.decorators = Some(decorators);
+    }
+
+    pub(crate) fn set_access_modifier(&mut self, access_modifier: ASTNode<AccessModifier>) {
+        self.access_modifier = Some(access_modifier);
+    }
+
+    pub(crate) fn set_question_mark(&mut self) {
+        self.question_mark = Some(ASTNode::new(TokenKind::QuestionMark));
+    }
+
+    pub(crate) fn set_type_annotation(&mut self, type_annotation: ASTNode<TypeAnnotation>) {
+        self.type_annotation = Some(type_annotation);
+    }
+
+    pub(crate) fn set_initializer(&mut self, single_exp: ASTNode<Exp>) {
+        self.initializer = Some(ASTNode::new(Initializer::new(single_exp)));
+    }
+}
+
+#[derive(Visualizable)]
+pub struct Initializer {
+    single_exp: ASTNode<Exp>,
+}
+impl Initializer {
+    fn new(single_exp: ASTNode<Exp>) -> Self {
+        Self { single_exp }
     }
 }

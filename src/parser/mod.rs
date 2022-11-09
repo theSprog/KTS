@@ -3,6 +3,7 @@ pub mod error;
 use crate::ast::ast_node::decorator::Decorators;
 use crate::ast::ast_node::eos::EOS;
 use crate::ast::ast_node::identifier;
+use crate::ast::ast_node::literal::Literal;
 use crate::ast::ast_node::program::Program;
 
 use crate::ast::visulize::Visualizable;
@@ -115,6 +116,20 @@ impl Parser {
         unreachable!()
     }
 
+    fn is_literal(&self) -> bool {
+        self.tokens
+            .get(self.index)
+            .map_or(false, |token| match token.peek_kind() {
+                TokenKind::String
+                | TokenKind::Number
+                | TokenKind::KeyWord(KeyWordKind::True)
+                | TokenKind::KeyWord(KeyWordKind::False)
+                | TokenKind::KeyWord(KeyWordKind::Null) => true,
+
+                _ => false,
+            })
+    }
+
     /*
     尝试函数，选择一个分支进行尝试，成功则返回，出错则回溯
     注意，成功也包括解析出 None
@@ -164,6 +179,54 @@ impl Parser {
         };
 
         Ok(String::from(ident))
+    }
+
+    fn extact_literal(&mut self) -> Result<Literal, ParserError> {
+        let literal = match self.peek_kind() {
+            TokenKind::String => Literal::String(self.peek().unwrap().peek_value().clone()),
+
+            TokenKind::Number => {
+                let string_value = self.peek().unwrap().peek_value().clone();
+                // 先处理其余进制
+                if string_value.starts_with("0") {
+                    Literal::Integer(match string_value.as_bytes() {
+                        // 特殊的八进制
+                        [b'0', b'0'..=b'7', rest@..] => {
+                            i32::from_str_radix(&string_value[1..], 8).unwrap()
+                        } 
+                        // 一般情况
+                        [f, s, rest @ ..] => {
+                            let rest = std::str::from_utf8(rest).unwrap();
+                            match (f, s) {
+                                (b'0', b'b' | b'B') => i32::from_str_radix(rest, 2).unwrap(),
+                                (b'0', b'o' | b'O') => i32::from_str_radix(rest, 8).unwrap(),
+                                (b'0', b'x' | b'X') => i32::from_str_radix(rest, 16).unwrap(),
+                                _ => return Err(self.report_error("Unrecognized number")),
+                            }
+                        }
+                        _ => compiler_internal_error!("Why it can be here?"),
+                    })
+                } else {
+                    // 再处理最常见的两种情况
+                    if let Ok(integer) = string_value.parse::<i32>() {
+                        Literal::Integer(integer)
+                    } else if let Ok(float) = string_value.parse::<f64>() {
+                        Literal::Number(float)
+                    } else {
+                        compiler_internal_error!("Why it can be here?")
+                    }
+                }
+            }
+
+            TokenKind::KeyWord(KeyWordKind::True) => Literal::Boolean(true),
+            TokenKind::KeyWord(KeyWordKind::False) => Literal::Boolean(false),
+            TokenKind::KeyWord(KeyWordKind::Null) => Literal::Null,
+
+            _ => return Err(self.expect_error("Literal", "literal")),
+        };
+
+        self.index += 1;
+        Ok(literal)
     }
 
     fn peek_kind(&self) -> TokenKind {
@@ -261,6 +324,10 @@ impl Parser {
                 Ok(ASTNode::new(Stat::ClassDecl(self.parse_class_decl()?)))
             }
 
+            TokenKind::KeyWord(KeyWordKind::Interface) => Ok(ASTNode::new(Stat::InterfaceDecl(
+                self.parse_interface_decl()?,
+            ))),
+
             TokenKind::KeyWord(KeyWordKind::Namespace) => Ok(ASTNode::new(Stat::NamespaceDecl(
                 self.parse_namespace_decl()?,
             ))),
@@ -269,10 +336,12 @@ impl Parser {
                 Ok(ASTNode::new(Stat::IfStat(self.parse_if_stat()?)))
             }
 
-            // // do|while|for -> iteration stat
-            // TokenKind::KeyWord(KeyWordKind::Do)
-            // | TokenKind::KeyWord(KeyWordKind::While)
-            // | TokenKind::KeyWord(KeyWordKind::For) => Ok(Some(self.parse_iteration_stat()?)),
+            // do|while|for -> iteration stat
+            TokenKind::KeyWord(KeyWordKind::Do)
+            | TokenKind::KeyWord(KeyWordKind::While)
+            | TokenKind::KeyWord(KeyWordKind::For) => {
+                Ok(ASTNode::new(Stat::IterStat(self.parse_iter_stat()?)))
+            }
 
             // TokenKind::KeyWord(KeyWordKind::Continue) => Ok(Some(self.parse_continue_stat()?)),
             // TokenKind::KeyWord(KeyWordKind::Break) => Ok(Some(self.parse_break_stat()?)),
@@ -767,7 +836,7 @@ impl Parser {
         }
 
         method_decl_exp.set_identifier(&self.extact_identifier()?);
-        method_decl_exp.set_call_sig(self.parse_call_signature()?);
+        method_decl_exp.set_call_sig(self.parse_call_sig()?);
 
         match self.peek_kind() {
             TokenKind::LeftBracket => {
@@ -849,7 +918,7 @@ impl Parser {
     */
     fn parse_index_member_decl(&mut self) -> Result<ASTNode<IndexMemberDecl>, ParserError> {
         let mut index_member_decl = IndexMemberDecl::default();
-        index_member_decl.set_index_sig(self.parse_index_signature()?);
+        index_member_decl.set_index_sig(self.parse_index_sig()?);
         self.eat(TokenKind::SemiColon)?;
         Ok(ASTNode::new(index_member_decl))
     }
@@ -858,7 +927,7 @@ impl Parser {
     indexSignature:
         '[' Identifier ':' (Number | String) ']' typeAnnotation;
     */
-    fn parse_index_signature(&mut self) -> Result<ASTNode<IndexSig>, ParserError> {
+    fn parse_index_sig(&mut self) -> Result<ASTNode<IndexSig>, ParserError> {
         Err(self.unsupported_error("Index Signature"))
     }
 
@@ -869,57 +938,63 @@ impl Parser {
         let mut abs_decl = AbsDecl::default();
         self.eat(TokenKind::KeyWord(KeyWordKind::Abstract))?;
         abs_decl.set_identifier(&self.extact_identifier()?);
-        abs_decl.set_call_sig(self.parse_call_signature()?);
+        abs_decl.set_call_sig(self.parse_call_sig()?);
         self.eat_eos();
         Ok(ASTNode::new(abs_decl))
     }
 
+    /*
+    ifStatement:
+        If '(' expressionSequence ')' statement (Else statement)?;
+    */
     fn parse_if_stat(&mut self) -> Result<ASTNode<IfStat>, ParserError> {
+        let mut if_stat = IfStat::default();
         self.eat(TokenKind::KeyWord(KeyWordKind::If));
         self.eat(TokenKind::LeftParen);
-        let exp_seq = self.parse_exp_seq()?;
+        if_stat.set_exp_seq(self.parse_exp_seq()?);
         self.eat(TokenKind::RightParen);
+        if_stat.set_stat(self.parse_stat()?);
         let stat = self.parse_stat()?;
         if self.kind_is(TokenKind::KeyWord(KeyWordKind::Else)) {
             self.eat(TokenKind::KeyWord(KeyWordKind::Else));
-            let else_stat = self.parse_stat()?;
+            if_stat.set_else_stat(self.parse_stat()?);
         }
-        todo!()
+        Ok(ASTNode::new(if_stat))
     }
 
-    // fn parse_iteration_stat(&mut self) -> Result<Option<ASTNode<IterStat>>, ParserError> {
-    //     match self.peek_kind() {
-    //         TokenKind::KeyWord(KeyWordKind::Do) => {
-    //             self.eat(TokenKind::KeyWord(KeyWordKind::Do));
-    //             let stat = self.parse_stat()?;
-    //             self.eat(TokenKind::KeyWord(KeyWordKind::While));
-    //             self.eat(TokenKind::LeftParen);
-    //             let exp_seq = self.parse_exp_seq()?;
-    //             self.eat(TokenKind::RightParen);
-    //             let eos = self.parse_eos()?;
-    //             todo!()
-    //         }
+    fn parse_iter_stat(&mut self) -> Result<ASTNode<IterStat>, ParserError> {
+        match self.peek_kind() {
+            TokenKind::KeyWord(KeyWordKind::Do) => {
+                self.eat(TokenKind::KeyWord(KeyWordKind::Do));
+                let stat = self.parse_stat()?;
+                self.eat(TokenKind::KeyWord(KeyWordKind::While));
+                self.eat(TokenKind::LeftParen);
+                let exp_seq = self.parse_exp_seq()?;
+                self.eat(TokenKind::RightParen);
+                // let eos = self.parse_eos()?;
+                todo!()
+            }
 
-    //         TokenKind::KeyWord(KeyWordKind::While) => {
-    //             self.eat(TokenKind::KeyWord(KeyWordKind::While));
+            TokenKind::KeyWord(KeyWordKind::While) => {
+                self.eat(TokenKind::KeyWord(KeyWordKind::While));
 
-    //             self.eat(TokenKind::LeftParen);
-    //             let exp_seq = self.parse_exp_seq()?;
-    //             self.eat(TokenKind::RightParen);
-    //             let stat = self.parse_stat()?;
+                self.eat(TokenKind::LeftParen);
+                let exp_seq = self.parse_exp_seq()?;
+                self.eat(TokenKind::RightParen);
+                let stat = self.parse_stat()?;
 
-    //             todo!()
-    //         }
+                todo!()
+            }
 
-    //         TokenKind::KeyWord(KeyWordKind::For) => {
-    //             self.eat(TokenKind::KeyWord(KeyWordKind::For));
-    //             self.eat(TokenKind::LeftParen);
-    //             todo!()
-    //         }
+            TokenKind::KeyWord(KeyWordKind::For) => {
+                self.eat(TokenKind::KeyWord(KeyWordKind::For));
+                self.eat(TokenKind::LeftParen);
+                todo!()
+            }
 
-    //         _ => compiler_internal_error!("Why is can be here?"),
-    //     }
-    // }
+            _ => compiler_internal_error!("Why is can be here?"),
+        }
+    }
 
     // fn parse_continue_stat(&mut self) -> Result<Option<ASTNode<ContinueStat>>, ParserError> {
     //     self.eat(TokenKind::KeyWord(KeyWordKind::Continue));
@@ -1032,7 +1107,7 @@ impl Parser {
         self.eat(TokenKind::KeyWord(KeyWordKind::Function))?;
         func_decl.set_func_name(&self.extact_identifier()?);
 
-        func_decl.set_call_sig(self.parse_call_signature()?);
+        func_decl.set_call_sig(self.parse_call_sig()?);
         if self.kind_is(TokenKind::SemiColon) {
             self.eat(TokenKind::SemiColon)?;
         } else {
@@ -1054,7 +1129,7 @@ impl Parser {
     callSignature:
         typeParameters? '(' parameterList? ')' typeAnnotation?;
     */
-    fn parse_call_signature(&mut self) -> Result<ASTNode<CallSig>, ParserError> {
+    fn parse_call_sig(&mut self) -> Result<ASTNode<CallSig>, ParserError> {
         let mut call_sig = CallSig::default();
         if self.kind_is(TokenKind::LessThan) {
             call_sig.set_type_paras(self.parse_type_paras()?);
@@ -1069,11 +1144,76 @@ impl Parser {
         }
         self.eat(TokenKind::RightParen)?;
         if self.kind_is(TokenKind::Colon) {
-            self.eat(TokenKind::Colon)?;
             call_sig.set_type_annotation(self.parse_type_annotation()?);
         }
 
         Ok(ASTNode::new(call_sig))
+    }
+
+    /*
+    constructSignature:
+        'new' typeParameters? '(' parameterList? ')' typeAnnotation?;
+    */
+    fn parse_construct_sig(&mut self) -> Result<ASTNode<ConstructSig>, ParserError> {
+        let mut construct_sig = ConstructSig::default();
+        self.eat(TokenKind::KeyWord(KeyWordKind::New))?;
+        if self.kind_is(TokenKind::LessThan) {
+            construct_sig.set_type_paras(self.parse_type_paras()?);
+        }
+        self.eat(TokenKind::LeftParen)?;
+
+        if !self.kind_is(TokenKind::RightParen) {
+            construct_sig.set_para_list(self.parse_para_list()?)
+        }
+
+        self.eat(TokenKind::RightParen)?;
+
+        if self.kind_is(TokenKind::Colon) {
+            construct_sig.set_type_annotation(self.parse_type_annotation()?);
+        }
+
+        Ok(ASTNode::new(construct_sig))
+    }
+
+    /*
+    propertySignature:
+        ReadOnly? Identifier '?'? typeAnnotation?;
+    */
+    fn parse_property_sig(&mut self) -> Result<ASTNode<PropertySig>, ParserError> {
+        let mut property_sig = PropertySig::default();
+        if self.kind_is(TokenKind::KeyWord(KeyWordKind::ReadOnly)) {
+            property_sig.set_readonly();
+            self.eat(TokenKind::KeyWord(KeyWordKind::ReadOnly));
+        }
+
+        property_sig.set_property_name(&self.extact_identifier()?);
+
+        if self.kind_is(TokenKind::QuestionMark) {
+            property_sig.set_question_mark();
+            self.eat(TokenKind::QuestionMark);
+        }
+
+        if self.kind_is(TokenKind::Colon) {
+            property_sig.set_type_annotation(self.parse_type_annotation()?);
+        }
+
+        Ok(ASTNode::new(property_sig))
+    }
+
+    /*
+    methodSignature: Identifier '?'? callSignature;
+    */
+    fn parse_method_sig(&mut self) -> Result<ASTNode<MethodSig>, ParserError> {
+        let mut method_sig = MethodSig::default();
+        method_sig.set_method_name(&self.extact_identifier()?);
+        if self.kind_is(TokenKind::QuestionMark) {
+            method_sig.set_question_mark();
+            self.eat(TokenKind::QuestionMark);
+        }
+
+        method_sig.set_call_sig(self.parse_call_sig()?);
+
+        Ok(ASTNode::new(method_sig))
     }
 
     /*
@@ -1201,9 +1341,13 @@ impl Parser {
         }
     }
 
-    fn parse_single_exp(&self) -> Result<ASTNode<Exp>, ParserError> {
+    fn parse_single_exp(&mut self) -> Result<ASTNode<Exp>, ParserError> {
         // TODO: this is first to deal with
-
+        if self.is_literal() {
+            return Ok(ASTNode::new(Exp::Literal(ASTNode::new(
+                self.extact_literal()?,
+            ))));
+        }
         todo!()
     }
 
@@ -1211,6 +1355,11 @@ impl Parser {
         Err(self.unsupported_error("type paras"))
     }
 
+    /*
+    parameterList:
+        restParameter
+        | parameter (',' parameter)* (',' restParameter)?;
+    */
     fn parse_para_list(&mut self) -> Result<ASTNode<ParaList>, ParserError> {
         let mut para_list = ParaList::default();
 
@@ -1253,25 +1402,49 @@ impl Parser {
         todo!()
     }
 
+    /*
+    parameter:
+        decoratorList? accessibilityModifier? Identifier (
+                '?' typeAnnotation?
+                | typeAnnotation? initializer?
+            )?
+        ;
+    */
     fn parse_para(&mut self) -> Result<ASTNode<Para>, ParserError> {
-        match self.peek_kind() {
-            TokenKind::Identifier => {
-                let mut para = Para::new();
-                let para_name = self.peek().unwrap().peek_value();
-                para.set_para_name(para_name);
-                self.eat(TokenKind::Identifier)?;
-                Ok(ASTNode::new(para))
-            }
-            TokenKind::LeftBracket => {
-                // 太复杂，不考虑
-                todo!()
-            }
-            TokenKind::LeftBrace => {
-                // 太复杂，不考虑
-                todo!()
-            }
-            _ => Err(self.expect_error("Para", "Identifier")),
+        let mut para = Para::default();
+        if self.kind_is(TokenKind::At) {
+            para.set_decorators(self.parse_decorators()?);
         }
+
+        match self.peek_kind() {
+            TokenKind::KeyWord(KeyWordKind::Public)
+            | TokenKind::KeyWord(KeyWordKind::Protected)
+            | TokenKind::KeyWord(KeyWordKind::Private) => {
+                para.set_access_modifier(self.parse_access_modifier()?);
+            }
+            _ => (),
+        }
+
+        para.set_para_name(&self.extact_identifier()?);
+
+        if self.kind_is(TokenKind::QuestionMark) {
+            para.set_question_mark();
+            self.eat(TokenKind::QuestionMark)?;
+            if self.kind_is(TokenKind::Colon) {
+                para.set_type_annotation(self.parse_type_annotation()?);
+            }
+        } else {
+            if self.kind_is(TokenKind::Colon) {
+                para.set_type_annotation(self.parse_type_annotation()?);
+            }
+
+            if self.kind_is(TokenKind::Assign) {
+                self.eat(TokenKind::Assign)?;
+                para.set_initializer(self.parse_single_exp()?);
+            }
+        }
+
+        Ok(ASTNode::new(para))
     }
 
     fn parse_type(&mut self) -> Result<ASTNode<Type>, ParserError> {
@@ -1474,13 +1647,85 @@ impl Parser {
         Ok(ASTNode::new(interface_decl))
     }
 
+    /*
+    objectType:
+        '{' (
+            typeMember ((SemiColon | ',') typeMember)* (
+                SemiColon
+                | ','
+            )?
+        )? '}';
+    */
     fn parse_object_type(&mut self) -> Result<ASTNode<ObjectType>, ParserError> {
         let mut object_type = ObjectType::default();
-        // now thing to do
-        todo!()
+        self.eat(TokenKind::LeftBracket)?;
+        loop {
+            let type_member = self.parse_type_member()?;
+            object_type.push_type_member(type_member);
+            match self.peek_kind() {
+                TokenKind::Comma => {
+                    self.eat(TokenKind::Comma)?;
+                }
+                TokenKind::SemiColon => {
+                    self.eat(TokenKind::SemiColon)?;
+                }
+                _ => {
+                    if !self.kind_is(TokenKind::RightBracket) {
+                        return Err(self.expect_error("Object Type", ", or ; or }"));
+                    }
+                }
+            }
+
+            if self.kind_is(TokenKind::RightBracket) {
+                break;
+            }
+        }
+        self.eat(TokenKind::RightBracket)?;
+        Ok(ASTNode::new(object_type))
     }
 
-    fn parse_namespace_decl(&self) -> Result<ASTNode<NamespaceDecl>, ParserError> {
+    /*
+    typeMember:
+        propertySignature
+        | callSignature
+        | constructSignature
+        | indexSignature
+        | methodSignature;
+        */
+    fn parse_type_member(&mut self) -> Result<ASTNode<TypeMember>, ParserError> {
+        match self.peek_kind() {
+            TokenKind::LeftParen | TokenKind::LessThan => {
+                Ok(ASTNode::new(TypeMember::CallSig(self.parse_call_sig()?)))
+            }
+            TokenKind::KeyWord(KeyWordKind::New) => {
+                Ok(ASTNode::new(TypeMember::ConstructSig(self.parse_construct_sig()?)))
+            }
+            TokenKind::LeftBrace => {
+                Ok(ASTNode::new(TypeMember::IndexSig(self.parse_index_sig()?)))
+            }
+            TokenKind::KeyWord(KeyWordKind::ReadOnly) => {
+                Ok(ASTNode::new(TypeMember::PropertySig(self.parse_property_sig()?)))
+            }
+            TokenKind::Identifier => {
+                // attention: do not exchange the order of this if below
+                // because property_sig can be the prefix of the method_sig
+                if let Some(method_sig) = self.try_to(&Parser::parse_method_sig) {
+                    return Ok(ASTNode::new(TypeMember::MethodSig(method_sig)));
+                }
+
+                if let Some(property_sig) = self.try_to(&Parser::parse_property_sig) {
+                    return Ok(ASTNode::new(TypeMember::PropertySig(property_sig)));
+                }   
+
+                Err(self.expect_error("typeMember", "propertySignature or methodSignature"))
+            }
+            _ => {
+                Err(self.expect_error("typeMember", "propertySignature or callSignature or constructSignature or indexSignature or methodSignature"))
+            }
+        }
+    }
+
+    fn parse_namespace_decl(&mut self) -> Result<ASTNode<NamespaceDecl>, ParserError> {
         todo!()
     }
 }

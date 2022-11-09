@@ -4,7 +4,8 @@ use crate::parser::error::ParserError;
 
 use std::{
     error::Error,
-    fmt::{Debug, Display}, process,
+    fmt::{Debug, Display},
+    process,
 };
 
 pub mod compiler_internal_error;
