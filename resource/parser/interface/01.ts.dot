@@ -1,28 +1,28 @@
 graph vis {
-	node181[label="Program"]
-	node181 -- node167
-	node167[label="SourceElements"]
-	node167 -- node166
-	node166[label="Stat"]
-	node166 -- node165
-	node165[label="InterfaceDecl"]
-	node165 -- node66
+	node180[label="Program"]
+	node180 -- node138
+	node138[label="SourceElements"]
+	node138 -- node135
+	node135[label="Stat"]
+	node135 -- node134
+	node134[label="InterfaceDecl"]
+	node134 -- node66
 	node66[label="A"]
-	node165 -- node69
+	node134 -- node69
 	node69[label="Extends"]
 	node69 -- node68
 	node68[label="TypeRef"]
 	node68 -- node67
 	node67[label="B"]
-	node165 -- node72
+	node134 -- node72
 	node72[label="Extends"]
 	node72 -- node71
 	node71[label="TypeRef"]
 	node71 -- node70
 	node70[label="C"]
-	node165 -- node164
-	node164[label="ObjectType"]
-	node164 -- node94
+	node134 -- node133
+	node133[label="ObjectType"]
+	node133 -- node94
 	node94[label="TypeMember"]
 	node94 -- node93
 	node93[label="CallSig"]
@@ -66,78 +66,78 @@ graph vis {
 	node90[label="PrimaryType"]
 	node90 -- node89
 	node89[label="boolean", color=red]
-	node164 -- node143
-	node143[label="TypeMember"]
-	node143 -- node142
-	node142[label="MethodSig"]
-	node142 -- node110
-	node110[label="setTime"]
-	node142 -- node141
-	node141[label="CallSig"]
-	node141 -- node135
-	node135[label="ParaList"]
-	node135 -- node134
-	node134[label="Para"]
-	node134 -- node111
-	node111[label="d"]
-	node134 -- node133
-	node133[label="TypeAnnotation"]
-	node133 -- node132
-	node132[label="Type"]
-	node132 -- node131
-	node131[label="PrimaryType"]
+	node133 -- node111
+	node111[label="TypeMember"]
+	node111 -- node110
+	node110[label="MethodSig"]
+	node110 -- node95
+	node95[label="setTime"]
+	node110 -- node109
+	node109[label="CallSig"]
+	node109 -- node103
+	node103[label="ParaList"]
+	node103 -- node102
+	node102[label="Para"]
+	node102 -- node96
+	node96[label="d"]
+	node102 -- node101
+	node101[label="TypeAnnotation"]
+	node101 -- node100
+	node100[label="Type"]
+	node100 -- node99
+	node99[label="PrimaryType"]
+	node99 -- node98
+	node98[label="TypeRef"]
+	node98 -- node97
+	node97[label="Date"]
+	node109 -- node108
+	node108[label="TypeAnnotation"]
+	node108 -- node107
+	node107[label="Type"]
+	node107 -- node106
+	node106[label="PrimaryType"]
+	node106 -- node105
+	node105[label="TypeRef"]
+	node105 -- node104
+	node104[label="Date"]
+	node133 -- node131
+	node131[label="TypeMember"]
 	node131 -- node130
-	node130[label="TypeRef"]
+	node130[label="ConstructSig"]
+	node130 -- node124
+	node124[label="ParaList"]
+	node124 -- node117
+	node117[label="Para"]
+	node117 -- node112
+	node112[label="hour"]
+	node117 -- node116
+	node116[label="TypeAnnotation"]
+	node116 -- node115
+	node115[label="Type"]
+	node115 -- node114
+	node114[label="PrimaryType"]
+	node114 -- node113
+	node113[label="number", color=red]
+	node124 -- node123
+	node123[label="Para"]
+	node123 -- node118
+	node118[label="minute"]
+	node123 -- node122
+	node122[label="TypeAnnotation"]
+	node122 -- node121
+	node121[label="Type"]
+	node121 -- node120
+	node120[label="PrimaryType"]
+	node120 -- node119
+	node119[label="number", color=red]
 	node130 -- node129
-	node129[label="Date"]
-	node141 -- node140
-	node140[label="TypeAnnotation"]
-	node140 -- node139
-	node139[label="Type"]
-	node139 -- node138
-	node138[label="PrimaryType"]
-	node138 -- node137
-	node137[label="TypeRef"]
-	node137 -- node136
-	node136[label="Date"]
-	node164 -- node163
-	node163[label="TypeMember"]
-	node163 -- node162
-	node162[label="ConstructSig"]
-	node162 -- node156
-	node156[label="ParaList"]
-	node156 -- node149
-	node149[label="Para"]
-	node149 -- node144
-	node144[label="hour"]
-	node149 -- node148
-	node148[label="TypeAnnotation"]
-	node148 -- node147
-	node147[label="Type"]
-	node147 -- node146
-	node146[label="PrimaryType"]
-	node146 -- node145
-	node145[label="number", color=red]
-	node156 -- node155
-	node155[label="Para"]
-	node155 -- node150
-	node150[label="minute"]
-	node155 -- node154
-	node154[label="TypeAnnotation"]
-	node154 -- node153
-	node153[label="Type"]
-	node153 -- node152
-	node152[label="PrimaryType"]
-	node152 -- node151
-	node151[label="number", color=red]
-	node162 -- node161
-	node161[label="TypeAnnotation"]
-	node161 -- node160
-	node160[label="Type"]
-	node160 -- node159
-	node159[label="PrimaryType"]
-	node159 -- node158
-	node158[label="TypeRef"]
-	node158 -- node157
-	node157[label="ClockInterface"]
+	node129[label="TypeAnnotation"]
+	node129 -- node128
+	node128[label="Type"]
+	node128 -- node127
+	node127[label="PrimaryType"]
+	node127 -- node126
+	node126[label="TypeRef"]
+	node126 -- node125
+	node125[label="ClockInterface"]
 }

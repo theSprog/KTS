@@ -1,35 +1,35 @@
 graph vis {
-	node51[label="Program"]
-	node51 -- node16
-	node16[label="SourceElements"]
-	node16 -- node15
-	node15[label="Stat"]
-	node15 -- node14
-	node14[label="ClassDecl"]
-	node14 -- node1
-	node1[label="C"]
-	node14 -- node12
-	node12[label="ClassHeritage"]
-	node12 -- node4
-	node4[label="Extends"]
-	node4 -- node3
-	node3[label="TypeRef"]
-	node3 -- node2
-	node2[label="B"]
-	node12 -- node11
-	node11[label="Implement"]
-	node11 -- node6
-	node6[label="TypeRef"]
-	node6 -- node5
-	node5[label="X"]
-	node11 -- node8
-	node8[label="TypeRef"]
-	node8 -- node7
-	node7[label="Y"]
-	node11 -- node10
-	node10[label="TypeRef"]
-	node10 -- node9
-	node9[label="Z"]
-	node14 -- node13
-	node13[label="ClassTail"]
+	node65[label="Program"]
+	node65 -- node64
+	node64[label="SourceElements"]
+	node64 -- node63
+	node63[label="Stat"]
+	node63 -- node62
+	node62[label="ClassDecl"]
+	node62 -- node48
+	node48[label="C"]
+	node62 -- node60
+	node60[label="ClassHeritage"]
+	node60 -- node51
+	node51[label="Extends"]
+	node51 -- node50
+	node50[label="TypeRef"]
+	node50 -- node49
+	node49[label="B"]
+	node60 -- node59
+	node59[label="Implement"]
+	node59 -- node53
+	node53[label="TypeRef"]
+	node53 -- node52
+	node52[label="X"]
+	node59 -- node56
+	node56[label="TypeRef"]
+	node56 -- node55
+	node55[label="Y"]
+	node59 -- node58
+	node58[label="TypeRef"]
+	node58 -- node57
+	node57[label="Z"]
+	node62 -- node61
+	node61[label="ClassTail"]
 }

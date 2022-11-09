@@ -1,0 +1,85 @@
+graph vis {
+	node43[label="Program"]
+	node43 -- node42
+	node42[label="SourceElements"]
+	node42 -- node41
+	node41[label="Stat"]
+	node41 -- node40
+	node40[label="IfStat"]
+	node40 -- node4
+	node4[label="ExpSeq"]
+	node4 -- node3
+	node3[label="Exp"]
+	node3 -- node2
+	node2[label="true", color=red]
+	node40 -- node14
+	node14[label="Stat"]
+	node14 -- node13
+	node13[label="Block"]
+	node13 -- node8
+	node8[label="Stat"]
+	node8 -- node7
+	node7[label="ExpSeq"]
+	node7 -- node6
+	node6[label="Exp"]
+	node6 -- node5
+	node5[label="4"]
+	node13 -- node12
+	node12[label="Stat"]
+	node12 -- node11
+	node11[label="ExpSeq"]
+	node11 -- node10
+	node10[label="Exp"]
+	node10 -- node9
+	node9[label="5"]
+	node40 -- node39
+	node39[label="Stat"]
+	node39 -- node38
+	node38[label="IfStat"]
+	node38 -- node17
+	node17[label="ExpSeq"]
+	node17 -- node16
+	node16[label="Exp"]
+	node16 -- node15
+	node15[label="false", color=red]
+	node38 -- node27
+	node27[label="Stat"]
+	node27 -- node26
+	node26[label="Block"]
+	node26 -- node21
+	node21[label="Stat"]
+	node21 -- node20
+	node20[label="ExpSeq"]
+	node20 -- node19
+	node19[label="Exp"]
+	node19 -- node18
+	node18[label="6"]
+	node26 -- node25
+	node25[label="Stat"]
+	node25 -- node24
+	node24[label="ExpSeq"]
+	node24 -- node23
+	node23[label="Exp"]
+	node23 -- node22
+	node22[label="7"]
+	node38 -- node37
+	node37[label="Stat"]
+	node37 -- node36
+	node36[label="Block"]
+	node36 -- node31
+	node31[label="Stat"]
+	node31 -- node30
+	node30[label="ExpSeq"]
+	node30 -- node29
+	node29[label="Exp"]
+	node29 -- node28
+	node28[label="8"]
+	node36 -- node35
+	node35[label="Stat"]
+	node35 -- node34
+	node34[label="ExpSeq"]
+	node34 -- node33
+	node33[label="Exp"]
+	node33 -- node32
+	node32[label="9"]
+}

@@ -35,6 +35,9 @@ pub enum Stat {
     FuncDecl(ASTNode<FuncDecl>),
     FuncExpDecl(ASTNode<FuncExpDecl>),
     GenFuncDecl(ASTNode<GenFuncDecl>),
+
+    ExpStat(ASTNode<ExpSeq>),
+
     Unknown(ASTNode<Unknown>),
 }
 

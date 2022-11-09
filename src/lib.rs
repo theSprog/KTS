@@ -1,4 +1,4 @@
-#![allow(warnings, unused)]
+#![allow(unused)]
 
 #[macro_use]
 extern crate visulize;
