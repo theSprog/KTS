@@ -1,0 +1,59 @@
+graph vis {
+	node491[label="Program"]
+	node491 -- node490
+	node490[label="SourceElements"]
+	node490 -- node489
+	node489[label="Stat"]
+	node489 -- node488
+	node488[label="InterfaceDecl"]
+	node488 -- node460
+	node460[label="IteratorInterface"]
+	node488 -- node487
+	node487[label="ObjectType"]
+	node487 -- node486
+	node486[label="TypeMember"]
+	node486 -- node485
+	node485[label="PropertySig"]
+	node485 -- node462
+	node462[label="next"]
+	node485 -- node484
+	node484[label="TypeAnnotation"]
+	node484 -- node483
+	node483[label="Type"]
+	node483 -- node482
+	node482[label="FunctionType"]
+	node482 -- node481
+	node481[label="Type"]
+	node481 -- node480
+	node480[label="PrimaryType"]
+	node480 -- node479
+	node479[label="ObjectType"]
+	node479 -- node470
+	node470[label="TypeMember"]
+	node470 -- node469
+	node469[label="PropertySig"]
+	node469 -- node464
+	node464[label="value"]
+	node469 -- node468
+	node468[label="TypeAnnotation"]
+	node468 -- node467
+	node467[label="Type"]
+	node467 -- node466
+	node466[label="PrimaryType"]
+	node466 -- node465
+	node465[label="any", color=red]
+	node479 -- node478
+	node478[label="TypeMember"]
+	node478 -- node477
+	node477[label="PropertySig"]
+	node477 -- node472
+	node472[label="done"]
+	node477 -- node476
+	node476[label="TypeAnnotation"]
+	node476 -- node475
+	node475[label="Type"]
+	node475 -- node474
+	node474[label="PrimaryType"]
+	node474 -- node473
+	node473[label="boolean", color=red]
+}

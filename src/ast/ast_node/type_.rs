@@ -3,7 +3,10 @@ use crate::ast::AstGraph;
 use crate::ast::Visualizable;
 use crate::ast::AST;
 
+use super::decl::ObjectType;
 use super::identifier::Identifier;
+use super::parameter::ParaList;
+use super::parameter::TypeParas;
 
 #[derive(Visualizable, Default)]
 pub struct TypeRef {
@@ -53,10 +56,25 @@ pub enum PrimaryType {
     ArrayPredefinedType(ASTNode<ArrayPredefinedType>),
     ArrayTypeRef(ASTNode<ArrayTypeRef>),
     TupleType(ASTNode<TupleElementTypes>),
+    ObjectType(ASTNode<ObjectType>),
 }
 
 #[derive(Visualizable)]
-pub struct FunctionType {}
+pub struct FunctionType {
+    para_list: Option<Box<ASTNode<ParaList>>>,
+    type_: Box<ASTNode<Type>>,
+}
+impl FunctionType {
+    pub(crate) fn new(para_list: Option<ASTNode<ParaList>>, type_: ASTNode<Type>) -> Self {
+        Self {
+            para_list: match para_list {
+                Some(para_list) => Some(Box::new(para_list)),
+                None => None,
+            },
+            type_: Box::new(type_),
+        }
+    }
+}
 
 // #[derive(Visualizable)]
 pub struct ArrayPredefinedType {

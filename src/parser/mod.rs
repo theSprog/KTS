@@ -1,7 +1,6 @@
 pub mod error;
 
 use crate::ast::ast_node::decorator::Decorators;
-use crate::ast::ast_node::eos::EOS;
 use crate::ast::ast_node::identifier;
 use crate::ast::ast_node::literal::Literal;
 use crate::ast::ast_node::program::Program;
@@ -100,19 +99,11 @@ impl Parser {
             return Ok(());
         }
 
-        if let (Some(current), Some(next)) =
-            (self.tokens.get(self.index), self.tokens.get(self.index - 1))
-        {
-            // 换行也允许  xxx \n yyy
-            if current.peek_line() > next.peek_line() {
-                return Ok(());
-            } else {
-                // 不用分号又不换行 xxx yyy 这种形式不允许
-                return Err(self.expect_error("EOS", "; or newline"));
-            }
+        // 换行也可以
+        match self.is_new_line() {
+            true => Ok(()),
+            false => Err(self.expect_error("EOS", "; or newline")),
         }
-
-        unreachable!()
     }
 
     fn is_literal(&self) -> bool {
@@ -240,6 +231,16 @@ impl Parser {
         match self.tokens.get(self.index + 1) {
             Some(token) => Some(token.peek_kind()),
             None => None,
+        }
+    }
+
+    fn is_new_line(&self) -> bool {
+        if let (Some(current), Some(next)) =
+            (self.tokens.get(self.index), self.tokens.get(self.index - 1))
+        {
+            current.peek_line() > next.peek_line()
+        }else {
+            false
         }
     }
 
@@ -1001,8 +1002,8 @@ impl Parser {
                 self.eat(TokenKind::LeftParen)?;
                 let exp_seq = self.parse_exp_seq()?;
                 self.eat(TokenKind::RightParen)?;
-                // let eos = self.parse_eos()?;
-                todo!()
+                self.eat_eos()?;
+                Ok(ASTNode::new(IterStat::DoStat(ASTNode::new(DoStat::new(stat, exp_seq)))))
             }
 
             TokenKind::KeyWord(KeyWordKind::While) => {
@@ -1485,12 +1486,24 @@ impl Parser {
         }
     }
 
+    /*
+    primaryType:
+		predefinedType								# PredefinedPrimType
+		| typeReference								# ReferencePrimType
+		| (predefinedType | typeReference) '[' ']'	# ArrayPrimType
+		| '[' tupleElementTypes ']'					# TuplePrimType
+		| objectType								# ObjectPrimType;
+    */
     fn parse_primary_type(&mut self) -> Result<ASTNode<PrimaryType>, ParserError> {
         if self.kind_is(TokenKind::LeftBrace) {
             self.eat(TokenKind::LeftBrace)?;
             let tuple_type = PrimaryType::TupleType(self.parse_tuple_type()?);
             self.eat(TokenKind::RightBrace)?;
             return Ok(ASTNode::new(tuple_type));
+        }
+
+        if self.kind_is(TokenKind::LeftBracket) {
+            return Ok(ASTNode::new(PrimaryType::ObjectType( self.parse_object_type()?)));
         }
 
         match self.peek_kind() {
@@ -1609,8 +1622,21 @@ impl Parser {
         todo!()
     }
 
+    /*
+    functionType: '(' parameterList? ')' '=>' type_;
+    */
     fn parse_func_type(&mut self) -> Result<ASTNode<FunctionType>, ParserError> {
-        todo!()
+        let type_;
+        let mut para_list = None;
+        self.eat(TokenKind::LeftParen)?;
+        if ! self.kind_is(TokenKind::RightParen) {
+            para_list = Some(self.parse_para_list()?);
+        }
+        self.eat(TokenKind::RightParen)?;
+        self.eat(TokenKind::ARROW)?;
+        type_ = self.parse_type()?;
+
+        Ok(ASTNode::new(FunctionType::new(para_list, type_)))
     }
 
     fn parse_decorators(&mut self) -> Result<ASTNode<Decorators>, ParserError> {
@@ -1700,7 +1726,7 @@ impl Parser {
                     self.eat(TokenKind::SemiColon)?;
                 }
                 _ => {
-                    if !self.kind_is(TokenKind::RightBracket) {
+                    if !self.kind_is(TokenKind::RightBracket) && !self.is_new_line() {
                         return Err(self.expect_error("Object Type", ", or ; or }"));
                     }
                 }

@@ -5,7 +5,6 @@ pub mod class;
 pub mod clause;
 pub mod decl;
 pub mod decorator;
-pub mod eos;
 pub mod exp;
 pub mod identifier;
 pub mod literal;

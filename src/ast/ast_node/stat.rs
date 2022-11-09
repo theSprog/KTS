@@ -199,7 +199,18 @@ pub enum IterStat {
 }
 
 #[derive(Visualizable)]
-pub struct DoStat {}
+pub struct DoStat {
+    stat: Box<ASTNode<Stat>>,
+    exp_seq: ASTNode<ExpSeq>,
+}
+impl DoStat {
+    pub(crate) fn new(stat: ASTNode<Stat>, exp_seq: ASTNode<ExpSeq>) -> Self {
+        Self {
+            stat: Box::new(stat),
+            exp_seq,
+        }
+    }
+}
 
 #[derive(Visualizable)]
 pub struct WhileStat {}
