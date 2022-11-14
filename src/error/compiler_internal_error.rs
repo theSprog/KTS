@@ -26,6 +26,6 @@ impl Error for CompilerInternalError {}
 
 impl std::fmt::Display for CompilerInternalError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0.red())
+        write!(f, "{}", self.0)
     }
 }

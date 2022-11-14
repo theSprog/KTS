@@ -1,4 +1,4 @@
 do {
     1, 2, 3;
     4, 5, 6;
-} while (7, 8, 9)
+} while (true, true, true)

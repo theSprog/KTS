@@ -33,8 +33,18 @@ impl TypeRefs {
     }
 }
 
-#[derive(Visualizable)]
+#[derive(Visualizable, Default)]
 pub struct TypeGeneric {
+    type_args: Vec<ASTNode<TypeArg>>,
+}
+impl TypeGeneric {
+    pub(crate) fn push_type_arg(&mut self, type_arg: ASTNode<TypeArg>) {
+        self.type_args.push(type_arg);
+    }
+}
+
+#[derive(Visualizable, Default)]
+pub struct TypeArgs {
     type_args: Vec<ASTNode<TypeArg>>,
 }
 
@@ -61,18 +71,12 @@ pub enum PrimaryType {
 
 #[derive(Visualizable)]
 pub struct FunctionType {
-    para_list: Option<Box<ASTNode<ParaList>>>,
-    type_: Box<ASTNode<Type>>,
+    para_list: Option<ASTNode<ParaList>>,
+    type_: ASTNode<Type>,
 }
 impl FunctionType {
     pub(crate) fn new(para_list: Option<ASTNode<ParaList>>, type_: ASTNode<Type>) -> Self {
-        Self {
-            para_list: match para_list {
-                Some(para_list) => Some(Box::new(para_list)),
-                None => None,
-            },
-            type_: Box::new(type_),
-        }
+        Self { para_list, type_ }
     }
 }
 

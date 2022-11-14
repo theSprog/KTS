@@ -1,6 +1,7 @@
 use self::compiler_internal_error::CompilerInternalError;
 use crate::lexer::error::LexerError;
 use crate::parser::error::ParserError;
+use colored::Colorize;
 
 use std::{
     error::Error,
@@ -11,7 +12,7 @@ use std::{
 pub mod compiler_internal_error;
 
 pub fn err_exit<E: Error>(err: E) -> ! {
-    eprintln!("{}", err);
+    eprintln!("Error: {}", format!("{}", err).red());
     process::exit(1);
 }
 

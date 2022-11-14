@@ -2,7 +2,13 @@ use crate::ast::AstGraph;
 use visulize::Visualizable;
 
 use super::{
-    block::Block, decl::*, exp::ExpSeq, identifier::Identifier, literal::Literal, unknown::Unknown,
+    block::Block,
+    decl::*,
+    exp::{Exp, ExpSeq},
+    identifier::Identifier,
+    literal::Literal,
+    parameter::TypeAnnotation,
+    unknown::Unknown,
 };
 use crate::{
     ast::{visulize::Visualizable, ASTNode},
@@ -136,7 +142,7 @@ pub struct ExportStat {
     export_kw: ASTNode<KeyWordKind>,
     default: Option<ASTNode<KeyWordKind>>, // default keyword
     from_block: Option<ASTNode<FromBlock>>,
-    stat: Option<Box<ASTNode<Stat>>>,
+    stat: Option<ASTNode<Stat>>,
 }
 
 impl Default for ExportStat {
@@ -160,7 +166,7 @@ impl ExportStat {
     }
 
     pub(crate) fn set_stat(&mut self, stat: ASTNode<Stat>) {
-        self.stat = Some(Box::new(stat));
+        self.stat = Some(stat);
     }
 }
 #[derive(Visualizable)]
@@ -174,8 +180,8 @@ impl EmptyStat {
 #[derive(Visualizable, Default)]
 pub struct IfStat {
     exp_seq: ASTNode<ExpSeq>,
-    stat: Box<ASTNode<Stat>>,
-    else_stat: Option<Box<ASTNode<Stat>>>,
+    stat: ASTNode<Stat>,
+    else_stat: Option<ASTNode<Stat>>,
 }
 impl IfStat {
     pub(crate) fn set_exp_seq(&mut self, exp_seq: ASTNode<ExpSeq>) {
@@ -183,42 +189,153 @@ impl IfStat {
     }
 
     pub(crate) fn set_stat(&mut self, stat: ASTNode<Stat>) {
-        self.stat = Box::new(stat);
+        self.stat = stat;
     }
 
     pub(crate) fn set_else_stat(&mut self, else_stat: ASTNode<Stat>) {
-        self.else_stat = Some(Box::new(else_stat));
+        self.else_stat = Some(else_stat);
     }
 }
 #[derive(Visualizable)]
 pub enum IterStat {
     DoStat(ASTNode<DoStat>),
     WhileStat(ASTNode<WhileStat>),
+    ForStat(ASTNode<ForStat>),
     ForVarStat(ASTNode<ForVarStat>),
     ForInStat(ASTNode<ForInStat>),
 }
 
 #[derive(Visualizable)]
 pub struct DoStat {
-    stat: Box<ASTNode<Stat>>,
+    stat: ASTNode<Stat>,
     exp_seq: ASTNode<ExpSeq>,
 }
 impl DoStat {
     pub(crate) fn new(stat: ASTNode<Stat>, exp_seq: ASTNode<ExpSeq>) -> Self {
-        Self {
-            stat: Box::new(stat),
-            exp_seq,
-        }
+        Self { stat, exp_seq }
     }
 }
 
 #[derive(Visualizable)]
-pub struct WhileStat {}
+pub struct WhileStat {
+    exp_seq: ASTNode<ExpSeq>,
+    stat: ASTNode<Stat>,
+}
+impl WhileStat {
+    pub(crate) fn new(exp_seq: ASTNode<ExpSeq>, stat: ASTNode<Stat>) -> Self {
+        Self { exp_seq, stat }
+    }
+}
+
+#[derive(Visualizable, Default)]
+pub struct ForStat {
+    init: Option<ASTNode<ExpSeq>>,
+    cond: Option<ASTNode<ExpSeq>>,
+    action: Option<ASTNode<ExpSeq>>,
+}
+impl ForStat {
+    pub(crate) fn set_init(&mut self, init: ASTNode<ExpSeq>) {
+        self.init = Some(init);
+    }
+
+    pub(crate) fn set_cond(&mut self, cond: ASTNode<ExpSeq>) {
+        self.cond = Some(cond);
+    }
+
+    pub(crate) fn set_action(&mut self, action: ASTNode<ExpSeq>) {
+        self.action = Some(action);
+    }
+}
 
 #[derive(Visualizable)]
-pub struct ForVarStat {}
+pub struct ForVarStat {
+    var_modifier: ASTNode<VarModifier>,
+    var_decl_list: ASTNode<VarDeclList>,
+    cond: Option<ASTNode<ExpSeq>>,
+    action: Option<ASTNode<ExpSeq>>,
+    stat: ASTNode<Stat>,
+}
+impl ForVarStat {
+    pub(crate) fn new(
+        var_modifier: ASTNode<VarModifier>,
+        var_decl_list: ASTNode<VarDeclList>,
+        cond: Option<ASTNode<ExpSeq>>,
+        action: Option<ASTNode<ExpSeq>>,
+        stat: ASTNode<Stat>,
+    ) -> ForVarStat {
+        Self {
+            var_modifier,
+            var_decl_list,
+            cond,
+            action,
+            stat,
+        }
+    }
+}
 #[derive(Visualizable)]
-pub struct ForInStat {}
+pub struct ForInStat {
+    var: ASTNode<Exp>,
+    exp_seq: ASTNode<ExpSeq>,
+    stat: ASTNode<Stat>,
+}
+impl ForInStat {
+    pub(crate) fn new(
+        var: ASTNode<Exp>,
+        exp_seq: ASTNode<ExpSeq>,
+        stat: ASTNode<Stat>,
+    ) -> ForInStat {
+        Self { var, exp_seq, stat }
+    }
+}
+
+pub enum VarModifier {
+    Let,
+    Const,
+    Var,
+}
+impl Visualizable for VarModifier {
+    fn draw(&self, self_id: usize, graph: &mut AstGraph) {
+        match self {
+            VarModifier::Let => graph.put_node(self_id, "let"),
+            VarModifier::Const => graph.put_node(self_id, "const"),
+            VarModifier::Var => graph.put_node(self_id, "var"),
+        }
+    }
+}
+
+#[derive(Visualizable, Default)]
+pub struct VarDeclList {
+    var_decls: Vec<ASTNode<VarDecl>>,
+}
+impl VarDeclList {
+    pub(crate) fn push_var_decl(&mut self, var_decl: ASTNode<VarDecl>) {
+        self.var_decls.push(var_decl);
+    }
+}
+
+#[derive(Visualizable)]
+pub struct VarDecl {
+    var_name: ASTNode<Identifier>,
+    type_annotation: Option<ASTNode<TypeAnnotation>>,
+    initializer: Option<ASTNode<Exp>>,
+}
+impl VarDecl {
+    pub(crate) fn new(var_name: &str) -> Self {
+        Self {
+            var_name: ASTNode::new(Identifier::new(var_name)),
+            type_annotation: None,
+            initializer: None,
+        }
+    }
+
+    pub(crate) fn set_type_annotation(&mut self, type_annotation: ASTNode<TypeAnnotation>) {
+        self.type_annotation = Some(type_annotation);
+    }
+
+    pub(crate) fn set_initializer(&mut self, initializer: ASTNode<Exp>) {
+        self.initializer = Some(initializer);
+    }
+}
 
 #[derive(Visualizable)]
 pub struct ContinueStat {}

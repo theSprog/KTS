@@ -285,7 +285,7 @@ pub enum TokenKind {
     LessThan,                  // <
 
     IdentityEquals, // ===
-    Equals_,        // ==
+    Equals,         // ==
     ARROW,          // =>
     Assign,         // =
 
@@ -353,7 +353,7 @@ impl Visualizable for TokenKind {
             TokenKind::LessThanEquals => graph.put_node(id, "<="),
             TokenKind::LessThan => graph.put_node(id, "<"),
             TokenKind::IdentityEquals => graph.put_node(id, "==="),
-            TokenKind::Equals_ => graph.put_node(id, "=="),
+            TokenKind::Equals => graph.put_node(id, "=="),
             TokenKind::ARROW => graph.put_node(id, "=>"),
             TokenKind::Assign => graph.put_node(id, "="),
             TokenKind::And => graph.put_node(id, "&&"),
@@ -428,7 +428,7 @@ impl Display for TokenKind {
             TokenKind::LessThan => token_string!(f, "lessThan"),
 
             TokenKind::IdentityEquals => token_string!(f, "identity equals"),
-            TokenKind::Equals_ => token_string!(f, "equals"),
+            TokenKind::Equals => token_string!(f, "equals"),
             TokenKind::ARROW => token_string!(f, "arrow"),
             TokenKind::Assign => token_string!(f, "assign"),
 

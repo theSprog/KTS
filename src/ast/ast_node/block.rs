@@ -4,11 +4,11 @@ use crate::ast::{visulize::Visualizable, ASTNode};
 
 #[derive(Visualizable, Default)]
 pub struct Block {
-    stats: Vec<Box<ASTNode<Stat>>>,
+    stats: Vec<ASTNode<Stat>>,
 }
 impl Block {
     pub(crate) fn push(&mut self, stat: ASTNode<Stat>) {
-        self.stats.push(Box::new(stat));
+        self.stats.push(stat);
     }
 }
 

@@ -122,6 +122,10 @@ impl<'a> Lexer<'a> {
         Ok(tokens)
     }
 
+    fn report_error(&self, s: &str) -> LexerError {
+        LexerError::new(format!("TokenError: Line[{}]: {}", self.line, s))
+    }
+
     pub(crate) fn next_token(&mut self) -> Result<Token, LexerError> {
         self.skip_unrelated();
 
@@ -243,7 +247,7 @@ impl<'a> Lexer<'a> {
                 [b'=', b'=', b'=', _res @ ..] => {
                     Ok(self.make_token("===", self.line, TokenKind::IdentityEquals))
                 }
-                [b'=', b'=', _res @ ..] => Ok(self.make_token("==", self.line, TokenKind::Equals_)),
+                [b'=', b'=', _res @ ..] => Ok(self.make_token("==", self.line, TokenKind::Equals)),
                 [b'=', b'>', _res @ ..] => Ok(self.make_token("=>", self.line, TokenKind::ARROW)),
                 _ => Ok(self.make_token("=", self.line, TokenKind::Assign)),
             },
@@ -535,9 +539,5 @@ impl<'a> Lexer<'a> {
 
     fn inc_line(&mut self) {
         self.line += 1;
-    }
-
-    fn report_error(&self, s: &str) -> LexerError {
-        LexerError::new(format!("Line[{}]: {}", self.line, s))
     }
 }
