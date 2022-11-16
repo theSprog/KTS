@@ -7,7 +7,7 @@ use super::{
     body::FuncBody,
     class::{ClassHeritage, ClassTail, Extends},
     identifier::Identifier,
-    parameter::TypeParas,
+    parameter::{FormalParas, TypeAnnotation, TypeParas},
     sig::*,
     type_::*,
 };
@@ -17,7 +17,7 @@ pub struct ClassDecl {
     abstr: Option<ASTNode<KeyWordKind>>,
     class_name: ASTNode<Identifier>,
     type_paras: Option<ASTNode<TypeParas>>,
-    class_heritage: ASTNode<ClassHeritage>,
+    class_heritage: Option<ASTNode<ClassHeritage>>,
     class_tail: ASTNode<ClassTail>,
 }
 impl ClassDecl {
@@ -34,7 +34,7 @@ impl ClassDecl {
     }
 
     pub(crate) fn set_class_heritage(&mut self, class_heritage: ASTNode<ClassHeritage>) {
-        self.class_heritage = class_heritage;
+        self.class_heritage = Some(class_heritage);
     }
 
     pub(crate) fn set_class_tail(&mut self, class_tail: ASTNode<ClassTail>) {
@@ -132,7 +132,29 @@ impl FuncDecl {
 }
 
 #[derive(Visualizable, Default)]
-pub struct FuncExpDecl {}
+pub struct FuncExpDecl {
+    func_name: Option<ASTNode<Identifier>>,
+    formal_paras: Option<ASTNode<FormalParas>>,
+    type_annotation: Option<ASTNode<TypeAnnotation>>,
+    func_body: ASTNode<FuncBody>,
+}
+impl FuncExpDecl {
+    pub(crate) fn set_func_name(&mut self, func_name: &str) {
+        self.func_name = Some(ASTNode::new(Identifier::new(func_name)));
+    }
+
+    pub(crate) fn set_formal_paras(&mut self, formal_paras: ASTNode<FormalParas>) {
+        self.formal_paras = Some(formal_paras);
+    }
+
+    pub(crate) fn set_type_annotation(&mut self, type_annotation: ASTNode<TypeAnnotation>) {
+        self.type_annotation = Some(type_annotation);
+    }
+
+    pub(crate) fn set_func_body(&mut self, func_body: ASTNode<FuncBody>) {
+        self.func_body = func_body;
+    }
+}
 
 #[derive(Visualizable, Default)]
 pub struct GenFuncDecl {}

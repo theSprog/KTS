@@ -1,33 +1,87 @@
 graph vis {
-	node328[label="Program"]
-	node328 -- node327
-	node327[label="SourceElements"]
-	node327 -- node324
-	node324[label="Stat"]
-	node324 -- node323
-	node323[label="IterStat"]
-	node323 -- node322
-	node322[label="ForStat"]
-	node322 -- node315
-	node315[label="ExpSeq"]
-	node315 -- node314
-	node314[label="Exp"]
-	node314 -- node313
-	node313[label="1"]
-	node322 -- node318
-	node318[label="ExpSeq"]
-	node318 -- node317
-	node317[label="Exp"]
-	node317 -- node316
-	node316[label="2"]
-	node322 -- node321
-	node321[label="ExpSeq"]
-	node321 -- node320
-	node320[label="Exp"]
-	node320 -- node319
-	node319[label="3"]
-	node327 -- node326
-	node326[label="Stat"]
-	node326 -- node325
-	node325[label="Block"]
+	node43[label="Program"]
+	node43 -- node42
+	node42[label="SourceElements"]
+	node42 -- node41
+	node41[label="Stat"]
+	node41 -- node40
+	node40[label="IterStat"]
+	node40 -- node39
+	node39[label="ForStat"]
+	node39 -- node3
+	node3[label="ExpSeq"]
+	node3 -- node2
+	node2[label="Exp"]
+	node2 -- node1
+	node1[label="1"]
+	node39 -- node5
+	node5[label="Exp"]
+	node5 -- node4
+	node4[label="2"]
+	node39 -- node8
+	node8[label="ExpSeq"]
+	node8 -- node7
+	node7[label="Exp"]
+	node7 -- node6
+	node6[label="3"]
+	node39 -- node38
+	node38[label="Stat"]
+	node38 -- node37
+	node37[label="Block"]
+	node37 -- node17
+	node17[label="Stat"]
+	node17 -- node16
+	node16[label="ExpSeq"]
+	node16 -- node15
+	node15[label="Exp"]
+	node15 -- node14
+	node14[label="BinaryExp"]
+	node14 -- node10
+	node10[label="Exp"]
+	node10 -- node9
+	node9[label="4"]
+	node14 -- node13
+	node13[label="+"]
+	node14 -- node12
+	node12[label="Exp"]
+	node12 -- node11
+	node11[label="5"]
+	node37 -- node36
+	node36[label="Stat"]
+	node36 -- node35
+	node35[label="ExpSeq"]
+	node35 -- node34
+	node34[label="Exp"]
+	node34 -- node33
+	node33[label="BinaryExp"]
+	node33 -- node24
+	node24[label="Exp"]
+	node24 -- node23
+	node23[label="BinaryExp"]
+	node23 -- node19
+	node19[label="Exp"]
+	node19 -- node18
+	node18[label="6"]
+	node23 -- node22
+	node22[label="+"]
+	node23 -- node21
+	node21[label="Exp"]
+	node21 -- node20
+	node20[label="7"]
+	node33 -- node32
+	node32[label="+"]
+	node33 -- node31
+	node31[label="Exp"]
+	node31 -- node30
+	node30[label="BinaryExp"]
+	node30 -- node26
+	node26[label="Exp"]
+	node26 -- node25
+	node25[label="8"]
+	node30 -- node29
+	node29[label="*"]
+	node30 -- node28
+	node28[label="Exp"]
+	node28 -- node27
+	node27[label="9"]
 }

@@ -1,4 +1,5 @@
 pub mod error;
+mod exp_parser;
 
 use std::string::ParseError;
 
@@ -111,21 +112,28 @@ impl Parser {
         }
     }
 
-    fn eat_eos(&mut self) -> Result<(), ParserError> {
+    fn is_eos(&mut self) -> bool {
+        match self.peek_kind() {
         // 用分号可以  xxx; yyy
-        if self.peek_kind() == TokenKind::SemiColon {
-            self.eat(TokenKind::SemiColon)?;
-            return Ok(());
-        }
-
-        if self.peek_kind() == TokenKind::EOF {
-            return Ok(());
-        }
-
+            TokenKind::SemiColon 
+        // 收尾可以
+            | TokenKind::RightBracket
+        // 结尾也可以
+            | TokenKind::EOF => true,
         // 换行也可以
-        match self.is_new_line() {
-            true => Ok(()),
-            false => Err(self.expect_error("EOS", "; or newline")),
+            _ => self.is_new_line()
+        }
+    }
+
+    fn eat_eos(&mut self) -> Result<(), ParserError> {
+        if self.is_eos() {
+            if self.peek_kind() == TokenKind::SemiColon {
+                self.eat(TokenKind::SemiColon)?;
+                return Ok(());
+            }
+            return Ok(());
+        }else {
+            Err(self.expect_error("EOS", "; or close-brace or newline"))
         }
     }
 
@@ -141,14 +149,6 @@ impl Parser {
 
                 _ => false,
             })
-    }
-
-    fn is_op(&mut self) -> bool {
-        match self.peek_kind() {
-            TokenKind::Plus | TokenKind::Minus | TokenKind::Multiply | TokenKind::Divide => true,
-
-            _ => false,
-        }
     }
 
     /*
@@ -290,10 +290,10 @@ impl Parser {
     }
 
     fn is_new_line(&self) -> bool {
-        if let (Some(current), Some(next)) =
+        if let (Some(current), Some(pre)) =
             (self.tokens.get(self.index), self.tokens.get(self.index - 1))
         {
-            current.peek_line() > next.peek_line()
+            current.peek_line() > pre.peek_line()
         } else {
             false
         }
@@ -304,6 +304,11 @@ impl Parser {
             Some(token) => token.kind_is(kind),
             None => false,
         }
+    }
+
+    fn prekind_is(&self, kind: TokenKind) -> bool {
+        let pre_token = &self.tokens[self.index - 1];
+        return pre_token.kind_is(kind);
     }
 
     pub(crate) fn parse(&mut self) -> Result<AST, TSError> {
@@ -387,7 +392,7 @@ impl Parser {
 
             // TokenKind::KeyWord(KeyWordKind::Continue) => Ok(Some(self.parse_continue_stat()?)),
             // TokenKind::KeyWord(KeyWordKind::Break) => Ok(Some(self.parse_break_stat()?)),
-            // TokenKind::KeyWord(KeyWordKind::Return) => Ok(Some(self.parse_return_stat()?)),
+            TokenKind::KeyWord(KeyWordKind::Return) => Ok(ASTNode::new(Stat::ReturnStat(self.parse_return_stat()?))),
             // TokenKind::KeyWord(KeyWordKind::Yield) => Ok(Some(self.parse_yield_stat()?)),
             // TokenKind::KeyWord(KeyWordKind::With) => Ok(Some(self.parse_with_stat()?)),
 
@@ -430,7 +435,12 @@ impl Parser {
             | TokenKind::KeyWord(KeyWordKind::New)
             | TokenKind::KeyWord(KeyWordKind::Delete)
             | TokenKind::KeyWord(KeyWordKind::Typeof)
-            | _ if self.is_literal() => {
+            // literal
+            | TokenKind::String
+            | TokenKind::Number
+            | TokenKind::KeyWord(KeyWordKind::True)
+            | TokenKind::KeyWord(KeyWordKind::False)
+            | TokenKind::KeyWord(KeyWordKind::Null) => {
                 let exp_stat = self.parse_exp_seq()?;
                 if self.kind_is(TokenKind::SemiColon) {
                     self.eat(TokenKind::SemiColon)?;
@@ -459,10 +469,11 @@ impl Parser {
         let mut block = Block::default();
         self.eat(TokenKind::LeftBracket)?;
         loop {
-            match self.try_to(Parser::parse_stat) {
-                Some(stat) => block.push(stat),
-                None => break,
+            if self.kind_is(TokenKind::RightBracket) {
+                break;
             }
+            let stat = self.parse_stat()?;
+            block.push(stat);
         }
         self.eat(TokenKind::RightBracket)?;
         Ok(ASTNode::new(block))
@@ -637,7 +648,11 @@ impl Parser {
             class_decl.set_type_paras(self.parse_type_paras()?);
         }
 
-        class_decl.set_class_heritage(self.parse_class_heritage()?);
+        if self.kind_is(TokenKind::KeyWord(KeyWordKind::Extends))
+            || self.kind_is(TokenKind::KeyWord(KeyWordKind::Implements))
+        {
+            class_decl.set_class_heritage(self.parse_class_heritage()?);
+        }
         class_decl.set_class_tail(self.parse_class_tail()?);
         Ok(ASTNode::new(class_decl))
     }
@@ -735,6 +750,16 @@ impl Parser {
             )),
 
             // propertyMemberDeclaration
+            TokenKind::Identifier => Ok(ASTNode::new(ClassElement::PropertyMemberDecl(
+                self.parse_property_member_decl()?,
+            ))),
+
+            // indexMemberDeclaration
+            TokenKind::LeftBrace => Ok(ASTNode::new(ClassElement::IndexMemberDecl(
+                self.parse_index_member_decl()?,
+            ))),
+
+            // propertyMemberDeclaration
             TokenKind::KeyWord(KeyWordKind::Async)
             | TokenKind::KeyWord(KeyWordKind::Static)
             | TokenKind::KeyWord(KeyWordKind::ReadOnly)
@@ -755,11 +780,6 @@ impl Parser {
                     self.parse_property_member_decl()?,
                 ))),
             },
-
-            // indexMemberDeclaration
-            TokenKind::LeftBrace => Ok(ASTNode::new(ClassElement::IndexMemberDecl(
-                self.parse_index_member_decl()?,
-            ))),
 
             _ => {
                 return Err(self.expect_error(
@@ -881,7 +901,7 @@ impl Parser {
 
         if self.kind_is(TokenKind::Assign) {
             self.eat(TokenKind::Assign)?;
-            property_decl_exp.set_initializer(self.parse_single_exp()?);
+            property_decl_exp.set_initializer(self.parse_exp()?);
         }
 
         self.eat(TokenKind::SemiColon)?;
@@ -1059,13 +1079,13 @@ impl Parser {
 
     /*
     iterationStatement:
-        Do statement While '(' expressionSequence ')' eos	# DoStatement
-        | While '(' expressionSequence ')' statement		# WhileStatement
-        | For '(' expressionSequence? SemiColon expressionSequence? SemiColon expressionSequence? ')'
+        Do statement While '(' singleExpression ')' eos	# DoStatement
+        | While '(' singleExpression ')' statement		# WhileStatement
+        | For '(' expressionSequence? SemiColon singleExpression? SemiColon expressionSequence? ')'
             statement # ForStatement
-        | For '(' varModifier variableDeclarationList SemiColon expressionSequence? SemiColon
+        | For '(' varModifier variableDeclarationList SemiColon singleExpression? SemiColon
             expressionSequence? ')' statement							# ForVarStatement
-        | For '(' singleExpression In expressionSequence ')' statement	# ForInStatement;
+        | For '(' singleExpression In singleExpression ')' statement	# ForInStatement;
 
         varModifier:Var | Let | Const;
 
@@ -1073,30 +1093,30 @@ impl Parser {
     fn parse_iter_stat(&mut self) -> Result<ASTNode<IterStat>, ParserError> {
         // now thing to do
         match self.peek_kind() {
-            // Do statement While '(' expressionSequence ')' eos	# DoStatement
+            // Do statement While '(' singleExpression ')' eos	# DoStatement
             TokenKind::KeyWord(KeyWordKind::Do) => {
                 self.eat(TokenKind::KeyWord(KeyWordKind::Do))?;
                 let stat = self.parse_stat()?;
                 self.eat(TokenKind::KeyWord(KeyWordKind::While))?;
                 self.eat(TokenKind::LeftParen)?;
-                let exp_seq = self.parse_exp_seq()?;
+                let exp = self.parse_exp()?;
                 self.eat(TokenKind::RightParen)?;
                 self.eat_eos()?;
                 Ok(ASTNode::new(IterStat::DoStat(ASTNode::new(DoStat::new(
-                    stat, exp_seq,
+                    stat, exp,
                 )))))
             }
 
-            // While '(' expressionSequence ')' statement		# WhileStatement
+            // While '(' singleExpression ')' statement		# WhileStatement
             TokenKind::KeyWord(KeyWordKind::While) => {
                 self.eat(TokenKind::KeyWord(KeyWordKind::While))?;
 
                 self.eat(TokenKind::LeftParen)?;
-                let exp_seq = self.parse_exp_seq()?;
+                let exp = self.parse_exp()?;
                 self.eat(TokenKind::RightParen)?;
                 let stat = self.parse_stat()?;
                 Ok(ASTNode::new(IterStat::WhileStat(ASTNode::new(
-                    WhileStat::new(exp_seq, stat),
+                    WhileStat::new(exp, stat),
                 ))))
             }
 
@@ -1119,7 +1139,7 @@ impl Parser {
                 ))
             }
 
-            _ => compiler_internal_error!("Why is can be here?"),
+            _ => unreachable!(),
         }
     }
 
@@ -1135,14 +1155,14 @@ impl Parser {
         }
         self.eat(TokenKind::SemiColon)?;
         if !self.kind_is(TokenKind::SemiColon) {
-            for_stat.set_cond(self.parse_exp_seq()?);
+            for_stat.set_cond(self.parse_exp()?);
         }
         self.eat(TokenKind::SemiColon)?;
         if !self.kind_is(TokenKind::SemiColon) {
             for_stat.set_action(self.parse_exp_seq()?);
         }
         self.eat(TokenKind::RightParen)?;
-
+        for_stat.set_stat(self.parse_stat()?);
         Ok(ASTNode::new(for_stat))
     }
 
@@ -1151,16 +1171,16 @@ impl Parser {
     */
     fn parse_forin_stat(&mut self) -> Result<ASTNode<ForInStat>, ParserError> {
         let var;
-        let exp_seq;
+        let exp;
         let stat;
         self.eat(TokenKind::KeyWord(KeyWordKind::For))?;
         self.eat(TokenKind::LeftParen)?;
-        var = self.parse_single_exp()?;
+        var = self.parse_exp()?;
         self.eat(TokenKind::KeyWord(KeyWordKind::In))?;
-        exp_seq = self.parse_exp_seq()?;
+        exp = self.parse_exp()?;
         self.eat(TokenKind::RightParen)?;
         stat = self.parse_stat()?;
-        Ok(ASTNode::new(ForInStat::new(var, exp_seq, stat)))
+        Ok(ASTNode::new(ForInStat::new(var, exp, stat)))
     }
 
     /*
@@ -1195,7 +1215,7 @@ impl Parser {
         var_decl_list = self.parse_var_decl_list()?;
         self.eat(TokenKind::SemiColon)?;
         if !self.kind_is(TokenKind::SemiColon) {
-            cond = Some(self.parse_exp_seq()?);
+            cond = Some(self.parse_exp()?);
         }
         self.eat(TokenKind::SemiColon)?;
         if !self.kind_is(TokenKind::RightParen) {
@@ -1225,7 +1245,7 @@ impl Parser {
             if !self.kind_is(TokenKind::Comma) {
                 break;
             }
-            self.eat(TokenKind::Comma);
+            self.eat(TokenKind::Comma)?;
         }
         Ok(ASTNode::new(var_decl_list))
     }
@@ -1243,7 +1263,7 @@ impl Parser {
                 }
                 if self.kind_is(TokenKind::Assign) {
                     self.eat(TokenKind::Assign)?;
-                    var_decl.set_initializer(self.parse_single_exp()?);
+                    var_decl.set_initializer(self.parse_exp()?);
                 }
                 Ok(ASTNode::new(var_decl))
             }
@@ -1267,12 +1287,18 @@ impl Parser {
     //     todo!()
     // }
 
-    // fn parse_return_stat(&mut self) -> Result<Option<ASTNode<ReturnStat>>, ParserError> {
-    //     self.eat(TokenKind::KeyWord(KeyWordKind::Return));
-    //     // todo
-    //     let eos = self.parse_eos()?;
-    //     todo!()
-    // }
+    /*
+    Return (singleExpression)? eos;
+    */
+    fn parse_return_stat(&mut self) -> Result<ASTNode<ReturnStat>, ParserError> {
+        let mut return_stat = ReturnStat::default();
+        self.eat(TokenKind::KeyWord(KeyWordKind::Return));
+        if !self.is_eos() {
+            return_stat.set_exp_seq(self.parse_exp()?);
+        }
+        self.eat_eos()?;
+        Ok(ASTNode::new(return_stat))
+    }
 
     // fn parse_yield_stat(&mut self) -> Result<Option<ASTNode<YieldStat>>, ParserError> {
     //     self.eat(TokenKind::KeyWord(KeyWordKind::Yield));
@@ -1377,9 +1403,28 @@ impl Parser {
     }
 
     // functionExpressionDeclaration:
-    // Function_ '(' formalParameterList? ')' typeAnnotation? '{' functionBody '}';
+    // Function_ Identifier? '(' formalParameterList? ')' typeAnnotation? '{' functionBody '}';
     fn parse_func_exp_declaration(&mut self) -> Result<ASTNode<FuncExpDecl>, ParserError> {
-        todo!()
+        let mut func_exp_decl = FuncExpDecl::default();
+        self.eat(TokenKind::KeyWord(KeyWordKind::Function))?;
+        if self.kind_is(TokenKind::Identifier) {
+            func_exp_decl.set_func_name(&self.extact_identifier()?);
+        }
+        self.eat(TokenKind::LeftParen)?;
+        if !self.kind_is(TokenKind::RightParen) {
+            func_exp_decl.set_formal_paras(self.parse_formal_parameters()?);
+        }
+        self.eat(TokenKind::RightParen)?;
+
+        if self.kind_is(TokenKind::Colon) {
+            func_exp_decl.set_type_annotation(self.parse_type_annotation()?);
+        }
+
+        self.eat(TokenKind::LeftBracket)?;
+        func_exp_decl.set_func_body(self.parse_func_body()?);
+        self.eat(TokenKind::RightBracket)?;
+
+        Ok(ASTNode::new(func_exp_decl))
     }
 
     /*
@@ -1588,149 +1633,13 @@ impl Parser {
     fn parse_exp_seq(&mut self) -> Result<ASTNode<ExpSeq>, ParserError> {
         let mut exp_seq = ExpSeq::default();
         loop {
-            let single_exp = self.parse_single_exp()?;
-            exp_seq.push_exp(single_exp);
+            let exp = self.parse_exp()?;
+            exp_seq.push_exp(exp);
             if !self.kind_is(TokenKind::Comma) {
                 return Ok(ASTNode::new(exp_seq));
             }
 
             self.eat(TokenKind::Comma)?;
-        }
-    }
-
-    /*
-    singleExpression:
-    functionExpressionDeclaration					# FunctionExpression
-    | arrowFunctionDeclaration						# ArrowFunctionExpression // ECMAScript 6
-    | singleExpression '[' expressionSequence ']'	# MemberIndexExpression
-    | singleExpression '.' Identifier				# MemberDotExpression
-    // Split to try `new Date()` first, then `new Date`.
-    | New singleExpression typeArguments? arguments						# NewExpression
-    | New singleExpression typeArguments?								# NewExpression
-    | singleExpression arguments										# funcCallExpression
-    | singleExpression '++'												# PostIncrementExpression
-    | singleExpression '--'												# PostDecreaseExpression
-    | Delete singleExpression											# DeleteExpression
-    | Typeof singleExpression											# TypeofExpression
-    | '++' singleExpression												# PreIncrementExpression
-    | '--' singleExpression												# PreDecreaseExpression
-    | '+' singleExpression												# UnaryPlusExpression
-    | '-' singleExpression												# UnaryMinusExpression
-    | '~' singleExpression												# BitNotExpression
-    | '!' singleExpression												# NotExpression
-    | singleExpression ('*' | '/' | '%') singleExpression				# MultiplicativeExpression
-    | singleExpression ('+' | '-') singleExpression						# AdditiveExpression
-    | singleExpression ('<<' | '>>' | '>>>') singleExpression			# BitShiftExpression
-    | singleExpression ('<' | '>' | '<=' | '>=') singleExpression		# RelationalExpression
-    | singleExpression Instanceof singleExpression						# InstanceofExpression
-    | singleExpression In singleExpression								# InExpression
-    | singleExpression ('==' | '!=' | '===' | '!==') singleExpression	# EqualityExpression
-    | singleExpression '&' singleExpression								# BitAndExpression
-    | singleExpression '^' singleExpression								# BitXOrExpression
-    | singleExpression '|' singleExpression								# BitOrExpression
-    | singleExpression '&&' singleExpression							# LogicalAndExpression
-    | singleExpression '||' singleExpression							# LogicalOrExpression
-    | singleExpression '?' singleExpression ':' singleExpression		# TernaryExpression
-    | singleExpression '=' singleExpression								# AssignmentExpression
-    | singleExpression assignmentOperator singleExpression				# AssignmentOperatorExpression
-    | This																# ThisExpression
-    | Identifier singleExpression?										# IdentifierExpression
-    | Super																# SuperExpression
-    | literal															# LiteralExpression
-    | arrayLiteral														# ArrayLiteralExpression
-    | objectLiteral														# ObjectLiteralExpression
-    | '(' expressionSequence ')'										# ParenthesizedExpression
-    | singleExpression As asExpression									# CastAsExpression;
-    */
-    fn parse_single_exp(&mut self) -> Result<ASTNode<Exp>, ParserError> {
-        // TODO: this is first to deal with
-        let mut exp_stack = Vec::<ASTNode<Exp>>::new();
-        let mut op_stack = Vec::<Op>::new();
-        loop {
-            let base_exp = self.parse_base_exp()?;
-            exp_stack.push(base_exp);
-            if !self.is_op() {
-                break;
-            }
-            let op = self.extract_op()?;
-            self.push_op(&mut op_stack, &mut exp_stack, op);
-        }
-        return self.extract_exp_from_stack(op_stack, exp_stack);
-    }
-
-    fn extract_op(&mut self) -> Result<Op, ParserError> {
-        match self.peek_kind() {
-            TokenKind::Plus => {
-                self.eat(TokenKind::Plus);
-                Ok(Op::Plus)
-            }
-            // TokenKind::Minus => self.eat(TokenKind::Minus),
-            // TokenKind::Multiply => self.eat(TokenKind::Multiply),
-            // TokenKind::Divide => self.eat(TokenKind::Divide),
-            _ => panic!(),
-        }
-    }
-
-    fn push_op(&mut self, op_stack: &mut Vec<Op>, exp_stack: &mut Vec<ASTNode<Exp>>, op: Op) {
-        loop {
-            if op_stack.is_empty() {
-                op_stack.push(op);
-                return;
-            }
-
-            // todo 增加优先级合并
-            let top_op = op_stack.last().unwrap();
-            if op.greater_than(top_op) {
-                op_stack.push(op);
-                return;
-            }
-            let top_op = op_stack.pop().unwrap();
-            let right = exp_stack.pop().unwrap();
-            let left = exp_stack.pop().unwrap();
-            let exp = Exp::BinaryExp(ASTNode::new(BinaryExp::new(left, top_op, right)));
-            exp_stack.push(ASTNode::new(exp))
-        }
-    }
-
-    fn extract_exp_from_stack(
-        &mut self,
-        mut op_stack: Vec<Op>,
-        mut exp_stack: Vec<ASTNode<Exp>>,
-    ) -> Result<ASTNode<Exp>, ParserError> {
-        if exp_stack.len() == 1 {
-            return Ok(exp_stack.pop().unwrap());
-        }
-
-        loop {
-            let right = exp_stack.pop().unwrap();
-            let left = exp_stack.pop().unwrap();
-            let op = op_stack.pop().unwrap();
-            let exp = Exp::BinaryExp(ASTNode::new(BinaryExp::new(left, op, right)));
-            exp_stack.push(ASTNode::new(exp));
-            if exp_stack.len() == 1 {
-                return Ok(exp_stack.pop().unwrap());
-            }
-        }
-    }
-
-    fn parse_base_exp(&mut self) -> Result<ASTNode<Exp>, ParserError> {
-        if self.is_literal() {
-            return Ok(ASTNode::new(Exp::Literal(ASTNode::new(
-                self.extact_literal()?,
-            ))));
-        }
-        if self.kind_is(TokenKind::KeyWord(KeyWordKind::This)) {
-            return Ok(ASTNode::new(Exp::This(ASTNode::new(KeyWordKind::This))));
-        }
-        if self.kind_is(TokenKind::KeyWord(KeyWordKind::Super)) {
-            return Ok(ASTNode::new(Exp::Super_(ASTNode::new(KeyWordKind::Super))));
-        }
-
-        match self.extact_identifier() {
-            Ok(identifier) => Ok(ASTNode::new(Exp::Identifier(ASTNode::new(
-                Identifier::new(&identifier),
-            )))),
-            Err(_) => Err(self.expect_error("expression", "identifier or literal")),
         }
     }
 
@@ -1839,7 +1748,7 @@ impl Parser {
 
             if self.kind_is(TokenKind::Assign) {
                 self.eat(TokenKind::Assign)?;
-                para.set_initializer(self.parse_single_exp()?);
+                para.set_initializer(self.parse_exp()?);
             }
         }
 

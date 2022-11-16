@@ -1,91 +1,91 @@
 graph vis {
-	node138[label="Program"]
-	node138 -- node137
-	node137[label="SourceElements"]
-	node137 -- node106
+	node110[label="Program"]
+	node110 -- node109
+	node109[label="SourceElements"]
+	node109 -- node77
+	node77[label="Stat"]
+	node77 -- node76
+	node76[label="ExportStat"]
+	node76 -- node65
+	node65[label="export", color=red]
+	node76 -- node75
+	node75[label="FromBlock"]
+	node75 -- node68
+	node68[label="ImportedAlias"]
+	node68 -- node67
+	node67[label="variable1"]
+	node68 -- node66
+	node66[label="name1"]
+	node75 -- node71
+	node71[label="ImportedAlias"]
+	node71 -- node70
+	node70[label="variable2"]
+	node71 -- node69
+	node69[label="name2"]
+	node75 -- node73
+	node73[label="ImportedAlias"]
+	node73 -- node72
+	node72[label="nameN"]
+	node75 -- node74
+	node74[label="\"abc mod\""]
+	node109 -- node90
+	node90[label="Stat"]
+	node90 -- node89
+	node89[label="ExportStat"]
+	node89 -- node78
+	node78[label="export", color=red]
+	node89 -- node79
+	node79[label="default", color=red]
+	node89 -- node88
+	node88[label="FromBlock"]
+	node88 -- node82
+	node82[label="ImportedAlias"]
+	node82 -- node81
+	node81[label="name1"]
+	node88 -- node84
+	node84[label="ImportedAlias"]
+	node84 -- node83
+	node83[label="name2"]
+	node88 -- node86
+	node86[label="ImportedAlias"]
+	node86 -- node85
+	node85[label="nameN"]
+	node88 -- node87
+	node87[label="\"xxx\""]
+	node109 -- node96
+	node96[label="Stat"]
+	node96 -- node95
+	node95[label="ExportStat"]
+	node95 -- node91
+	node91[label="export", color=red]
+	node95 -- node94
+	node94[label="FromBlock"]
+	node94 -- node92
+	node92[label="*"]
+	node94 -- node93
+	node93[label="\"abc mod\""]
+	node109 -- node101
+	node101[label="Stat"]
+	node101 -- node100
+	node100[label="ExportStat"]
+	node100 -- node97
+	node97[label="export", color=red]
+	node100 -- node99
+	node99[label="Stat"]
+	node99 -- node98
+	node98[label="Block"]
+	node109 -- node108
+	node108[label="Stat"]
+	node108 -- node107
+	node107[label="ExportStat"]
+	node107 -- node102
+	node102[label="export", color=red]
+	node107 -- node106
 	node106[label="Stat"]
 	node106 -- node105
-	node105[label="ExportStat"]
-	node105 -- node94
-	node94[label="export", color=red]
+	node105[label="Block"]
 	node105 -- node104
-	node104[label="FromBlock"]
-	node104 -- node97
-	node97[label="ImportedAlias"]
-	node97 -- node96
-	node96[label="variable1"]
-	node97 -- node95
-	node95[label="name1"]
-	node104 -- node100
-	node100[label="ImportedAlias"]
-	node100 -- node99
-	node99[label="variable2"]
-	node100 -- node98
-	node98[label="name2"]
-	node104 -- node102
-	node102[label="ImportedAlias"]
-	node102 -- node101
-	node101[label="nameN"]
+	node104[label="Stat"]
 	node104 -- node103
-	node103[label="\"abc mod\""]
-	node137 -- node118
-	node118[label="Stat"]
-	node118 -- node117
-	node117[label="ExportStat"]
-	node117 -- node107
-	node107[label="export", color=red]
-	node117 -- node108
-	node108[label="default", color=red]
-	node117 -- node116
-	node116[label="FromBlock"]
-	node116 -- node110
-	node110[label="ImportedAlias"]
-	node110 -- node109
-	node109[label="name1"]
-	node116 -- node112
-	node112[label="ImportedAlias"]
-	node112 -- node111
-	node111[label="name2"]
-	node116 -- node114
-	node114[label="ImportedAlias"]
-	node114 -- node113
-	node113[label="nameN"]
-	node116 -- node115
-	node115[label="\"xxx\""]
-	node137 -- node124
-	node124[label="Stat"]
-	node124 -- node123
-	node123[label="ExportStat"]
-	node123 -- node119
-	node119[label="export", color=red]
-	node123 -- node122
-	node122[label="FromBlock"]
-	node122 -- node120
-	node120[label="*"]
-	node122 -- node121
-	node121[label="\"abc mod\""]
-	node137 -- node129
-	node129[label="Stat"]
-	node129 -- node128
-	node128[label="ExportStat"]
-	node128 -- node125
-	node125[label="export", color=red]
-	node128 -- node127
-	node127[label="Stat"]
-	node127 -- node126
-	node126[label="Block"]
-	node137 -- node136
-	node136[label="Stat"]
-	node136 -- node135
-	node135[label="ExportStat"]
-	node135 -- node130
-	node130[label="export", color=red]
-	node135 -- node134
-	node134[label="Stat"]
-	node134 -- node133
-	node133[label="Block"]
-	node133 -- node132
-	node132[label="Stat"]
-	node132 -- node131
-	node131[label="EmptyStat"]
+	node103[label="EmptyStat"]
 }

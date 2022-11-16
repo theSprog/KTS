@@ -1,89 +1,89 @@
 graph vis {
-	node81[label="Program"]
-	node81 -- node44
-	node44[label="SourceElements"]
-	node44 -- node43
-	node43[label="Stat"]
-	node43 -- node42
-	node42[label="ClassDecl"]
-	node42 -- node1
-	node1[label="abstract", color=red]
-	node42 -- node2
-	node2[label="C"]
-	node42 -- node9
-	node9[label="ClassHeritage"]
-	node9 -- node5
-	node5[label="Extends"]
-	node5 -- node4
-	node4[label="TypeRef"]
-	node4 -- node3
-	node3[label="B"]
-	node9 -- node8
-	node8[label="Implement"]
-	node8 -- node7
-	node7[label="TypeRef"]
-	node7 -- node6
-	node6[label="X"]
-	node42 -- node41
-	node41[label="ClassTail"]
-	node41 -- node21
-	node21[label="ClassElement"]
-	node21 -- node20
-	node20[label="ConstructorDecl"]
-	node20 -- node10
-	node10[label="protected", color=red]
-	node20 -- node18
-	node18[label="FormalParas"]
-	node18 -- node12
-	node12[label="FormalPara"]
-	node12 -- node11
-	node11[label="a"]
-	node18 -- node14
-	node14[label="FormalPara"]
-	node14 -- node13
-	node13[label="b"]
-	node18 -- node16
-	node16[label="FormalPara"]
-	node16 -- node15
-	node15[label="c"]
-	node18 -- node17
-	node17[label="x"]
-	node20 -- node19
-	node19[label="FuncBody"]
-	node41 -- node29
-	node29[label="ClassElement"]
-	node29 -- node28
-	node28[label="PropertyMemberDecl"]
-	node28 -- node27
-	node27[label="PropertyDeclExp"]
-	node27 -- node22
-	node22[label="private", color=red]
-	node27 -- node23
-	node23[label="static", color=red]
-	node27 -- node24
-	node24[label="readonly", color=red]
-	node27 -- node25
-	node25[label="ident"]
-	node27 -- node26
-	node26[label="?"]
-	node41 -- node40
-	node40[label="ClassElement"]
-	node40 -- node39
-	node39[label="PropertyMemberDecl"]
-	node39 -- node38
-	node38[label="MethodDeclExp"]
-	node38 -- node32
-	node32[label="private", color=red]
-	node38 -- node33
-	node33[label="static", color=red]
-	node38 -- node34
-	node34[label="async", color=red]
-	node38 -- node35
-	node35[label="func"]
-	node38 -- node36
-	node36[label="CallSig"]
-	node36 -- node0
+	node155[label="Program"]
+	node155 -- node154
+	node154[label="SourceElements"]
+	node154 -- node153
+	node153[label="Stat"]
+	node153 -- node152
+	node152[label="ClassDecl"]
+	node152 -- node111
+	node111[label="abstract", color=red]
+	node152 -- node112
+	node112[label="C"]
+	node152 -- node119
+	node119[label="ClassHeritage"]
+	node119 -- node115
+	node115[label="Extends"]
+	node115 -- node114
+	node114[label="TypeRef"]
+	node114 -- node113
+	node113[label="B"]
+	node119 -- node118
+	node118[label="Implement"]
+	node118 -- node117
+	node117[label="TypeRef"]
+	node117 -- node116
+	node116[label="X"]
+	node152 -- node151
+	node151[label="ClassTail"]
+	node151 -- node131
+	node131[label="ClassElement"]
+	node131 -- node130
+	node130[label="ConstructorDecl"]
+	node130 -- node120
+	node120[label="protected", color=red]
+	node130 -- node128
+	node128[label="FormalParas"]
+	node128 -- node122
+	node122[label="FormalPara"]
+	node122 -- node121
+	node121[label="a"]
+	node128 -- node124
+	node124[label="FormalPara"]
+	node124 -- node123
+	node123[label="b"]
+	node128 -- node126
+	node126[label="FormalPara"]
+	node126 -- node125
+	node125[label="c"]
+	node128 -- node127
+	node127[label="x"]
+	node130 -- node129
+	node129[label="FuncBody"]
+	node151 -- node139
+	node139[label="ClassElement"]
+	node139 -- node138
+	node138[label="PropertyMemberDecl"]
+	node138 -- node137
+	node137[label="PropertyDeclExp"]
+	node137 -- node132
+	node132[label="private", color=red]
+	node137 -- node133
+	node133[label="static", color=red]
+	node137 -- node134
+	node134[label="readonly", color=red]
+	node137 -- node135
+	node135[label="ident"]
+	node137 -- node136
+	node136[label="?"]
+	node151 -- node150
+	node150[label="ClassElement"]
+	node150 -- node149
+	node149[label="PropertyMemberDecl"]
+	node149 -- node148
+	node148[label="MethodDeclExp"]
+	node148 -- node142
+	node142[label="private", color=red]
+	node148 -- node143
+	node143[label="static", color=red]
+	node148 -- node144
+	node144[label="async", color=red]
+	node148 -- node145
+	node145[label="func"]
+	node148 -- node146
+	node146[label="CallSig"]
+	node146 -- node0
 	node0[label="ParaList"]
-	node38 -- node37
-	node37[label="FuncBody"]
+	node148 -- node147
+	node147[label="FuncBody"]
 }

@@ -1,12 +1,10 @@
 use crate::ast::ASTNode;
 use crate::ast::AstGraph;
 use crate::ast::Visualizable;
-use crate::ast::AST;
 
 use super::decl::ObjectType;
 use super::identifier::Identifier;
 use super::parameter::ParaList;
-use super::parameter::TypeParas;
 
 #[derive(Visualizable, Default)]
 pub struct TypeRef {

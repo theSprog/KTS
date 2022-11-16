@@ -38,6 +38,8 @@ pub enum Stat {
     IfStat(ASTNode<IfStat>),
     IterStat(ASTNode<IterStat>),
 
+    ReturnStat(ASTNode<ReturnStat>),
+
     FuncDecl(ASTNode<FuncDecl>),
     FuncExpDecl(ASTNode<FuncExpDecl>),
     GenFuncDecl(ASTNode<GenFuncDecl>),
@@ -208,42 +210,47 @@ pub enum IterStat {
 #[derive(Visualizable)]
 pub struct DoStat {
     stat: ASTNode<Stat>,
-    exp_seq: ASTNode<ExpSeq>,
+    exp: ASTNode<Exp>,
 }
 impl DoStat {
-    pub(crate) fn new(stat: ASTNode<Stat>, exp_seq: ASTNode<ExpSeq>) -> Self {
-        Self { stat, exp_seq }
+    pub(crate) fn new(stat: ASTNode<Stat>, exp: ASTNode<Exp>) -> Self {
+        Self { stat, exp }
     }
 }
 
 #[derive(Visualizable)]
 pub struct WhileStat {
-    exp_seq: ASTNode<ExpSeq>,
+    exp: ASTNode<Exp>,
     stat: ASTNode<Stat>,
 }
 impl WhileStat {
-    pub(crate) fn new(exp_seq: ASTNode<ExpSeq>, stat: ASTNode<Stat>) -> Self {
-        Self { exp_seq, stat }
+    pub(crate) fn new(exp: ASTNode<Exp>, stat: ASTNode<Stat>) -> Self {
+        Self { exp, stat }
     }
 }
 
 #[derive(Visualizable, Default)]
 pub struct ForStat {
     init: Option<ASTNode<ExpSeq>>,
-    cond: Option<ASTNode<ExpSeq>>,
+    cond: Option<ASTNode<Exp>>,
     action: Option<ASTNode<ExpSeq>>,
+    stat: ASTNode<Stat>,
 }
 impl ForStat {
     pub(crate) fn set_init(&mut self, init: ASTNode<ExpSeq>) {
         self.init = Some(init);
     }
 
-    pub(crate) fn set_cond(&mut self, cond: ASTNode<ExpSeq>) {
+    pub(crate) fn set_cond(&mut self, cond: ASTNode<Exp>) {
         self.cond = Some(cond);
     }
 
     pub(crate) fn set_action(&mut self, action: ASTNode<ExpSeq>) {
         self.action = Some(action);
+    }
+
+    pub(crate) fn set_stat(&mut self, stat: ASTNode<Stat>) {
+        self.stat = stat;
     }
 }
 
@@ -251,7 +258,7 @@ impl ForStat {
 pub struct ForVarStat {
     var_modifier: ASTNode<VarModifier>,
     var_decl_list: ASTNode<VarDeclList>,
-    cond: Option<ASTNode<ExpSeq>>,
+    cond: Option<ASTNode<Exp>>,
     action: Option<ASTNode<ExpSeq>>,
     stat: ASTNode<Stat>,
 }
@@ -259,7 +266,7 @@ impl ForVarStat {
     pub(crate) fn new(
         var_modifier: ASTNode<VarModifier>,
         var_decl_list: ASTNode<VarDeclList>,
-        cond: Option<ASTNode<ExpSeq>>,
+        cond: Option<ASTNode<Exp>>,
         action: Option<ASTNode<ExpSeq>>,
         stat: ASTNode<Stat>,
     ) -> ForVarStat {
@@ -275,16 +282,12 @@ impl ForVarStat {
 #[derive(Visualizable)]
 pub struct ForInStat {
     var: ASTNode<Exp>,
-    exp_seq: ASTNode<ExpSeq>,
+    exp: ASTNode<Exp>,
     stat: ASTNode<Stat>,
 }
 impl ForInStat {
-    pub(crate) fn new(
-        var: ASTNode<Exp>,
-        exp_seq: ASTNode<ExpSeq>,
-        stat: ASTNode<Stat>,
-    ) -> ForInStat {
-        Self { var, exp_seq, stat }
+    pub(crate) fn new(var: ASTNode<Exp>, exp: ASTNode<Exp>, stat: ASTNode<Stat>) -> ForInStat {
+        Self { var, exp, stat }
     }
 }
 
@@ -343,8 +346,15 @@ pub struct ContinueStat {}
 #[derive(Visualizable)]
 pub struct BreakStat {}
 
-#[derive(Visualizable)]
-pub struct ReturnStat {}
+#[derive(Visualizable, Default)]
+pub struct ReturnStat {
+    exp: Option<ASTNode<Exp>>,
+}
+impl ReturnStat {
+    pub(crate) fn set_exp_seq(&mut self, exp: ASTNode<Exp>) {
+        self.exp = Some(exp);
+    }
+}
 
 #[derive(Visualizable)]
 pub struct YieldStat {}

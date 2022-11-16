@@ -1,5 +1,3 @@
-use colored::Colorize;
-
 // define lexical-related errors
 #[derive(Debug)]
 pub struct LexerError(String);

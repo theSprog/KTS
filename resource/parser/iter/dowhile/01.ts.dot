@@ -1,61 +1,51 @@
 graph vis {
-	node243[label="Program"]
-	node243 -- node239
-	node239[label="SourceElements"]
-	node239 -- node238
-	node238[label="Stat"]
-	node238 -- node237
-	node237[label="IterStat"]
-	node237 -- node236
-	node236[label="DoStat"]
-	node236 -- node228
-	node228[label="Stat"]
-	node228 -- node227
-	node227[label="Block"]
-	node227 -- node218
-	node218[label="Stat"]
-	node218 -- node217
-	node217[label="ExpSeq"]
-	node217 -- node212
-	node212[label="Exp"]
-	node212 -- node211
-	node211[label="1"]
-	node217 -- node214
-	node214[label="Exp"]
-	node214 -- node213
-	node213[label="2"]
-	node217 -- node216
-	node216[label="Exp"]
-	node216 -- node215
-	node215[label="3"]
-	node227 -- node226
-	node226[label="Stat"]
-	node226 -- node225
-	node225[label="ExpSeq"]
-	node225 -- node220
-	node220[label="Exp"]
-	node220 -- node219
-	node219[label="4"]
-	node225 -- node222
-	node222[label="Exp"]
-	node222 -- node221
-	node221[label="5"]
-	node225 -- node224
-	node224[label="Exp"]
-	node224 -- node223
-	node223[label="6"]
-	node236 -- node235
-	node235[label="ExpSeq"]
-	node235 -- node230
-	node230[label="Exp"]
-	node230 -- node229
-	node229[label="true", color=red]
-	node235 -- node232
-	node232[label="Exp"]
-	node232 -- node231
-	node231[label="true", color=red]
-	node235 -- node234
-	node234[label="Exp"]
-	node234 -- node233
-	node233[label="true", color=red]
+	node45[label="Program"]
+	node45 -- node44
+	node44[label="SourceElements"]
+	node44 -- node43
+	node43[label="Stat"]
+	node43 -- node42
+	node42[label="IterStat"]
+	node42 -- node41
+	node41[label="DoStat"]
+	node41 -- node38
+	node38[label="Stat"]
+	node38 -- node37
+	node37[label="Block"]
+	node37 -- node28
+	node28[label="Stat"]
+	node28 -- node27
+	node27[label="ExpSeq"]
+	node27 -- node22
+	node22[label="Exp"]
+	node22 -- node21
+	node21[label="1"]
+	node27 -- node24
+	node24[label="Exp"]
+	node24 -- node23
+	node23[label="2"]
+	node27 -- node26
+	node26[label="Exp"]
+	node26 -- node25
+	node25[label="3"]
+	node37 -- node36
+	node36[label="Stat"]
+	node36 -- node35
+	node35[label="ExpSeq"]
+	node35 -- node30
+	node30[label="Exp"]
+	node30 -- node29
+	node29[label="4"]
+	node35 -- node32
+	node32[label="Exp"]
+	node32 -- node31
+	node31[label="5"]
+	node35 -- node34
+	node34[label="Exp"]
+	node34 -- node33
+	node33[label="6"]
+	node41 -- node40
+	node40[label="Exp"]
+	node40 -- node39
+	node39[label="true", color=red]
 }

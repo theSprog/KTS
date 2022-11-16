@@ -85,6 +85,7 @@ fn derive_enum(input: &syn::DataEnum, ident: &Ident) -> TokenStream {
     .into()
 }
 
+// 并不是严格的蛇形，在末尾还加了一个 _, 目的是防止和关键字例如 type 冲突
 fn snake(input: &str) -> String {
     let mut out = String::default();
     let mut chars = input.chars();
@@ -98,5 +99,6 @@ fn snake(input: &str) -> String {
             false => out.push(ch),
         }
     }
+    out.push('_');
     out
 }

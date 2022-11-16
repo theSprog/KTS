@@ -1,111 +1,111 @@
 graph vis {
-	node442[label="Program"]
-	node442 -- node441
-	node441[label="SourceElements"]
-	node441 -- node412
-	node412[label="Stat"]
-	node412 -- node411
-	node411[label="InterfaceDecl"]
-	node411 -- node383
-	node383[label="A"]
-	node411 -- node410
-	node410[label="ObjectType"]
-	node410 -- node409
-	node409[label="TypeMember"]
-	node409 -- node408
-	node408[label="PropertySig"]
-	node408 -- node385
-	node385[label="next"]
-	node408 -- node407
-	node407[label="TypeAnnotation"]
-	node407 -- node406
-	node406[label="Type"]
-	node406 -- node405
-	node405[label="FunctionType"]
-	node405 -- node404
-	node404[label="Type"]
-	node404 -- node403
-	node403[label="PrimaryType"]
-	node403 -- node402
-	node402[label="ObjectType"]
-	node402 -- node393
-	node393[label="TypeMember"]
-	node393 -- node392
-	node392[label="PropertySig"]
-	node392 -- node387
-	node387[label="value"]
-	node392 -- node391
-	node391[label="TypeAnnotation"]
-	node391 -- node390
-	node390[label="Type"]
-	node390 -- node389
-	node389[label="PrimaryType"]
-	node389 -- node388
-	node388[label="any", color=red]
-	node402 -- node401
-	node401[label="TypeMember"]
-	node401 -- node400
-	node400[label="PropertySig"]
-	node400 -- node395
-	node395[label="done"]
-	node400 -- node399
-	node399[label="TypeAnnotation"]
-	node399 -- node398
-	node398[label="Type"]
-	node398 -- node397
-	node397[label="PrimaryType"]
-	node397 -- node396
-	node396[label="boolean", color=red]
-	node441 -- node440
-	node440[label="Stat"]
-	node440 -- node439
-	node439[label="InterfaceDecl"]
-	node439 -- node413
-	node413[label="A"]
-	node439 -- node438
-	node438[label="ObjectType"]
-	node438 -- node437
-	node437[label="TypeMember"]
-	node437 -- node436
-	node436[label="IndexSig"]
-	node436 -- node435
-	node435[label="a"]
-	node436 -- node414
-	node414[label="string", color=red]
-	node436 -- node434
-	node434[label="TypeAnnotation"]
-	node434 -- node433
-	node433[label="Type"]
-	node433 -- node432
-	node432[label="PrimaryType"]
-	node432 -- node431
-	node431[label="ObjectType"]
-	node431 -- node422
-	node422[label="TypeMember"]
-	node422 -- node421
-	node421[label="PropertySig"]
-	node421 -- node416
-	node416[label="value"]
-	node421 -- node420
-	node420[label="TypeAnnotation"]
-	node420 -- node419
-	node419[label="Type"]
-	node419 -- node418
-	node418[label="PrimaryType"]
-	node418 -- node417
-	node417[label="any", color=red]
-	node431 -- node430
-	node430[label="TypeMember"]
-	node430 -- node429
-	node429[label="PropertySig"]
-	node429 -- node424
-	node424[label="done"]
-	node429 -- node428
-	node428[label="TypeAnnotation"]
-	node428 -- node427
-	node427[label="Type"]
-	node427 -- node426
-	node426[label="PrimaryType"]
-	node426 -- node425
-	node425[label="boolean", color=red]
+	node663[label="Program"]
+	node663 -- node662
+	node662[label="SourceElements"]
+	node662 -- node633
+	node633[label="Stat"]
+	node633 -- node632
+	node632[label="InterfaceDecl"]
+	node632 -- node604
+	node604[label="A"]
+	node632 -- node631
+	node631[label="ObjectType"]
+	node631 -- node630
+	node630[label="TypeMember"]
+	node630 -- node629
+	node629[label="PropertySig"]
+	node629 -- node606
+	node606[label="next"]
+	node629 -- node628
+	node628[label="TypeAnnotation"]
+	node628 -- node627
+	node627[label="Type"]
+	node627 -- node626
+	node626[label="FunctionType"]
+	node626 -- node625
+	node625[label="Type"]
+	node625 -- node624
+	node624[label="PrimaryType"]
+	node624 -- node623
+	node623[label="ObjectType"]
+	node623 -- node614
+	node614[label="TypeMember"]
+	node614 -- node613
+	node613[label="PropertySig"]
+	node613 -- node608
+	node608[label="value"]
+	node613 -- node612
+	node612[label="TypeAnnotation"]
+	node612 -- node611
+	node611[label="Type"]
+	node611 -- node610
+	node610[label="PrimaryType"]
+	node610 -- node609
+	node609[label="any", color=red]
+	node623 -- node622
+	node622[label="TypeMember"]
+	node622 -- node621
+	node621[label="PropertySig"]
+	node621 -- node616
+	node616[label="done"]
+	node621 -- node620
+	node620[label="TypeAnnotation"]
+	node620 -- node619
+	node619[label="Type"]
+	node619 -- node618
+	node618[label="PrimaryType"]
+	node618 -- node617
+	node617[label="boolean", color=red]
+	node662 -- node661
+	node661[label="Stat"]
+	node661 -- node660
+	node660[label="InterfaceDecl"]
+	node660 -- node634
+	node634[label="A"]
+	node660 -- node659
+	node659[label="ObjectType"]
+	node659 -- node658
+	node658[label="TypeMember"]
+	node658 -- node657
+	node657[label="IndexSig"]
+	node657 -- node656
+	node656[label="a"]
+	node657 -- node635
+	node635[label="string", color=red]
+	node657 -- node655
+	node655[label="TypeAnnotation"]
+	node655 -- node654
+	node654[label="Type"]
+	node654 -- node653
+	node653[label="PrimaryType"]
+	node653 -- node652
+	node652[label="ObjectType"]
+	node652 -- node643
+	node643[label="TypeMember"]
+	node643 -- node642
+	node642[label="PropertySig"]
+	node642 -- node637
+	node637[label="value"]
+	node642 -- node641
+	node641[label="TypeAnnotation"]
+	node641 -- node640
+	node640[label="Type"]
+	node640 -- node639
+	node639[label="PrimaryType"]
+	node639 -- node638
+	node638[label="any", color=red]
+	node652 -- node651
+	node651[label="TypeMember"]
+	node651 -- node650
+	node650[label="PropertySig"]
+	node650 -- node645
+	node645[label="done"]
+	node650 -- node649
+	node649[label="TypeAnnotation"]
+	node649 -- node648
+	node648[label="Type"]
+	node648 -- node647
+	node647[label="PrimaryType"]
+	node647 -- node646
+	node646[label="boolean", color=red]
 }

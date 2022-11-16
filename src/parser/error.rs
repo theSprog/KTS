@@ -1,7 +1,5 @@
 use std::fmt::Display;
 
-use colored::Colorize;
-
 // define lexical-related errors
 #[derive(Debug)]
 pub struct ParserError(String);

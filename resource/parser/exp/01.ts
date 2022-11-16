@@ -1,0 +1,1 @@
+func_res = func(a, b + c * x[2][p * q(s)], d);

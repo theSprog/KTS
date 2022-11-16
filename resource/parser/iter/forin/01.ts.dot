@@ -1,25 +1,23 @@
 graph vis {
-	node366[label="Program"]
-	node366 -- node365
-	node365[label="SourceElements"]
-	node365 -- node364
-	node364[label="Stat"]
-	node364 -- node363
-	node363[label="IterStat"]
-	node363 -- node362
-	node362[label="ForInStat"]
-	node362 -- node356
-	node356[label="Exp"]
-	node356 -- node355
-	node355[label="true", color=red]
-	node362 -- node359
-	node359[label="ExpSeq"]
-	node359 -- node358
-	node358[label="Exp"]
-	node358 -- node357
-	node357[label="1"]
-	node362 -- node361
-	node361[label="Stat"]
-	node361 -- node360
-	node360[label="Block"]
+	node511[label="Program"]
+	node511 -- node510
+	node510[label="SourceElements"]
+	node510 -- node509
+	node509[label="Stat"]
+	node509 -- node508
+	node508[label="IterStat"]
+	node508 -- node507
+	node507[label="ForInStat"]
+	node507 -- node502
+	node502[label="Exp"]
+	node502 -- node501
+	node501[label="true", color=red]
+	node507 -- node504
+	node504[label="Exp"]
+	node504 -- node503
+	node503[label="1"]
+	node507 -- node506
+	node506[label="Stat"]
+	node506 -- node505
+	node505[label="Block"]
 }

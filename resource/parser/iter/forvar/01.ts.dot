@@ -1,47 +1,45 @@
 graph vis {
-	node351[label="Program"]
-	node351 -- node350
-	node350[label="SourceElements"]
-	node350 -- node349
-	node349[label="Stat"]
-	node349 -- node348
-	node348[label="IterStat"]
-	node348 -- node347
-	node347[label="ForVarStat"]
-	node347 -- node329
-	node329[label="let", color=red]
-	node347 -- node338
-	node338[label="VarDeclList"]
-	node338 -- node333
-	node333[label="VarDecl"]
-	node333 -- node330
-	node330[label="i"]
-	node333 -- node332
-	node332[label="Exp"]
-	node332 -- node331
-	node331[label="0"]
-	node338 -- node337
-	node337[label="VarDecl"]
-	node337 -- node334
-	node334[label="j"]
-	node337 -- node336
-	node336[label="Exp"]
-	node336 -- node335
-	node335[label="1"]
-	node347 -- node341
-	node341[label="ExpSeq"]
-	node341 -- node340
-	node340[label="Exp"]
-	node340 -- node339
-	node339[label="true", color=red]
-	node347 -- node344
-	node344[label="ExpSeq"]
-	node344 -- node343
-	node343[label="Exp"]
-	node343 -- node342
-	node342[label="123"]
-	node347 -- node346
-	node346[label="Stat"]
-	node346 -- node345
-	node345[label="Block"]
+	node497[label="Program"]
+	node497 -- node496
+	node496[label="SourceElements"]
+	node496 -- node495
+	node495[label="Stat"]
+	node495 -- node494
+	node494[label="IterStat"]
+	node494 -- node493
+	node493[label="ForVarStat"]
+	node493 -- node476
+	node476[label="let", color=red]
+	node493 -- node485
+	node485[label="VarDeclList"]
+	node485 -- node480
+	node480[label="VarDecl"]
+	node480 -- node477
+	node477[label="i"]
+	node480 -- node479
+	node479[label="Exp"]
+	node479 -- node478
+	node478[label="0"]
+	node485 -- node484
+	node484[label="VarDecl"]
+	node484 -- node481
+	node481[label="j"]
+	node484 -- node483
+	node483[label="Exp"]
+	node483 -- node482
+	node482[label="1"]
+	node493 -- node487
+	node487[label="Exp"]
+	node487 -- node486
+	node486[label="true", color=red]
+	node493 -- node490
+	node490[label="ExpSeq"]
+	node490 -- node489
+	node489[label="Exp"]
+	node489 -- node488
+	node488[label="123"]
+	node493 -- node492
+	node492[label="Stat"]
+	node492 -- node491
+	node491[label="Block"]
 }

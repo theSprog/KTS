@@ -1,4 +1,3 @@
-while (7 + 2 + 3) {
-    1 + 5;
-    5 + 6;
+while (true) {
+    func(a, b + c * x[2], d);
 }
