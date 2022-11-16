@@ -292,8 +292,6 @@ pub enum Exp {
 
     ParenExp(ASTNode<ParenExp>),
 
-    IndexExp(ASTNode<IndexExp>),
-
     ArgsExp(ASTNode<ArgsExp>),
 
     FunctionExp(ASTNode<FuncExpDecl>),
@@ -313,10 +311,36 @@ pub enum Exp {
     ArrayExp(ASTNode<ArrayExp>),
 }
 
-#[derive(Visualizable)]
 pub struct UnaryExp {
     op: ASTNode<Op>,
     exp: ASTNode<Exp>,
+}
+
+impl UnaryExp {
+    pub fn new(op: Op, exp: ASTNode<Exp>) -> Self {
+        Self {
+            op: ASTNode::new(op),
+            exp,
+        }
+    }
+}
+
+// 因为要区分前置和后置，手动实现 Visualizable
+impl Visualizable for UnaryExp {
+    fn draw(&self, self_id: usize, graph: &mut AstGraph) {
+        graph.put_node(self_id, "UnaryExp");
+
+        match *self.op.context {
+            Op::PostDec | Op::PostInc => {
+                self.exp.draw(self_id, graph);
+                self.op.draw(self_id, graph);
+            }
+            _ => {
+                self.op.draw(self_id, graph);
+                self.exp.draw(self_id, graph);
+            }
+        }
+    }
 }
 
 #[derive(Visualizable)]
@@ -386,17 +410,6 @@ impl ParenExp {
             exp,
             right_paren: ASTNode::new(TokenKind::RightParen),
         }
-    }
-}
-
-#[derive(Visualizable)]
-pub struct IndexExp {
-    index: ASTNode<Exp>,
-}
-
-impl IndexExp {
-    pub(crate) fn new(index: ASTNode<Exp>) -> Self {
-        Self { index }
     }
 }
 

@@ -69,7 +69,7 @@ impl Parser {
             }
             // 由于不是 single_exp_op 的都 break 了，此处提取出来的必是 single_exp_op
             let op = self.extract_op()?;
-            self.push_op(&mut op_stack, &mut exp_stack, op);
+            self.push_op(&mut op_stack, &mut exp_stack, op)?;
         }
         self.extract_exp_from_stack(op_stack, exp_stack)
     }
@@ -78,15 +78,21 @@ impl Parser {
     unary: base | prefixOp base | base postfixOp ;
     */
     fn parse_unary_exp(&mut self) -> Result<ASTNode<Exp>, ParserError> {
-        let mut exp_stack = Vec::<ASTNode<Exp>>::new();
-        let mut op_stack = Vec::<Op>::new();
-
+        let prefix = self.extract_prefix_op();
         let base_exp = self.parse_base_exp()?;
-        exp_stack.push(base_exp);
+        let postfix = self.extract_postfix_op();
 
-        // todo, 暂时假设无前缀和后缀
+        if prefix.is_none() && postfix.is_none() {
+            return Ok(base_exp);
+        }
 
-        self.extract_exp_from_stack(op_stack, exp_stack)
+        if let Some(fix_op) = prefix.xor(postfix) {
+            Ok(ASTNode::new(Exp::UnaryExp(ASTNode::new(UnaryExp::new(
+                fix_op, base_exp,
+            )))))
+        } else {
+            Err(self.report_error("just supports either postfix or prefix"))
+        }
     }
 
     // . [] ()
@@ -105,7 +111,7 @@ impl Parser {
                 ))));
                 self.eat(TokenKind::RightParen)?;
 
-                self.push_op(&mut op_stack, &mut exp_stack, Op::Call);
+                self.push_op(&mut op_stack, &mut exp_stack, Op::Call)?;
                 exp_stack.push(args_exp);
             }
             if self.kind_is(TokenKind::LeftBrace) {
@@ -113,14 +119,14 @@ impl Parser {
                 let index_exp = self.parse_exp()?;
                 self.eat(TokenKind::RightBrace)?;
 
-                self.push_op(&mut op_stack, &mut exp_stack, Op::Index);
+                self.push_op(&mut op_stack, &mut exp_stack, Op::Index)?;
                 exp_stack.push(index_exp);
             } else if self.kind_is(TokenKind::Dot) {
                 self.eat(TokenKind::Dot)?;
                 let other_atom_exp = self.parse_atom_exp()?;
                 exp_stack.push(other_atom_exp);
 
-                self.push_op(&mut op_stack, &mut exp_stack, Op::Dot);
+                self.push_op(&mut op_stack, &mut exp_stack, Op::Dot)?;
             } else {
                 break;
             }
@@ -140,12 +146,12 @@ impl Parser {
             )))),
 
             TokenKind::KeyWord(KeyWordKind::This) => {
-                self.eat(TokenKind::KeyWord(KeyWordKind::This));
+                self.eat(TokenKind::KeyWord(KeyWordKind::This))?;
                 Ok(ASTNode::new(Exp::This(ASTNode::new(KeyWordKind::This))))
             }
 
             TokenKind::KeyWord(KeyWordKind::Super) => {
-                self.eat(TokenKind::KeyWord(KeyWordKind::Super));
+                self.eat(TokenKind::KeyWord(KeyWordKind::Super))?;
                 Ok(ASTNode::new(Exp::Super(ASTNode::new(KeyWordKind::Super))))
             }
 
@@ -187,8 +193,38 @@ impl Parser {
         }
     }
 
+    fn extract_prefix_op(&mut self) -> Option<Op> {
+        match self.peek_kind() {
+            TokenKind::KeyWord(KeyWordKind::Delete) => Some(Op::Delete),
+            TokenKind::KeyWord(KeyWordKind::Typeof) => Some(Op::Typeof),
+            TokenKind::PlusPlus => Some(Op::PreInc),
+            TokenKind::MinusMinus => Some(Op::PreDec),
+            TokenKind::Plus => Some(Op::UnaryPlus),
+            TokenKind::Minus => Some(Op::UnaryMinus),
+            TokenKind::BitNot => Some(Op::BitNot),
+            TokenKind::Not => Some(Op::Not),
+            _ => None,
+        }
+        .map(|op| {
+            self.index += 1;
+            op
+        })
+    }
+
+    fn extract_postfix_op(&mut self) -> Option<Op> {
+        match self.peek_kind() {
+            TokenKind::PlusPlus => Some(Op::PostInc),
+            TokenKind::MinusMinus => Some(Op::PostDec),
+            _ => None,
+        }
+        .map(|op| {
+            self.index += 1;
+            op
+        })
+    }
+
     fn extract_op(&mut self) -> Result<Op, ParserError> {
-        let op = match self.peek_kind() {
+        match self.peek_kind() {
             TokenKind::Assign => Ok(Op::Assign),
             TokenKind::PlusAssign => Ok(Op::PlusAssign),
             TokenKind::MinusAssign => Ok(Op::MinusAssign),
@@ -226,19 +262,20 @@ impl Parser {
             TokenKind::LessThanEquals => Ok(Op::LessThanEquals),
             TokenKind::MoreThan => Ok(Op::MoreThan),
             TokenKind::GreaterThanEquals => Ok(Op::GreaterThanEquals),
-            TokenKind::KeyWord(KeyWordKind::In)=> Ok(Op::In),
-            TokenKind::KeyWord(KeyWordKind::Instanceof)=> Ok(Op::Instanceof),
-            TokenKind::KeyWord(KeyWordKind::As)=> Ok(Op::As),
-    
+            TokenKind::KeyWord(KeyWordKind::In) => Ok(Op::In),
+            TokenKind::KeyWord(KeyWordKind::Instanceof) => Ok(Op::Instanceof),
+            TokenKind::KeyWord(KeyWordKind::As) => Ok(Op::As),
+
             TokenKind::LeftShiftArithmetic => Ok(Op::LeftShiftArithmetic),
             TokenKind::RightShiftArithmetic => Ok(Op::RightShiftArithmetic),
             TokenKind::RightShiftLogical => Ok(Op::RightShiftLogical),
 
             _ => unreachable!(),
-        };
-
-        self.index += 1;
-        return op;
+        }
+        .map(|op| {
+            self.index += 1;
+            op
+        })
     }
 
     fn extract_exp_from_stack(
@@ -251,7 +288,7 @@ impl Parser {
                 return Ok(exp_stack.pop().unwrap());
             } else {
                 // op_stack is not empty
-                self.climb(&mut op_stack, &mut exp_stack);
+                self.climb(&mut op_stack, &mut exp_stack)?;
             }
         }
     }
@@ -275,7 +312,7 @@ impl Parser {
             }
 
             // 如果优先级爬山
-            self.climb(op_stack, exp_stack);
+            self.climb(op_stack, exp_stack)?;
         }
 
         Ok(())
@@ -320,7 +357,10 @@ impl Parser {
             }
 
             let op_colon = op_stack.pop().unwrap();
+            assert_eq!(op_colon, Op::Colon);
             let op_question = op_stack.pop().unwrap();
+            assert_eq!(op_question, Op::QuestionMark);
+
             let false_br = exp_stack.pop().unwrap();
             let true_br = exp_stack.pop().unwrap();
             let cond = exp_stack.pop().unwrap();
@@ -333,21 +373,6 @@ impl Parser {
 
         Ok(())
     }
-
-    // fn is_op(&mut self) -> bool {
-    //     // 注意 () 不是运算符
-    //     match self.peek_kind() {
-    //         // []
-    //         TokenKind::LeftBrace => true,
-    //         // .
-    //         TokenKind::Dot => true,
-
-    //         // 函数调用
-    //         TokenKind::LeftParen => true,
-
-    //         _ => false,
-    //     }
-    // }
 
     fn is_assign_op(&mut self) -> bool {
         match self.peek_kind() {
@@ -376,7 +401,7 @@ impl Parser {
             | TokenKind::Plus
             | TokenKind::Minus
             | TokenKind::Multiply
-            | TokenKind::Divide 
+            | TokenKind::Divide
 
             // || && | ^ &
             | TokenKind::Or
@@ -398,7 +423,7 @@ impl Parser {
             | TokenKind::KeyWord(KeyWordKind::In)
             | TokenKind::KeyWord(KeyWordKind::Instanceof)
             | TokenKind::KeyWord(KeyWordKind::As)
-            
+
             | TokenKind::LeftShiftArithmetic
             | TokenKind::RightShiftArithmetic
             | TokenKind::RightShiftLogical => true,

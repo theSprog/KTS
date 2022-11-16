@@ -1,87 +1,121 @@
 graph vis {
-	node43[label="Program"]
-	node43 -- node42
-	node42[label="SourceElements"]
-	node42 -- node41
-	node41[label="Stat"]
-	node41 -- node40
-	node40[label="IterStat"]
-	node40 -- node39
-	node39[label="ForStat"]
-	node39 -- node3
-	node3[label="ExpSeq"]
-	node3 -- node2
-	node2[label="Exp"]
-	node2 -- node1
-	node1[label="1"]
-	node39 -- node5
-	node5[label="Exp"]
-	node5 -- node4
-	node4[label="2"]
-	node39 -- node8
-	node8[label="ExpSeq"]
-	node8 -- node7
-	node7[label="Exp"]
-	node7 -- node6
-	node6[label="3"]
-	node39 -- node38
-	node38[label="Stat"]
-	node38 -- node37
-	node37[label="Block"]
-	node37 -- node17
-	node17[label="Stat"]
-	node17 -- node16
-	node16[label="ExpSeq"]
-	node16 -- node15
-	node15[label="Exp"]
-	node15 -- node14
-	node14[label="BinaryExp"]
-	node14 -- node10
-	node10[label="Exp"]
-	node10 -- node9
-	node9[label="4"]
-	node14 -- node13
-	node13[label="+"]
-	node14 -- node12
-	node12[label="Exp"]
-	node12 -- node11
-	node11[label="5"]
-	node37 -- node36
-	node36[label="Stat"]
-	node36 -- node35
-	node35[label="ExpSeq"]
-	node35 -- node34
-	node34[label="Exp"]
-	node34 -- node33
-	node33[label="BinaryExp"]
-	node33 -- node24
-	node24[label="Exp"]
-	node24 -- node23
-	node23[label="BinaryExp"]
-	node23 -- node19
-	node19[label="Exp"]
-	node19 -- node18
-	node18[label="6"]
-	node23 -- node22
-	node22[label="+"]
-	node23 -- node21
-	node21[label="Exp"]
-	node21 -- node20
-	node20[label="7"]
-	node33 -- node32
-	node32[label="+"]
-	node33 -- node31
-	node31[label="Exp"]
-	node31 -- node30
-	node30[label="BinaryExp"]
-	node30 -- node26
-	node26[label="Exp"]
-	node26 -- node25
-	node25[label="8"]
-	node30 -- node29
-	node29[label="*"]
-	node30 -- node28
-	node28[label="Exp"]
-	node28 -- node27
-	node27[label="9"]
+	node580[label="Program"]
+	node580 -- node579
+	node579[label="SourceElements"]
+	node579 -- node578
+	node578[label="Stat"]
+	node578 -- node577
+	node577[label="IterStat"]
+	node577 -- node576
+	node576[label="ForStat"]
+	node576 -- node523
+	node523[label="ExpSeq"]
+	node523 -- node522
+	node522[label="Exp"]
+	node522 -- node521
+	node521[label="1"]
+	node576 -- node525
+	node525[label="Exp"]
+	node525 -- node524
+	node524[label="2"]
+	node576 -- node528
+	node528[label="ExpSeq"]
+	node528 -- node527
+	node527[label="Exp"]
+	node527 -- node526
+	node526[label="3"]
+	node576 -- node575
+	node575[label="Stat"]
+	node575 -- node574
+	node574[label="Block"]
+	node574 -- node537
+	node537[label="Stat"]
+	node537 -- node536
+	node536[label="ExpSeq"]
+	node536 -- node535
+	node535[label="Exp"]
+	node535 -- node534
+	node534[label="BinaryExp"]
+	node534 -- node530
+	node530[label="Exp"]
+	node530 -- node529
+	node529[label="4"]
+	node534 -- node533
+	node533[label="+"]
+	node534 -- node532
+	node532[label="Exp"]
+	node532 -- node531
+	node531[label="5"]
+	node574 -- node573
+	node573[label="Stat"]
+	node573 -- node572
+	node572[label="ExpSeq"]
+	node572 -- node571
+	node571[label="Exp"]
+	node571 -- node570
+	node570[label="BinaryExp"]
+	node570 -- node554
+	node554[label="Exp"]
+	node554 -- node553
+	node553[label="BinaryExp"]
+	node553 -- node544
+	node544[label="Exp"]
+	node544 -- node543
+	node543[label="BinaryExp"]
+	node543 -- node539
+	node539[label="Exp"]
+	node539 -- node538
+	node538[label="6"]
+	node543 -- node542
+	node542[label="+"]
+	node543 -- node541
+	node541[label="Exp"]
+	node541 -- node540
+	node540[label="7"]
+	node553 -- node552
+	node552[label="+"]
+	node553 -- node551
+	node551[label="Exp"]
+	node551 -- node550
+	node550[label="BinaryExp"]
+	node550 -- node546
+	node546[label="Exp"]
+	node546 -- node545
+	node545[label="8"]
+	node550 -- node549
+	node549[label="*"]
+	node550 -- node548
+	node548[label="Exp"]
+	node548 -- node547
+	node547[label="9"]
+	node570 -- node569
+	node569[label="+"]
+	node570 -- node568
+	node568[label="Exp"]
+	node568 -- node567
+	node567[label="BinaryExp"]
+	node567 -- node556
+	node556[label="Exp"]
+	node556 -- node555
+	node555[label="func"]
+	node567 -- node566
+	node566[label="call"]
+	node567 -- node565
+	node565[label="Exp"]
+	node565 -- node564
+	node564[label="ArgsExp"]
+	node564 -- node563
+	node563[label="ExpSeq"]
+	node563 -- node558
+	node558[label="Exp"]
+	node558 -- node557
+	node557[label="1"]
+	node563 -- node560
+	node560[label="Exp"]
+	node560 -- node559
+	node559[label="2"]
+	node563 -- node562
+	node562[label="Exp"]
+	node562 -- node561
+	node561[label="3"]
 }

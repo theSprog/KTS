@@ -90,13 +90,15 @@ lazy_static! {
 pub(crate) struct Lexer<'a> {
     bytes: &'a [u8],
     line: usize,
+    filename: String,
 }
 
 impl<'a> Lexer<'a> {
-    pub(crate) fn new(chars: &'a str) -> Self {
+    pub(crate) fn new(chars: &'a str, filename: &str) -> Self {
         Self {
             bytes: chars.as_bytes(),
             line: 1,
+            filename: filename.to_owned(),
         }
     }
 
@@ -123,7 +125,10 @@ impl<'a> Lexer<'a> {
     }
 
     fn report_error(&self, s: &str) -> LexerError {
-        LexerError::new(format!("TokenError: Line[{}]: {}", self.line, s))
+        LexerError::new(format!(
+            "{}: TokenError: Line[{}]: {}",
+            self.filename, self.line, s
+        ))
     }
 
     pub(crate) fn next_token(&mut self) -> Result<Token, LexerError> {

@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
 // define lexical-related errors
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ParserError(String);
 impl ParserError {
     pub(crate) fn new(s: String) -> Self {

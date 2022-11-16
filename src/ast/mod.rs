@@ -128,21 +128,21 @@ impl AST {
 #[derive(Debug, Default)]
 pub struct ASTNode<T: Visualizable> {
     id: usize,
-    kind: Box<T>,
+    context: Box<T>,
 }
 
 impl<T: Visualizable> ASTNode<T> {
-    pub(crate) fn new(kind: T) -> ASTNode<T> {
+    pub(crate) fn new(context: T) -> ASTNode<T> {
         let self_id = AST::gen_id();
         ASTNode {
             id: self_id,
-            kind: Box::new(kind),
+            context: Box::new(context),
         }
     }
 
     fn draw(&self, father_id: usize, graph: &mut AstGraph) {
         graph.put_edge(father_id, self.id);
-        self.kind.draw(self.id, graph);
+        self.context.draw(self.id, graph);
     }
 }
 
@@ -150,7 +150,7 @@ impl ASTNode<Unknown> {
     pub fn dummy() -> ASTNode<Unknown> {
         ASTNode {
             id: 0,
-            kind: Box::new(Unknown::new()),
+            context: Box::new(Unknown::new()),
         }
     }
 }

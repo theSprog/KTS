@@ -1,73 +1,73 @@
 graph vis {
-	node93[label="Program"]
-	node93 -- node92
-	node92[label="SourceElements"]
-	node92 -- node91
-	node91[label="Stat"]
-	node91 -- node90
-	node90[label="ExpSeq"]
-	node90 -- node89
-	node89[label="Exp"]
-	node89 -- node88
-	node88[label="AssignExp"]
-	node88 -- node59
-	node59[label="Exp"]
-	node59 -- node58
-	node58[label="x"]
-	node88 -- node87
-	node87[label="="]
-	node88 -- node86
-	node86[label="Exp"]
-	node86 -- node85
-	node85[label="AssignExp"]
-	node85 -- node61
-	node61[label="Exp"]
-	node61 -- node60
-	node60[label="y"]
-	node85 -- node84
-	node84[label="+="]
-	node85 -- node83
-	node83[label="Exp"]
-	node83 -- node82
-	node82[label="AssignExp"]
-	node82 -- node63
-	node63[label="Exp"]
-	node63 -- node62
-	node62[label="z"]
-	node82 -- node81
-	node81[label="|="]
-	node82 -- node80
-	node80[label="Exp"]
-	node80 -- node79
-	node79[label="BinaryExp"]
-	node79 -- node70
-	node70[label="Exp"]
-	node70 -- node69
-	node69[label="BinaryExp"]
-	node69 -- node65
-	node65[label="Exp"]
-	node65 -- node64
-	node64[label="a"]
-	node69 -- node68
-	node68[label="+"]
-	node69 -- node67
-	node67[label="Exp"]
-	node67 -- node66
-	node66[label="b"]
-	node79 -- node78
-	node78[label="+"]
-	node79 -- node77
-	node77[label="Exp"]
-	node77 -- node76
-	node76[label="BinaryExp"]
-	node76 -- node72
-	node72[label="Exp"]
-	node72 -- node71
-	node71[label="c"]
-	node76 -- node75
-	node75[label="*"]
-	node76 -- node74
-	node74[label="Exp"]
-	node74 -- node73
-	node73[label="d"]
+	node453[label="Program"]
+	node453 -- node451
+	node451[label="SourceElements"]
+	node451 -- node450
+	node450[label="Stat"]
+	node450 -- node449
+	node449[label="ExpSeq"]
+	node449 -- node448
+	node448[label="Exp"]
+	node448 -- node447
+	node447[label="AssignExp"]
+	node447 -- node414
+	node414[label="Exp"]
+	node414 -- node413
+	node413[label="x"]
+	node447 -- node446
+	node446[label="="]
+	node447 -- node445
+	node445[label="Exp"]
+	node445 -- node444
+	node444[label="AssignExp"]
+	node444 -- node420
+	node420[label="Exp"]
+	node420 -- node419
+	node419[label="y"]
+	node444 -- node443
+	node443[label="+="]
+	node444 -- node442
+	node442[label="Exp"]
+	node442 -- node441
+	node441[label="AssignExp"]
+	node441 -- node422
+	node422[label="Exp"]
+	node422 -- node421
+	node421[label="z"]
+	node441 -- node440
+	node440[label="|="]
+	node441 -- node439
+	node439[label="Exp"]
+	node439 -- node438
+	node438[label="BinaryExp"]
+	node438 -- node429
+	node429[label="Exp"]
+	node429 -- node428
+	node428[label="BinaryExp"]
+	node428 -- node424
+	node424[label="Exp"]
+	node424 -- node423
+	node423[label="a"]
+	node428 -- node427
+	node427[label="+"]
+	node428 -- node426
+	node426[label="Exp"]
+	node426 -- node425
+	node425[label="b"]
+	node438 -- node437
+	node437[label="+"]
+	node438 -- node436
+	node436[label="Exp"]
+	node436 -- node435
+	node435[label="BinaryExp"]
+	node435 -- node431
+	node431[label="Exp"]
+	node431 -- node430
+	node430[label="c"]
+	node435 -- node434
+	node434[label="*"]
+	node435 -- node433
+	node433[label="Exp"]
+	node433 -- node432
+	node432[label="d"]
 }

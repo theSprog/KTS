@@ -1,8 +1,6 @@
 pub mod error;
 mod exp_parser;
 
-use std::string::ParseError;
-
 use crate::ast::ast_node::decorator::Decorators;
 use crate::ast::ast_node::exp;
 use crate::ast::ast_node::identifier;
@@ -36,6 +34,7 @@ use crate::{ast::AST, error::TSError};
 use self::error::ParserError;
 
 pub(crate) struct Parser {
+    filename: String,
     tokens: Vec<Token>,
     index: usize,
 
@@ -43,8 +42,9 @@ pub(crate) struct Parser {
     try_most_forward: usize,
 }
 impl Parser {
-    pub(crate) fn new(tokens: Vec<Token>) -> Self {
+    pub(crate) fn new(tokens: Vec<Token>, filename: &str) -> Self {
         Self {
+            filename: filename.to_owned(),
             tokens,
             index: 0,
             error_most_possible: None,
@@ -64,12 +64,12 @@ impl Parser {
         if self.index < self.try_most_forward {
             // 拦截 msg, 换上更准确的错误。
             // 但是实际上，更准确的那个错误也是从 else 的那个分支传出来的
-            let pre_err = self.error_most_possible.as_ref().unwrap();
-            return ParserError::new(format!("{}", pre_err));
+            return self.error_most_possible.clone().unwrap();
         }
 
         ParserError::new(format!(
-            "SyntaxError: near Line[{}]: {}",
+            "{}: SyntaxError: near Line[{}]: {}",
+            self.filename,
             cur.peek_line(),
             msg
         ))
@@ -79,7 +79,7 @@ impl Parser {
     fn expect_error(&mut self, stat: &str, expects: &str) -> ParserError {
         let cur = self.peek().unwrap();
         self.report_error(&format!(
-            "{}: Expect [{}] but got token [{}] ({})",
+            "{}: Expect [{}] but got token [ {} ] ({})",
             stat,
             expects,
             cur.peek_value(),
@@ -98,14 +98,17 @@ impl Parser {
                     self.index += 1;
                     Ok(())
                 }
-                false => match kind {
-                    TokenKind::SemiColon => Err(self.report_error(&format!(
-                        "you might forgot ';' in the end of line[{}]",
-                        self.tokens.get(self.index - 1).unwrap().peek_line()
-                    ))),
+                false => {
+                    if kind == TokenKind::SemiColon && self.is_new_line() {
+                        Err(self.report_error(&format!(
+                            "you might forgot ';' in the end of line[{}]",
+                            self.tokens.get(self.index - 1).unwrap().peek_line()
+                        )))
+                    }else {
+                        Err(self.expect_error("Token Dismatch", &kind.to_string()))
+                    }
 
-                    _ => Err(self.expect_error("Token Dismatch", &kind.to_string())),
-                },
+                }
             }
         } else {
             compiler_internal_error!("Can not eat token because there is no token");
@@ -132,7 +135,7 @@ impl Parser {
                 return Ok(());
             }
             return Ok(());
-        }else {
+        } else {
             Err(self.expect_error("EOS", "; or close-brace or newline"))
         }
     }
@@ -306,6 +309,14 @@ impl Parser {
         }
     }
 
+    fn pre_peek_kind(&self) -> TokenKind {
+        let pre_token = self.tokens.get(self.index - 1);
+        match pre_token {
+            Some(pre_token) => pre_token.peek_kind(),
+            None => TokenKind::EOF,
+        }
+    }
+
     fn prekind_is(&self, kind: TokenKind) -> bool {
         let pre_token = &self.tokens[self.index - 1];
         return pre_token.kind_is(kind);
@@ -444,6 +455,9 @@ impl Parser {
                 let exp_stat = self.parse_exp_seq()?;
                 if self.kind_is(TokenKind::SemiColon) {
                     self.eat(TokenKind::SemiColon)?;
+                }
+                if self.kind_is(TokenKind::Identifier) && ! self.is_new_line() {
+                    return Err(self.report_error("maybe you forgot [,] to separate expression ?"))
                 }
                 Ok(ASTNode::new(Stat::ExpStat(exp_stat)))
             }
@@ -1020,7 +1034,7 @@ impl Parser {
         '[' Identifier ':' (Number | String) ']' typeAnnotation;
     */
     fn parse_index_sig(&mut self) -> Result<ASTNode<IndexSig>, ParserError> {
-        let mut type_ = None;
+        let type_;
         self.eat(TokenKind::LeftBrace)?;
         let index_name = &self.extact_identifier()?;
         self.eat(TokenKind::Colon)?;
@@ -1037,6 +1051,7 @@ impl Parser {
         };
         self.eat(TokenKind::RightBrace)?;
         let type_annotation = self.parse_type_annotation()?;
+
         Ok(ASTNode::new(IndexSig::new(
             index_name,
             type_,
@@ -1167,7 +1182,7 @@ impl Parser {
     }
 
     /*
-    For '(' singleExpression In expressionSequence ')' statement	# ForInStatement;
+    For '(' identifier In expression ')' statement	# ForInStatement;
     */
     fn parse_forin_stat(&mut self) -> Result<ASTNode<ForInStat>, ParserError> {
         let var;
@@ -1175,7 +1190,7 @@ impl Parser {
         let stat;
         self.eat(TokenKind::KeyWord(KeyWordKind::For))?;
         self.eat(TokenKind::LeftParen)?;
-        var = self.parse_exp()?;
+        var = ASTNode::new( Exp::Identifier(ASTNode::new( Identifier::new(&self.extact_identifier()?))));
         self.eat(TokenKind::KeyWord(KeyWordKind::In))?;
         exp = self.parse_exp()?;
         self.eat(TokenKind::RightParen)?;
@@ -1292,7 +1307,7 @@ impl Parser {
     */
     fn parse_return_stat(&mut self) -> Result<ASTNode<ReturnStat>, ParserError> {
         let mut return_stat = ReturnStat::default();
-        self.eat(TokenKind::KeyWord(KeyWordKind::Return));
+        self.eat(TokenKind::KeyWord(KeyWordKind::Return))?;
         if !self.is_eos() {
             return_stat.set_exp_seq(self.parse_exp()?);
         }
@@ -1629,7 +1644,7 @@ impl Parser {
         Ok(ASTNode::new(formal_para))
     }
 
-    // singleExpression (',' singleExpression)*
+    // expression (',' expression)*
     fn parse_exp_seq(&mut self) -> Result<ASTNode<ExpSeq>, ParserError> {
         let mut exp_seq = ExpSeq::default();
         loop {

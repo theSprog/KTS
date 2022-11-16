@@ -1,85 +1,81 @@
 graph vis {
-	node417[label="Program"]
-	node417 -- node402
-	node402[label="SourceElements"]
-	node402 -- node401
-	node401[label="Stat"]
-	node401 -- node400
-	node400[label="IterStat"]
-	node400 -- node399
-	node399[label="WhileStat"]
-	node399 -- node363
-	node363[label="Exp"]
-	node363 -- node362
-	node362[label="true", color=red]
-	node399 -- node398
-	node398[label="Stat"]
-	node398 -- node397
-	node397[label="Block"]
-	node397 -- node396
-	node396[label="Stat"]
-	node396 -- node395
-	node395[label="ExpSeq"]
-	node395 -- node394
-	node394[label="Exp"]
-	node394 -- node393
-	node393[label="BinaryExp"]
-	node393 -- node365
-	node365[label="Exp"]
-	node365 -- node364
-	node364[label="func"]
-	node393 -- node392
-	node392[label="call"]
-	node393 -- node391
-	node391[label="Exp"]
-	node391 -- node390
-	node390[label="ArgsExp"]
-	node390 -- node389
-	node389[label="ExpSeq"]
-	node389 -- node367
-	node367[label="Exp"]
-	node367 -- node366
-	node366[label="a"]
-	node389 -- node386
-	node386[label="Exp"]
-	node386 -- node385
-	node385[label="BinaryExp"]
-	node385 -- node369
-	node369[label="Exp"]
-	node369 -- node368
-	node368[label="b"]
-	node385 -- node384
-	node384[label="+"]
-	node385 -- node383
-	node383[label="Exp"]
-	node383 -- node382
-	node382[label="BinaryExp"]
-	node382 -- node371
-	node371[label="Exp"]
-	node371 -- node370
-	node370[label="c"]
-	node382 -- node381
-	node381[label="*"]
-	node382 -- node380
-	node380[label="Exp"]
-	node380 -- node379
-	node379[label="BinaryExp"]
-	node379 -- node373
-	node373[label="Exp"]
-	node373 -- node372
-	node372[label="x"]
-	node379 -- node378
-	node378[label="[]"]
-	node379 -- node377
-	node377[label="Exp"]
-	node377 -- node376
-	node376[label="IndexExp"]
-	node376 -- node375
-	node375[label="Exp"]
-	node375 -- node374
-	node374[label="2"]
-	node389 -- node388
-	node388[label="Exp"]
-	node388 -- node387
-	node387[label="d"]
+	node520[label="Program"]
+	node520 -- node519
+	node519[label="SourceElements"]
+	node519 -- node518
+	node518[label="Stat"]
+	node518 -- node517
+	node517[label="IterStat"]
+	node517 -- node516
+	node516[label="WhileStat"]
+	node516 -- node482
+	node482[label="Exp"]
+	node482 -- node481
+	node481[label="true", color=red]
+	node516 -- node515
+	node515[label="Stat"]
+	node515 -- node514
+	node514[label="Block"]
+	node514 -- node513
+	node513[label="Stat"]
+	node513 -- node512
+	node512[label="ExpSeq"]
+	node512 -- node511
+	node511[label="Exp"]
+	node511 -- node510
+	node510[label="BinaryExp"]
+	node510 -- node484
+	node484[label="Exp"]
+	node484 -- node483
+	node483[label="func"]
+	node510 -- node509
+	node509[label="call"]
+	node510 -- node508
+	node508[label="Exp"]
+	node508 -- node507
+	node507[label="ArgsExp"]
+	node507 -- node506
+	node506[label="ExpSeq"]
+	node506 -- node486
+	node486[label="Exp"]
+	node486 -- node485
+	node485[label="a"]
+	node506 -- node503
+	node503[label="Exp"]
+	node503 -- node502
+	node502[label="BinaryExp"]
+	node502 -- node488
+	node488[label="Exp"]
+	node488 -- node487
+	node487[label="b"]
+	node502 -- node501
+	node501[label="+"]
+	node502 -- node500
+	node500[label="Exp"]
+	node500 -- node499
+	node499[label="BinaryExp"]
+	node499 -- node490
+	node490[label="Exp"]
+	node490 -- node489
+	node489[label="c"]
+	node499 -- node498
+	node498[label="*"]
+	node499 -- node497
+	node497[label="Exp"]
+	node497 -- node496
+	node496[label="BinaryExp"]
+	node496 -- node492
+	node492[label="Exp"]
+	node492 -- node491
+	node491[label="x"]
+	node496 -- node495
+	node495[label="[]"]
+	node496 -- node494
+	node494[label="Exp"]
+	node494 -- node493
+	node493[label="2"]
+	node506 -- node505
+	node505[label="Exp"]
+	node505 -- node504
+	node504[label="d"]
 }

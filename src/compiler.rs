@@ -1,23 +1,24 @@
 use crate::{error::TSError, lexer::Lexer, parser::Parser, utils::get_char_stream};
 
-pub struct Compiler<'a> {
-    filename: &'a str,
+pub struct Compiler {
+    filename: String,
 }
 
-impl<'a> Compiler<'a> {
-    pub fn new(filename: &'a str) -> Self {
-        Compiler { filename }
+impl Compiler {
+    pub fn new(filename: &str) -> Self {
+        Compiler {
+            filename: filename.to_owned(),
+        }
     }
 
     pub fn run(&self) -> Result<(), TSError> {
-        let char_stream = get_char_stream(self.filename);
-        let mut lexer = Lexer::new(&char_stream);
-        let mut parser = Parser::new(lexer.get_token_stream()?);
+        let char_stream = get_char_stream(&self.filename);
+        let mut lexer = Lexer::new(&char_stream, &self.filename);
+        let token_stream = lexer.get_token_stream()?;
+        let mut parser = Parser::new(token_stream, &self.filename);
         let mut ast = parser.parse()?;
         ast.vis(&format!("{}.dot", self.filename));
 
-        // let mut parser = Parser::new(tokens);
-        // parser.parse();
         Ok(())
     }
 }

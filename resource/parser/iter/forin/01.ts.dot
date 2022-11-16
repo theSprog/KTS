@@ -1,23 +1,57 @@
 graph vis {
-	node511[label="Program"]
-	node511 -- node510
-	node510[label="SourceElements"]
-	node510 -- node509
-	node509[label="Stat"]
-	node509 -- node508
-	node508[label="IterStat"]
-	node508 -- node507
-	node507[label="ForInStat"]
-	node507 -- node502
-	node502[label="Exp"]
-	node502 -- node501
-	node501[label="true", color=red]
-	node507 -- node504
-	node504[label="Exp"]
-	node504 -- node503
-	node503[label="1"]
-	node507 -- node506
-	node506[label="Stat"]
-	node506 -- node505
-	node505[label="Block"]
+	node655[label="Program"]
+	node655 -- node654
+	node654[label="SourceElements"]
+	node654 -- node653
+	node653[label="Stat"]
+	node653 -- node652
+	node652[label="IterStat"]
+	node652 -- node651
+	node651[label="ForInStat"]
+	node651 -- node629
+	node629[label="Exp"]
+	node629 -- node628
+	node628[label="a"]
+	node651 -- node648
+	node648[label="Exp"]
+	node648 -- node647
+	node647[label="BinaryExp"]
+	node647 -- node645
+	node645[label="Exp"]
+	node645 -- node644
+	node644[label="BinaryExp"]
+	node644 -- node631
+	node631[label="Exp"]
+	node631 -- node630
+	node630[label="b"]
+	node644 -- node643
+	node643[label="."]
+	node644 -- node633
+	node633[label="Exp"]
+	node633 -- node632
+	node632[label="c"]
+	node647 -- node646
+	node646[label="call"]
+	node647 -- node642
+	node642[label="Exp"]
+	node642 -- node641
+	node641[label="ArgsExp"]
+	node641 -- node640
+	node640[label="ExpSeq"]
+	node640 -- node635
+	node635[label="Exp"]
+	node635 -- node634
+	node634[label="1"]
+	node640 -- node637
+	node637[label="Exp"]
+	node637 -- node636
+	node636[label="2"]
+	node640 -- node639
+	node639[label="Exp"]
+	node639 -- node638
+	node638[label="3"]
+	node651 -- node650
+	node650[label="Stat"]
+	node650 -- node649
+	node649[label="Block"]
 }

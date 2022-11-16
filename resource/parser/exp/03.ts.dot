@@ -1,53 +1,53 @@
 graph vis {
-	node27[label="Program"]
-	node27 -- node26
-	node26[label="SourceElements"]
-	node26 -- node25
-	node25[label="Stat"]
-	node25 -- node24
-	node24[label="ExpSeq"]
-	node24 -- node23
-	node23[label="Exp"]
-	node23 -- node22
-	node22[label="BinaryExp"]
-	node22 -- node3
-	node3[label="Exp"]
-	node3 -- node2
-	node2[label="a"]
-	node22 -- node21
-	node21[label="||"]
-	node22 -- node20
-	node20[label="Exp"]
-	node20 -- node19
-	node19[label="BinaryExp"]
-	node19 -- node5
-	node5[label="Exp"]
-	node5 -- node4
-	node4[label="b"]
-	node19 -- node18
-	node18[label="&&"]
-	node19 -- node17
-	node17[label="Exp"]
-	node17 -- node16
-	node16[label="BinaryExp"]
-	node16 -- node7
-	node7[label="Exp"]
-	node7 -- node6
-	node6[label="c"]
-	node16 -- node15
-	node15[label="&"]
-	node16 -- node14
-	node14[label="Exp"]
-	node14 -- node13
-	node13[label="BinaryExp"]
-	node13 -- node9
-	node9[label="Exp"]
-	node9 -- node8
-	node8[label="d"]
-	node13 -- node12
-	node12[label="."]
-	node13 -- node11
-	node11[label="Exp"]
-	node11 -- node10
-	node10[label="ts"]
+	node480[label="Program"]
+	node480 -- node479
+	node479[label="SourceElements"]
+	node479 -- node478
+	node478[label="Stat"]
+	node478 -- node477
+	node477[label="ExpSeq"]
+	node477 -- node476
+	node476[label="Exp"]
+	node476 -- node475
+	node475[label="BinaryExp"]
+	node475 -- node456
+	node456[label="Exp"]
+	node456 -- node455
+	node455[label="a"]
+	node475 -- node474
+	node474[label="||"]
+	node475 -- node473
+	node473[label="Exp"]
+	node473 -- node472
+	node472[label="BinaryExp"]
+	node472 -- node458
+	node458[label="Exp"]
+	node458 -- node457
+	node457[label="b"]
+	node472 -- node471
+	node471[label="&&"]
+	node472 -- node470
+	node470[label="Exp"]
+	node470 -- node469
+	node469[label="BinaryExp"]
+	node469 -- node460
+	node460[label="Exp"]
+	node460 -- node459
+	node459[label="c"]
+	node469 -- node468
+	node468[label="&"]
+	node469 -- node467
+	node467[label="Exp"]
+	node467 -- node466
+	node466[label="BinaryExp"]
+	node466 -- node462
+	node462[label="Exp"]
+	node462 -- node461
+	node461[label="d"]
+	node466 -- node465
+	node465[label="."]
+	node466 -- node464
+	node464[label="Exp"]
+	node464 -- node463
+	node463[label="ts"]
 }
