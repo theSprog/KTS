@@ -2,7 +2,7 @@ pub mod ast_node;
 pub mod visulize;
 
 use lazy_static::lazy_static;
-use std::fs::File;
+use std::fs::{self, File};
 use std::io;
 use std::process::Command;
 use std::{
@@ -121,7 +121,11 @@ impl AST {
             .arg("-o")
             .arg(to_path.replace("dot", "png"))
             .spawn()
-            .expect("dot command failed to start");
+            .expect("dot command failed to start")
+            .wait()
+            .expect("dot command failed to run");
+
+        fs::remove_file(to_path).expect("Removing dot file failed");
     }
 }
 
@@ -142,6 +146,10 @@ impl<T: Visualizable> ASTNode<T> {
 
     fn draw(&self, father_id: usize, graph: &mut AstGraph) {
         graph.put_edge(father_id, self.id);
+
+        // if it is true, there must be something wrong
+        assert_ne!(self.id, 0);
+
         self.context.draw(self.id, graph);
     }
 }

@@ -2,7 +2,8 @@ use crate::ast::AstGraph;
 use visulize::Visualizable;
 
 use super::{
-    block::Block,
+    block::{Block, CaseBlock},
+    class::AccessModifier,
     decl::*,
     exp::{Exp, ExpSeq},
     identifier::Identifier,
@@ -35,12 +36,24 @@ pub enum Stat {
     InterfaceDecl(ASTNode<InterfaceDecl>),
     AbsDecl(ASTNode<AbsDecl>),
     NamespaceDecl(ASTNode<NamespaceDecl>),
+
+    VarStat(ASTNode<VarStat>),
+
     IfStat(ASTNode<IfStat>),
     IterStat(ASTNode<IterStat>),
 
+    ContinueStat(ASTNode<ContinueStat>),
+    BreakStat(ASTNode<BreakStat>),
     ReturnStat(ASTNode<ReturnStat>),
+    YieldStat(ASTNode<YieldStat>),
+    WithStat(ASTNode<WithStat>),
 
-    FuncDecl(ASTNode<FuncDecl>),
+    SwitchStat(ASTNode<SwitchStat>),
+    ThrowStat(ASTNode<ThrowStat>),
+
+    DebuggerStat(ASTNode<DebuggerStat>),
+    TryStat(ASTNode<TryStat>),
+
     FuncExpDecl(ASTNode<FuncExpDecl>),
     GenFuncDecl(ASTNode<GenFuncDecl>),
 
@@ -174,8 +187,38 @@ impl ExportStat {
 #[derive(Visualizable)]
 pub struct EmptyStat {}
 impl EmptyStat {
-    pub(crate) fn new() -> EmptyStat {
+    pub(crate) fn new() -> Self {
         Self {}
+    }
+}
+
+#[derive(Visualizable, Default)]
+pub struct VarStat {
+    access_modifier: Option<ASTNode<AccessModifier>>,
+    declare: Option<ASTNode<KeyWordKind>>,
+    var_modifier: Option<ASTNode<VarModifier>>,
+    readonly: Option<ASTNode<KeyWordKind>>,
+    var_decl_list: ASTNode<VarDeclList>,
+}
+impl VarStat {
+    pub(crate) fn set_access_modifier(&mut self, access_modifier: ASTNode<AccessModifier>) {
+        self.access_modifier = Some(access_modifier);
+    }
+
+    pub(crate) fn set_declare(&mut self) {
+        self.declare = Some(ASTNode::new(KeyWordKind::Declare));
+    }
+
+    pub(crate) fn set_var_modifier(&mut self, var_modifier: ASTNode<VarModifier>) {
+        self.var_modifier = Some(var_modifier);
+    }
+
+    pub(crate) fn set_readonly(&mut self) {
+        self.readonly = Some(ASTNode::new(KeyWordKind::ReadOnly));
+    }
+
+    pub(crate) fn set_var_decl_list(&mut self, var_decl_list: ASTNode<VarDeclList>) {
+        self.var_decl_list = var_decl_list;
     }
 }
 
@@ -340,39 +383,94 @@ impl VarDecl {
     }
 }
 
-#[derive(Visualizable)]
-pub struct ContinueStat {}
+#[derive(Visualizable, Default)]
+pub struct ContinueStat {
+    identifier: Option<ASTNode<Identifier>>,
+}
+impl ContinueStat {
+    pub(crate) fn set_identifier(&mut self, identifier: &str) {
+        self.identifier = Some(ASTNode::new(Identifier::new(identifier)));
+    }
+}
 
-#[derive(Visualizable)]
-pub struct BreakStat {}
+#[derive(Visualizable, Default)]
+pub struct BreakStat {
+    identifier: Option<ASTNode<Identifier>>,
+}
+impl BreakStat {
+    pub(crate) fn set_identifier(&mut self, identifier: &str) {
+        self.identifier = Some(ASTNode::new(Identifier::new(identifier)));
+    }
+}
 
 #[derive(Visualizable, Default)]
 pub struct ReturnStat {
-    exp: Option<ASTNode<Exp>>,
+    exp_seq: Option<ASTNode<ExpSeq>>,
 }
 impl ReturnStat {
-    pub(crate) fn set_exp_seq(&mut self, exp: ASTNode<Exp>) {
-        self.exp = Some(exp);
+    pub(crate) fn set_exp_seq(&mut self, exp_seq: ASTNode<ExpSeq>) {
+        self.exp_seq = Some(exp_seq);
+    }
+}
+
+#[derive(Visualizable, Default)]
+pub struct YieldStat {
+    exp_seq: Option<ASTNode<ExpSeq>>,
+}
+impl YieldStat {
+    pub(crate) fn set_exp_seq(&mut self, exp_seq: ASTNode<ExpSeq>) {
+        self.exp_seq = Some(exp_seq);
+    }
+}
+
+#[derive(Visualizable, Default)]
+pub struct WithStat {
+    exp_seq: ASTNode<ExpSeq>,
+    stat: ASTNode<Stat>,
+}
+impl WithStat {
+    pub(crate) fn new(exp_seq: ASTNode<ExpSeq>, stat: ASTNode<Stat>) -> Self {
+        Self { exp_seq, stat }
     }
 }
 
 #[derive(Visualizable)]
-pub struct YieldStat {}
+pub struct LabelledStat {
+    identifier: ASTNode<Identifier>,
+    stat: ASTNode<Stat>,
+}
+impl LabelledStat {
+    pub(crate) fn new(identifier: &str, stat: ASTNode<Stat>) -> Self {
+        Self {
+            identifier: ASTNode::new(Identifier::new(identifier)),
+            stat,
+        }
+    }
+}
 
 #[derive(Visualizable)]
-pub struct WithStat {}
-
-#[derive(Visualizable)]
-pub struct LabelledStat {}
-
-#[derive(Visualizable)]
-pub struct SwitchStat {}
+pub struct SwitchStat {
+    exp: ASTNode<Exp>,
+    cases_block: ASTNode<CaseBlock>,
+}
+impl SwitchStat {
+    pub(crate) fn new(exp: ASTNode<Exp>, cases_block: ASTNode<CaseBlock>) -> Self {
+        Self { exp, cases_block }
+    }
+}
 
 #[derive(Visualizable)]
 pub struct ThrowStat {}
 
-#[derive(Visualizable)]
-pub struct TryStat {}
+#[derive(Visualizable, Default)]
+pub struct TryStat {
+    block: ASTNode<Block>,
+}
+impl TryStat {
+    pub(crate) fn set_block(&mut self, block: ASTNode<Block>) {
+        self.block = block;
+    }
+}
 
 #[derive(Visualizable)]
 pub struct DebuggerStat {}

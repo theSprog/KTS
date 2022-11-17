@@ -65,6 +65,8 @@ mod test_parser {
         test_parser("resource/parser/exp/03.ts");
         test_parser("resource/parser/exp/04.ts");
         test_parser("resource/parser/exp/05.ts");
+        test_parser("resource/parser/exp/06.ts");
+        test_parser("resource/parser/exp/07.ts");
     }
 
     #[test]

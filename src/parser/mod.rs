@@ -1,5 +1,6 @@
 pub mod error;
 mod exp_parser;
+mod parser_util;
 
 use crate::ast::ast_node::decorator::Decorators;
 use crate::ast::ast_node::exp;
@@ -52,12 +53,6 @@ impl Parser {
         }
     }
 
-    pub(crate) fn show_tokens(&mut self) {
-        for token in &self.tokens {
-            println!("{}", token);
-        }
-    }
-
     // general error report
     fn report_error(&mut self, msg: &str) -> ParserError {
         let cur = self.peek().unwrap();
@@ -68,91 +63,14 @@ impl Parser {
         }
 
         ParserError::new(format!(
-            "{}: SyntaxError: near Line[{}]: {}",
+            "{}: SyntaxError: near Line[{}]:\n{}",
             self.filename,
             cur.peek_line(),
             msg
         ))
     }
 
-    // expect token error
-    fn expect_error(&mut self, stat: &str, expects: &str) -> ParserError {
-        let cur = self.peek().unwrap();
-        self.report_error(&format!(
-            "{}: Expect [{}] but got token [ {} ] ({})",
-            stat,
-            expects,
-            cur.peek_value(),
-            cur.peek_kind()
-        ))
-    }
-
-    fn unsupported_error(&mut self, unsupported: &str) -> ParserError {
-        self.report_error(&format!("Sorry, but now {} is not supported", unsupported))
-    }
-
-    fn eat(&mut self, kind: TokenKind) -> Result<(), ParserError> {
-        if let Some(token) = self.peek() {
-            match token.peek_kind() == kind {
-                true => {
-                    self.index += 1;
-                    Ok(())
-                }
-                false => {
-                    if kind == TokenKind::SemiColon && self.is_new_line() {
-                        Err(self.report_error(&format!(
-                            "you might forgot ';' in the end of line[{}]",
-                            self.tokens.get(self.index - 1).unwrap().peek_line()
-                        )))
-                    }else {
-                        Err(self.expect_error("Token Dismatch", &kind.to_string()))
-                    }
-
-                }
-            }
-        } else {
-            compiler_internal_error!("Can not eat token because there is no token");
-        }
-    }
-
-    fn is_eos(&mut self) -> bool {
-        match self.peek_kind() {
-        // 用分号可以  xxx; yyy
-            TokenKind::SemiColon 
-        // 收尾可以
-            | TokenKind::RightBracket
-        // 结尾也可以
-            | TokenKind::EOF => true,
-        // 换行也可以
-            _ => self.is_new_line()
-        }
-    }
-
-    fn eat_eos(&mut self) -> Result<(), ParserError> {
-        if self.is_eos() {
-            if self.peek_kind() == TokenKind::SemiColon {
-                self.eat(TokenKind::SemiColon)?;
-                return Ok(());
-            }
-            return Ok(());
-        } else {
-            Err(self.expect_error("EOS", "; or close-brace or newline"))
-        }
-    }
-
-    fn is_literal(&self) -> bool {
-        self.tokens
-            .get(self.index)
-            .map_or(false, |token| match token.peek_kind() {
-                TokenKind::String
-                | TokenKind::Number
-                | TokenKind::KeyWord(KeyWordKind::True)
-                | TokenKind::KeyWord(KeyWordKind::False)
-                | TokenKind::KeyWord(KeyWordKind::Null) => true,
-
-                _ => false,
-            })
-    }
+    
 
     /*
     尝试函数，选择一个分支进行尝试，成功则返回，出错则回溯
@@ -188,138 +106,6 @@ impl Parser {
                 None
             }
         }
-    }
-
-    fn peek(&self) -> Option<&Token> {
-        self.tokens.get(self.index)
-    }
-
-    // 注意，该函数在 extract 的同时也会 eat Token
-    fn extact_identifier(&mut self) -> Result<String, ParserError> {
-        let ident = match self.peek_kind() {
-            TokenKind::Identifier => {
-                self.eat(TokenKind::Identifier)?;
-                self.tokens
-                    .get(self.index - 1)
-                    .unwrap()
-                    .peek_value()
-                    .as_str()
-            }
-            _ => return Err(self.expect_error("Identifier", "identifier")),
-        };
-
-        Ok(String::from(ident))
-    }
-
-    // 注意，该函数在 extract 的同时也会 eat Token
-    fn extact_literal(&mut self) -> Result<Literal, ParserError> {
-        let literal = match self.peek_kind() {
-            TokenKind::String => Literal::String(self.peek().unwrap().peek_value().clone()),
-
-            TokenKind::Number => {
-                let string_value = self.peek().unwrap().peek_value().clone();
-                // 先处理其余进制
-                if string_value.starts_with("0") {
-                    Literal::Integer(match string_value.as_bytes() {
-                        // 只是单个 0
-                        [b'0'] => 0i32,
-
-                        // 特殊的八进制
-                        [b'0', b'0'..=b'7', _rest @ ..] => {
-                            i32::from_str_radix(&string_value[1..], 8).unwrap()
-                        }
-                        // 一般情况
-                        [f, s, rest @ ..] => {
-                            let rest = std::str::from_utf8(rest).unwrap();
-                            match (f, s) {
-                                (b'0', b'b' | b'B') => i32::from_str_radix(rest, 2).unwrap(),
-                                (b'0', b'o' | b'O') => i32::from_str_radix(rest, 8).unwrap(),
-                                (b'0', b'x' | b'X') => i32::from_str_radix(rest, 16).unwrap(),
-                                _ => return Err(self.report_error("Unrecognized number")),
-                            }
-                        }
-
-                        _ => compiler_internal_error!("Why it can be here?"),
-                    })
-                } else {
-                    // 再处理最常见的两种情况
-                    if let Ok(integer) = string_value.parse::<i32>() {
-                        Literal::Integer(integer)
-                    } else if let Ok(float) = string_value.parse::<f64>() {
-                        Literal::Number(float)
-                    } else {
-                        compiler_internal_error!("Why it can be here?")
-                    }
-                }
-            }
-
-            TokenKind::KeyWord(KeyWordKind::True) => Literal::Boolean(true),
-            TokenKind::KeyWord(KeyWordKind::False) => Literal::Boolean(false),
-            TokenKind::KeyWord(KeyWordKind::Null) => Literal::Null,
-
-            _ => return Err(self.expect_error("Literal", "literal")),
-        };
-
-        self.index += 1;
-        Ok(literal)
-    }
-
-    fn peek_kind(&self) -> TokenKind {
-        match self.peek() {
-            Some(token) => token.peek_kind(),
-            None => TokenKind::EOF,
-        }
-    }
-
-    fn look_ahead(&self) -> Option<TokenKind> {
-        match self.tokens.get(self.index + 1) {
-            Some(token) => Some(token.peek_kind()),
-            None => None,
-        }
-    }
-
-    fn look_ahead2(&self) -> Option<TokenKind> {
-        match self.tokens.get(self.index + 2) {
-            Some(token) => Some(token.peek_kind()),
-            None => None,
-        }
-    }
-
-    fn look_ahead3(&self) -> Option<TokenKind> {
-        match self.tokens.get(self.index + 3) {
-            Some(token) => Some(token.peek_kind()),
-            None => None,
-        }
-    }
-
-    fn is_new_line(&self) -> bool {
-        if let (Some(current), Some(pre)) =
-            (self.tokens.get(self.index), self.tokens.get(self.index - 1))
-        {
-            current.peek_line() > pre.peek_line()
-        } else {
-            false
-        }
-    }
-
-    fn kind_is(&self, kind: TokenKind) -> bool {
-        match self.peek() {
-            Some(token) => token.kind_is(kind),
-            None => false,
-        }
-    }
-
-    fn pre_peek_kind(&self) -> TokenKind {
-        let pre_token = self.tokens.get(self.index - 1);
-        match pre_token {
-            Some(pre_token) => pre_token.peek_kind(),
-            None => TokenKind::EOF,
-        }
-    }
-
-    fn prekind_is(&self, kind: TokenKind) -> bool {
-        let pre_token = &self.tokens[self.index - 1];
-        return pre_token.kind_is(kind);
     }
 
     pub(crate) fn parse(&mut self) -> Result<AST, TSError> {
@@ -361,8 +147,8 @@ impl Parser {
                 Ok(ASTNode::new(Stat::ImportStat(self.parse_import_stat()?)))
             }
             TokenKind::KeyWord(KeyWordKind::Export) => match self.look_ahead() {
-                Some(TokenKind::KeyWord(KeyWordKind::Declare))
-                | Some(TokenKind::KeyWord(KeyWordKind::Interface)) => Ok(ASTNode::new(
+                TokenKind::KeyWord(KeyWordKind::Declare)
+                | TokenKind::KeyWord(KeyWordKind::Interface) => Ok(ASTNode::new(
                     Stat::InterfaceDecl(self.parse_interface_decl()?),
                 )),
 
@@ -372,10 +158,18 @@ impl Parser {
 
             // abstract class or abstract ?
             TokenKind::KeyWord(KeyWordKind::Abstract) => match self.look_ahead() {
-                Some(TokenKind::KeyWord(KeyWordKind::Class)) => {
+                TokenKind::KeyWord(KeyWordKind::Class) => {
                     Ok(ASTNode::new(Stat::ClassDecl(self.parse_class_decl()?)))
                 }
-                _ => Ok(ASTNode::new(Stat::AbsDecl(self.parse_abstract_decl()?))),
+
+                TokenKind::Identifier => {
+                    Ok(ASTNode::new(Stat::AbsDecl(self.parse_abstract_decl()?)))
+                }
+
+                _ => {
+                    self.eat(TokenKind::KeyWord(KeyWordKind::Abstract))?;
+                    Err(self.expect_error("The abstract keyword can only modify class or identifier", "class or identifier"))
+                }
             },
 
             TokenKind::KeyWord(KeyWordKind::Class) => {
@@ -401,11 +195,11 @@ impl Parser {
                 Ok(ASTNode::new(Stat::IterStat(self.parse_iter_stat()?)))
             }
 
-            // TokenKind::KeyWord(KeyWordKind::Continue) => Ok(Some(self.parse_continue_stat()?)),
-            // TokenKind::KeyWord(KeyWordKind::Break) => Ok(Some(self.parse_break_stat()?)),
+            TokenKind::KeyWord(KeyWordKind::Continue) => Ok(ASTNode::new(Stat::ContinueStat(self.parse_continue_stat()?))),
+            TokenKind::KeyWord(KeyWordKind::Break) => Ok(ASTNode::new(Stat::BreakStat(self.parse_break_stat()?))),
             TokenKind::KeyWord(KeyWordKind::Return) => Ok(ASTNode::new(Stat::ReturnStat(self.parse_return_stat()?))),
-            // TokenKind::KeyWord(KeyWordKind::Yield) => Ok(Some(self.parse_yield_stat()?)),
-            // TokenKind::KeyWord(KeyWordKind::With) => Ok(Some(self.parse_with_stat()?)),
+            TokenKind::KeyWord(KeyWordKind::Yield) => Ok(ASTNode::new(Stat::YieldStat(self.parse_yield_stat()?))),
+            TokenKind::KeyWord(KeyWordKind::With) => Ok(ASTNode::new(Stat::WithStat(self.parse_with_stat()?))),
 
             // TokenKind::Identifier => match self.lookAhead() {
             //     Some(TokenKind::Colon) => Ok(Some(self.parse_labelled_stat()?)),
@@ -413,27 +207,31 @@ impl Parser {
             //     _ => Ok(Some(self.parse_abstract_declaration()?)),
             // },
 
-            // TokenKind::KeyWord(KeyWordKind::Switch) => Ok(Some(self.parse_switch_stat()?)),
-            // TokenKind::KeyWord(KeyWordKind::Throw) => Ok(Some(self.parse_throw_stat()?)),
-            // TokenKind::KeyWord(KeyWordKind::Try) => Ok(Some(self.parse_try_stat()?)),
-            // TokenKind::KeyWord(KeyWordKind::Debugger) => Ok(Some(self.parse_debugger_stat()?)),
-            // TokenKind::KeyWord(KeyWordKind::Function_) => match self.look_ahead() {
-            //     Some(TokenKind::Identifier) => match self.parse_func_declaration()? {
-            //         Some(func_decl) => Ok(Some(ASTNode::new(Stat::FuncDecl(func_decl)))),
-            //         None => Ok(None),
-            //     },
-            //     Some(TokenKind::LeftParen) => match self.parse_func_exp_declaration()? {
-            //         Some(func_exp_decl) => Ok(Some(ASTNode::new(Stat::FuncExpDecl(func_exp_decl)))),
-            //         None => Ok(None),
-            //     },
-            //     Some(TokenKind::Multiply) => match self.parse_generator_func_declaration()? {
-            //         Some(gen_func_decl) => Ok(Some(ASTNode::new(Stat::GenFuncDecl(gen_func_decl)))),
-            //         None => Ok(None),
-            //     },
-            //     _ => Err(self.expect_error("Func", "Identifier, ( or *")),
-            // },
+            TokenKind::KeyWord(KeyWordKind::Switch) => Ok(ASTNode::new(Stat::SwitchStat(self.parse_switch_stat()?))),
+            TokenKind::KeyWord(KeyWordKind::Throw) => Ok(ASTNode::new(Stat::ThrowStat(self.parse_throw_stat()?))),
+            TokenKind::KeyWord(KeyWordKind::Try) => Ok(ASTNode::new(Stat::TryStat(self.parse_try_stat()?))),
+            TokenKind::KeyWord(KeyWordKind::Debugger) => Ok(ASTNode::new(Stat::DebuggerStat(self.parse_debugger_stat()?))),
 
-            // todo how to deal with arrow functions
+
+            TokenKind::KeyWord(KeyWordKind::Function) => match self.look_ahead() {
+                TokenKind::Identifier
+                | TokenKind::LeftParen => Ok(ASTNode::new(Stat::FuncExpDecl(self.parse_func_exp_decl()?))),
+                
+                TokenKind::Multiply =>  Ok(ASTNode::new(Stat::GenFuncDecl(self.parse_generator_func_decl()?))),
+                
+                _ => Err(self.expect_error("Func", "Identifier, ( or *")),
+            },
+
+            TokenKind::KeyWord(KeyWordKind::Declare) 
+            | TokenKind:: KeyWord(KeyWordKind::Public)
+            | TokenKind:: KeyWord(KeyWordKind::Protected)
+            | TokenKind:: KeyWord(KeyWordKind::Private)
+            | TokenKind:: KeyWord(KeyWordKind::Var)
+            | TokenKind:: KeyWord(KeyWordKind::Let)
+            | TokenKind:: KeyWord(KeyWordKind::Const)
+            | TokenKind:: KeyWord(KeyWordKind::ReadOnly) => {
+                Ok(ASTNode::new(Stat::VarStat(self.parse_var_stat()?)))
+            }
             // todo how to deal with variable statement
             // todo how to deal with type aliases
             // todo how to deal with enum declarations
@@ -451,12 +249,15 @@ impl Parser {
             | TokenKind::Number
             | TokenKind::KeyWord(KeyWordKind::True)
             | TokenKind::KeyWord(KeyWordKind::False)
-            | TokenKind::KeyWord(KeyWordKind::Null) => {
+            | TokenKind::KeyWord(KeyWordKind::Null) 
+            | TokenKind::LeftBrace
+            => {
                 let exp_stat = self.parse_exp_seq()?;
                 if self.kind_is(TokenKind::SemiColon) {
                     self.eat(TokenKind::SemiColon)?;
                 }
-                if self.kind_is(TokenKind::Identifier) && ! self.is_new_line() {
+                // ; 之后是 Identifier 并且是在同一行 
+                if ! self.prekind_is(TokenKind::SemiColon) && self.kind_is(TokenKind::Identifier) && ! self.is_new_line() {
                     return Err(self.report_error("maybe you forgot [,] to separate expression ?"))
                 }
                 Ok(ASTNode::new(Stat::ExpStat(exp_stat)))
@@ -474,7 +275,7 @@ impl Parser {
             //     Ok(ASTNode::new(Stat::ExpStat(exp_stat)))
             // }
             _ => {
-                Err(self.report_error(&format!("Stat: Unexpected Token {}", self.peek().unwrap())))
+                Err(self.expect_error("Stat", "stat"))
             }
         }
     }
@@ -768,6 +569,14 @@ impl Parser {
                 self.parse_property_member_decl()?,
             ))),
 
+            // propertyMemberDeclaration -> getter_setter_decl_exp
+            TokenKind::KeyWord(KeyWordKind::Get) 
+            | TokenKind:: KeyWord(KeyWordKind::Set) => {
+                Ok(ASTNode::new(ClassElement::PropertyMemberDecl(
+                    self.parse_property_member_decl()?,
+                )))
+            }
+
             // indexMemberDeclaration
             TokenKind::LeftBrace => Ok(ASTNode::new(ClassElement::IndexMemberDecl(
                 self.parse_index_member_decl()?,
@@ -785,7 +594,7 @@ impl Parser {
             | TokenKind::KeyWord(KeyWordKind::Private)
             | TokenKind::KeyWord(KeyWordKind::Protected) => match self.look_ahead() {
                 // constructorDeclaration
-                Some(TokenKind::KeyWord(KeyWordKind::Constructor)) => Ok(ASTNode::new(
+                TokenKind::KeyWord(KeyWordKind::Constructor) => Ok(ASTNode::new(
                     ClassElement::ConstructorDecl(self.parse_cons_decl()?),
                 )),
 
@@ -991,25 +800,37 @@ impl Parser {
                 if self.kind_is(TokenKind::Colon) {
                     accesser.set_type_annotation(self.parse_type_annotation()?);
                 }
-                self.eat(TokenKind::LeftBracket)?;
-                accesser.set_func_body(self.parse_func_body()?);
-                self.eat(TokenKind::RightBracket)?;
-                Ok(ASTNode::new(Accesser::GetAccessor(accesser)))
+                if self.kind_is(TokenKind::SemiColon) {
+                    self.eat(TokenKind::SemiColon)?;
+                    Ok(ASTNode::new(Accesser::GetAccessor(accesser))) 
+                }else {
+                    self.eat(TokenKind::LeftBracket)?;
+                    accesser.set_func_body(self.parse_func_body()?);
+                    self.eat(TokenKind::RightBracket)?;
+                    Ok(ASTNode::new(Accesser::GetAccessor(accesser)))
+                }
             }
             TokenKind::KeyWord(KeyWordKind::Set) => {
                 let mut accesser = SetAccesser::default();
                 self.eat(TokenKind::KeyWord(KeyWordKind::Set))?;
                 accesser.set_identifier(&self.extact_identifier()?);
+
                 self.eat(TokenKind::LeftParen)?;
                 accesser.set_parameter(&self.extact_identifier()?);
                 if self.kind_is(TokenKind::Colon) {
                     accesser.set_type_annotation(self.parse_type_annotation()?);
                 }
                 self.eat(TokenKind::RightParen)?;
-                self.eat(TokenKind::LeftBracket)?;
-                accesser.set_func_body(self.parse_func_body()?);
-                self.eat(TokenKind::RightBracket)?;
-                Ok(ASTNode::new(Accesser::SetAccessor(accesser)))
+
+                if self.kind_is(TokenKind::SemiColon) {
+                    self.eat(TokenKind::SemiColon)?;
+                    Ok(ASTNode::new(Accesser::SetAccessor(accesser))) 
+                }else {
+                    self.eat(TokenKind::LeftBracket)?;
+                    accesser.set_func_body(self.parse_func_body()?);
+                    self.eat(TokenKind::RightBracket)?;
+                    Ok(ASTNode::new(Accesser::SetAccessor(accesser)))
+                }
             }
             _ => {
                 return Err(self.expect_error(
@@ -1060,15 +881,31 @@ impl Parser {
     }
 
     /*
-        abstractDeclaration: Abstract Identifier callSignature eos;
+        abstractDeclaration: Abstract (AbstratcMethod | AbstratcVar | (getAccessor | setAccessor)) eos;
+        
+        AbstratcMethod:
+            Identifier callSignature
+        AbstratcVar:
+            variableStatement
     */
     fn parse_abstract_decl(&mut self) -> Result<ASTNode<AbsDecl>, ParserError> {
-        let mut abs_decl = AbsDecl::default();
+        let abs_method;
         self.eat(TokenKind::KeyWord(KeyWordKind::Abstract))?;
-        abs_decl.set_identifier(&self.extact_identifier()?);
-        abs_decl.set_call_sig(self.parse_call_sig()?);
+
+        if self.kind_is(TokenKind::Identifier) && 
+            self.look_ahead() == TokenKind::LeftParen {
+                let identifier = &self.extact_identifier()?;
+                let call_sig = self.parse_call_sig()?;
+                abs_method = AbsMember::AbsMethod(ASTNode::new( AbsMethod::new(identifier, call_sig)));
+        }else if self.kind_is(TokenKind::KeyWord(KeyWordKind::Get)) 
+        || self.kind_is(TokenKind::KeyWord(KeyWordKind::Set)) {
+            abs_method = AbsMember::AbsAccesser(self.parse_accesser()?);
+        }else {
+            abs_method = AbsMember::AbsVar(ASTNode::new(AbsVar::new(self.parse_var_stat()?)));
+        }
+
         self.eat_eos()?;
-        Ok(ASTNode::new(abs_decl))
+        Ok(ASTNode::new(AbsDecl::new(abs_method)))
     }
 
     /*
@@ -1199,7 +1036,7 @@ impl Parser {
     }
 
     /*
-    For '(' varModifier variableDeclarationList SemiColon expressionSequence? SemiColon expressionSequence? ')' statement							# ForVarStatement
+    For '(' varModifier variableDeclarationList SemiColon expression? SemiColon expressionSequence? ')' statement							# ForVarStatement
     )?;
     */
     fn parse_forvar_stat(&mut self) -> Result<ASTNode<ForVarStat>, ParserError> {
@@ -1211,28 +1048,16 @@ impl Parser {
 
         self.eat(TokenKind::KeyWord(KeyWordKind::For))?;
         self.eat(TokenKind::LeftParen)?;
-        match self.peek_kind() {
-            TokenKind::KeyWord(KeyWordKind::Let) => {
-                var_modifier = ASTNode::new(VarModifier::Let);
-                self.eat(TokenKind::KeyWord(KeyWordKind::Let))?;
-            }
-            TokenKind::KeyWord(KeyWordKind::Var) => {
-                var_modifier = ASTNode::new(VarModifier::Var);
-                self.eat(TokenKind::KeyWord(KeyWordKind::Var))?;
-            }
-            TokenKind::KeyWord(KeyWordKind::Const) => {
-                var_modifier = ASTNode::new(VarModifier::Const);
-                self.eat(TokenKind::KeyWord(KeyWordKind::Const))?;
-            }
-            _ => return Err(self.expect_error("For Var Statement", "Let or Var or Const")),
-        }
 
+        var_modifier = self.parse_var_modifier()?;
         var_decl_list = self.parse_var_decl_list()?;
         self.eat(TokenKind::SemiColon)?;
+
         if !self.kind_is(TokenKind::SemiColon) {
             cond = Some(self.parse_exp()?);
         }
         self.eat(TokenKind::SemiColon)?;
+
         if !self.kind_is(TokenKind::RightParen) {
             action = Some(self.parse_exp_seq()?);
         }
@@ -1273,7 +1098,6 @@ impl Parser {
             TokenKind::Identifier => {
                 let mut var_decl = VarDecl::new(&self.extact_identifier()?);
                 if self.kind_is(TokenKind::Colon) {
-                    self.eat(TokenKind::Colon)?;
                     var_decl.set_type_annotation(self.parse_type_annotation()?);
                 }
                 if self.kind_is(TokenKind::Assign) {
@@ -1288,138 +1112,168 @@ impl Parser {
         }
     }
 
-    // fn parse_continue_stat(&mut self) -> Result<Option<ASTNode<ContinueStat>>, ParserError> {
-    //     self.eat(TokenKind::KeyWord(KeyWordKind::Continue));
-    //     // todo
-    //     let eos = self.parse_eos()?;
-    //     todo!()
-    // }
-
-    // fn parse_break_stat(&mut self) -> Result<Option<ASTNode<BreakStat>>, ParserError> {
-    //     self.eat(TokenKind::KeyWord(KeyWordKind::Break));
-    //     // todo
-    //     let eos = self.parse_eos()?;
-    //     todo!()
-    // }
+    /*
+    continueStatement: 
+        Continue (Identifier)? eos;
+    */
+    fn parse_continue_stat(&mut self) -> Result<ASTNode<ContinueStat>, ParserError> {
+        let mut continue_stat = ContinueStat::default();
+        self.eat(TokenKind::KeyWord(KeyWordKind::Continue))?;
+        if self.kind_is(TokenKind::Identifier) {
+            continue_stat.set_identifier(&self.extact_identifier()?);
+        }
+        let eos = self.eat_eos()?;
+        return Ok(ASTNode::new(continue_stat));
+    }
 
     /*
-    Return (singleExpression)? eos;
+    breakStatement: 
+        Break (Identifier)? eos;
+    */
+    fn parse_break_stat(&mut self) -> Result<ASTNode<BreakStat>, ParserError> {
+        let mut break_stat = BreakStat::default();
+        self.eat(TokenKind::KeyWord(KeyWordKind::Break))?;
+
+        if self.kind_is(TokenKind::Identifier) {
+            break_stat.set_identifier(&self.extact_identifier()?);
+        }
+        let eos = self.eat_eos()?;
+        return Ok(ASTNode::new(break_stat));
+    }
+
+    /*
+    Return (expressionSequence)? eos;
     */
     fn parse_return_stat(&mut self) -> Result<ASTNode<ReturnStat>, ParserError> {
         let mut return_stat = ReturnStat::default();
         self.eat(TokenKind::KeyWord(KeyWordKind::Return))?;
         if !self.is_eos() {
-            return_stat.set_exp_seq(self.parse_exp()?);
+            return_stat.set_exp_seq(self.parse_exp_seq()?);
         }
         self.eat_eos()?;
         Ok(ASTNode::new(return_stat))
     }
 
-    // fn parse_yield_stat(&mut self) -> Result<Option<ASTNode<YieldStat>>, ParserError> {
-    //     self.eat(TokenKind::KeyWord(KeyWordKind::Yield));
-    //     // todo
-    //     let eos = self.parse_eos()?;
-    //     todo!()
-    // }
+    /*
+    yieldStatement: Yield (expressionSequence)? eos;
+    */
+    fn parse_yield_stat(&mut self) -> Result<ASTNode<YieldStat>, ParserError> {
+        let mut yield_stat = YieldStat::default();
+        self.eat(TokenKind::KeyWord(KeyWordKind::Yield))?;
+        yield_stat.set_exp_seq(self.parse_exp_seq()?);
+        let eos = self.eat_eos()?;
+        Ok(ASTNode::new(yield_stat))
+    }
 
-    // //    : With '(' expressionSequence ')' statement
-    // fn parse_with_stat(&mut self) -> Result<Option<ASTNode<WithStat>>, ParserError> {
-    //     self.eat(TokenKind::KeyWord(KeyWordKind::With));
-    //     self.eat(TokenKind::LeftParen);
-    //     let exp_seq = self.parse_exp_seq()?;
-    //     self.eat(TokenKind::RightParen);
-    //     let stat = self.parse_stat()?;
-    //     todo!()
-    // }
+    //    : With '(' expressionSequence ')' statement
+    fn parse_with_stat(&mut self) -> Result<ASTNode<WithStat>, ParserError> {
+        self.eat(TokenKind::KeyWord(KeyWordKind::With))?;
+        self.eat(TokenKind::LeftParen)?;
+        let exp_seq = self.parse_exp_seq()?;
+        self.eat(TokenKind::RightParen)?;
+        let stat = self.parse_stat()?;
+        Ok(ASTNode::new(WithStat::new(exp_seq, stat)))
+    }
 
-    // // Identifier ':' statement
-    // fn parse_labelled_stat(&mut self) -> Result<Option<ASTNode<LabelledStat>>, ParserError> {
-    //     self.eat(TokenKind::Identifier);
-    //     self.eat(TokenKind::Colon);
-    //     let stat = self.parse_stat()?;
+    // Identifier ':' statement
+    fn parse_labelled_stat(&mut self) -> Result<ASTNode<LabelledStat>, ParserError> {
+        let identifier = &self.extact_identifier()?;
+        self.eat(TokenKind::Colon)?;
+        let stat = self.parse_stat()?;
+        Ok(ASTNode::new(LabelledStat::new(identifier, stat)))
+    }
 
-    //     todo!()
-    // }
+    // Switch '(' expression ')' caseBlock
+    fn parse_switch_stat(&mut self) -> Result<ASTNode<SwitchStat>, ParserError> {
+        self.eat(TokenKind::KeyWord(KeyWordKind::Switch))?;
+        self.eat(TokenKind::LeftParen)?;
+        let exp = self.parse_exp()?;
+        self.eat(TokenKind::RightParen)?;
+        let cases_block = self.parse_case_block()?;
+        Ok(ASTNode::new(SwitchStat::new(exp, cases_block)))
+    }
 
-    // // Switch '(' expressionSequence ')' caseBlock
-    // fn parse_switch_stat(&mut self) -> Result<Option<ASTNode<SwitchStat>>, ParserError> {
-    //     self.eat(TokenKind::KeyWord(KeyWordKind::Switch));
-    //     self.eat(TokenKind::LeftParen);
-    //     let exp_seq = self.parse_exp_seq()?;
-    //     self.eat(TokenKind::RightParen);
-    //     let cases = self.parse_case_block()?;
-    //     todo!()
-    // }
-
-    // //  '{' caseClauses? (defaultClause caseClauses?)? '}'
-    // fn parse_case_block(&mut self) -> Result<Option<ASTNode<CaseBlock>>, ParserError> {
-    //     self.eat(TokenKind::LeftBracket);
-    //     todo!();
-    //     self.eat(TokenKind::RightBracket);
-    // }
-
-    // // caseClause+
-    // fn parse_case_clause(&mut self) -> Result<Option<ASTNode<CaseClause>>, ParserError> {
-    //     todo!()
-    // }
-
-    // // Case expressionSequence ':' statementList?
-    // fn parse_case(&mut self) -> Result<Option<ASTNode<Case>>, ParserError> {
-    //     self.eat(TokenKind::KeyWord(KeyWordKind::Case));
-    //     let exp_seq = self.parse_exp_seq()?;
-    //     self.eat(TokenKind::Colon);
-
-    //     // wether statementList ?
-    //     let stats = self.parse_stat_list()?;
-    //     todo!()
-    // }
-
-    // // Throw {this.notLineTerminator()}? expressionSequence eos
-    // fn parse_throw_stat(&mut self) -> Result<Option<ASTNode<ThrowStat>>, ParserError> {
-    //     self.eat(TokenKind::KeyWord(KeyWordKind::Throw));
-    //     let exp_seq = self.parse_exp_seq()?;
-    //     let eos = self.parse_eos()?;
-    //     todo!()
-    // }
-
-    // // Try block (catchProduction finallyProduction? | finallyProduction)
-    // fn parse_try_stat(&mut self) -> Result<Option<ASTNode<TryStat>>, ParserError> {
-    //     self.eat(TokenKind::KeyWord(KeyWordKind::Try));
-    //     let block = self.parse_block()?;
-    //     todo!()
-    // }
-
-    // fn parse_debugger_stat(&self) -> Result<Option<ASTNode<DebuggerStat>>, ParserError> {
-    //     todo!()
-    // }
-
-    // functionDeclaration:
-    // Function_ Identifier callSignature (
-    //     ('{' functionBody '}')
-    //     | SemiColon
-    // );
-    fn parse_func_declaration(&mut self) -> Result<ASTNode<FuncDecl>, ParserError> {
-        let mut func_decl = FuncDecl::default();
-
-        // 函数声明
-        self.eat(TokenKind::KeyWord(KeyWordKind::Function))?;
-        func_decl.set_func_name(&self.extact_identifier()?);
-
-        func_decl.set_call_sig(self.parse_call_sig()?);
-        if self.kind_is(TokenKind::SemiColon) {
-            self.eat(TokenKind::SemiColon)?;
-        } else {
-            self.eat(TokenKind::LeftBracket)?;
-            func_decl.set_func_body(self.parse_func_body()?);
-            self.eat(TokenKind::RightBracket)?;
+    /*
+    caseBlock: '{' caseClauses? (defaultClause)? '}';
+    */ 
+    fn parse_case_block(&mut self) -> Result<ASTNode<CaseBlock>, ParserError> {
+        let mut case_block = CaseBlock::default();
+        self.eat(TokenKind::LeftBracket)?;
+        if self.kind_is(TokenKind::KeyWord(KeyWordKind::Case)) {
+            case_block.set_case_clauses(self.parse_case_clauses()?);
         }
 
-        Ok(ASTNode::new(func_decl))
+        if self.kind_is(TokenKind::KeyWord(KeyWordKind::Default)) {
+            case_block.set_default_clause(self.parse_default_clause()?);
+        }
+        self.eat(TokenKind::RightBracket)?;
+        Ok(ASTNode::new(case_block))
+    }
+
+    // caseClause+
+    fn parse_case_clauses(&mut self) -> Result<ASTNode<CaseClauses>, ParserError> {
+        let mut case_clauses = CaseClauses::default();
+        loop {
+            match self.peek_kind() {
+                TokenKind::KeyWord(KeyWordKind::Case) => case_clauses.push_case_clause(self.parse_case_clause()?),
+                _ => return Ok(ASTNode::new(case_clauses))
+            }
+        }
+    }
+
+    /*
+     * Case expression ':' sourceElements?
+    */
+    fn parse_case_clause(&mut self) -> Result<ASTNode<CaseClause>, ParserError> {
+        let mut stats = None;
+        self.eat(TokenKind::KeyWord(KeyWordKind::Case))?;
+        let exp = self.parse_exp()?;
+        self.eat(TokenKind::Colon)?;
+        if ! self.kind_is(TokenKind::KeyWord(KeyWordKind::Case)) {
+            stats = Some(self.parse_source_elements()?);
+        }
+        Ok(ASTNode::new(CaseClause::new(exp, stats)))
+    }
+
+    /*
+    defaultClause: Default ':' sourceElements?;
+    */
+    fn parse_default_clause(&mut self) -> Result<ASTNode<DefaultClause>, ParserError> {
+        let mut stats = None;
+        self.eat(TokenKind::KeyWord(KeyWordKind::Default))?;
+        self.eat(TokenKind::Colon)?;
+        if !self.kind_is(TokenKind::RightBracket) {
+            stats = Some(self.parse_source_elements()?);
+        }
+        Ok(ASTNode::new(DefaultClause::new(stats)))
+    }
+
+    // Throw {this.notLineTerminator()}? expressionSequence eos
+    fn parse_throw_stat(&mut self) -> Result<ASTNode<ThrowStat>, ParserError> {
+        self.eat(TokenKind::KeyWord(KeyWordKind::Throw))?;
+        let exp_seq = self.parse_exp_seq()?;
+        let eos = self.eat_eos()?;
+        todo!()
+    }
+
+    // Try block (catchProduction finallyProduction? | finallyProduction)
+    fn parse_try_stat(&mut self) -> Result<ASTNode<TryStat>, ParserError> {
+        let mut try_stat = TryStat::default();
+        self.eat(TokenKind::KeyWord(KeyWordKind::Try))?;
+        try_stat.set_block(self.parse_block()?);
+        if self.kind_is(TokenKind::KeyWord(KeyWordKind::Catch)) {
+            todo!()
+        }
+        todo!()
+    }
+
+    fn parse_debugger_stat(&mut self) -> Result<ASTNode<DebuggerStat>, ParserError> {
+        Err(self.unsupported_error("debugger"))
     }
 
     // functionExpressionDeclaration:
     // Function_ Identifier? '(' formalParameterList? ')' typeAnnotation? '{' functionBody '}';
-    fn parse_func_exp_declaration(&mut self) -> Result<ASTNode<FuncExpDecl>, ParserError> {
+    fn parse_func_exp_decl(&mut self) -> Result<ASTNode<FuncExpDecl>, ParserError> {
         let mut func_exp_decl = FuncExpDecl::default();
         self.eat(TokenKind::KeyWord(KeyWordKind::Function))?;
         if self.kind_is(TokenKind::Identifier) {
@@ -1443,6 +1297,49 @@ impl Parser {
     }
 
     /*
+    arrowFunctionDeclaration:
+	    Async? '(' formalParameterList? ')' typeAnnotation? '=>' arrowFunctionBody;
+    */
+    fn parse_arrow_func(&mut self) -> Result<ASTNode<ArrowFuncExpDecl>, ParserError> {
+        let mut arrow_func = ArrowFuncExpDecl::default();
+        if self.kind_is(TokenKind::KeyWord(KeyWordKind::Async)) {
+            self.eat(TokenKind::KeyWord(KeyWordKind::Async))?;
+            arrow_func.set_async();
+        }
+
+        match self.peek_kind() {
+            TokenKind::LeftParen => {
+                self.eat(TokenKind::LeftParen)?;
+                if ! self.kind_is(TokenKind::RightParen) {
+                    arrow_func.set_formal_paras(self.parse_formal_parameters()?);
+                }
+                self.eat(TokenKind::RightParen)?;
+            }
+            TokenKind::Identifier => {
+                let mut formal_para = FormalPara::default();
+                formal_para.set_identifier(&self.extact_identifier()?);
+                arrow_func.set_formal_para(ASTNode::new(formal_para));
+            }
+
+            _ => return Err(self.expect_error("arrow function", "identifier or (")),
+        }
+        
+        if self.kind_is(TokenKind::Colon) {
+            arrow_func.set_type_annotation(self.parse_type_annotation()?);
+        }
+        self.eat(TokenKind::ARROW)?;
+        if self.kind_is(TokenKind::LeftBracket) {
+            self.eat(TokenKind::LeftBracket)?;
+            arrow_func.set_func_body(self.parse_func_body()?);
+            self.eat(TokenKind::RightBracket)?;
+        } else {
+            arrow_func.set_exp_body(self.parse_exp()?);
+        }
+
+        Ok(ASTNode::new(arrow_func))
+    }
+
+    /*
     callSignature:
         typeParameters? '(' parameterList? ')' typeAnnotation?;
     */
@@ -1457,7 +1354,10 @@ impl Parser {
             | TokenKind::Identifier
             | TokenKind::LeftBracket
             | TokenKind::LeftBrace => call_sig.set_para_list(self.parse_para_list()?),
-            _ => (), // nothing to do
+            
+            // 即使 () 内什么也没有，也要去申请结点。
+            // 因为内容和结点是分离的
+            _ => call_sig.set_para_list(ASTNode::new(ParaList::default())), 
         }
         self.eat(TokenKind::RightParen)?;
         if self.kind_is(TokenKind::Colon) {
@@ -1553,7 +1453,7 @@ impl Parser {
     生成器函数声明
     Function_ '*' Identifier? '(' formalParameterList? ')' '{' functionBody '}'
      */
-    fn parse_generator_func_declaration(&mut self) -> Result<ASTNode<GenFuncDecl>, ParserError> {
+    fn parse_generator_func_decl(&mut self) -> Result<ASTNode<GenFuncDecl>, ParserError> {
         self.eat(TokenKind::KeyWord(KeyWordKind::Function))?;
         self.eat(TokenKind::Multiply)?;
         if self.kind_is(TokenKind::Identifier) {
@@ -1711,6 +1611,9 @@ impl Parser {
         }
     }
 
+    /*
+    注意调用 type_annotation 不能吃掉 :, : 是该函数内部吃掉的
+    */
     fn parse_type_annotation(&mut self) -> Result<ASTNode<TypeAnnotation>, ParserError> {
         self.eat(TokenKind::Colon)?;
         let type_ = self.parse_type()?;
@@ -2075,7 +1978,116 @@ impl Parser {
         }
     }
 
+    /*
+    variableStatement:
+	accessibilityModifier? varModifier? ReadOnly? variableDeclarationList SemiColon?
+	| Declare varModifier? variableDeclarationList SemiColon?;
+    */
+    fn parse_var_stat(&mut self)-> Result<ASTNode<VarStat>, ParserError>  {
+        if  self.kind_is(TokenKind::KeyWord(KeyWordKind::Public)) 
+        || self.kind_is(TokenKind::KeyWord(KeyWordKind::Protected)) 
+        || self.kind_is(TokenKind::KeyWord(KeyWordKind::Private)) 
+        || self.kind_is(TokenKind::KeyWord(KeyWordKind::ReadOnly)) {
+            return self.parse_var_stat1();
+        }
+
+        if self.kind_is(TokenKind::KeyWord(KeyWordKind::Declare)) 
+        {
+            return self.parse_var_stat2();
+        }
+        
+        if let Some(var_stat) = self.try_to(Parser::parse_var_stat1) {
+            return Ok(var_stat);
+        }else if let Some(var_stat) = self.try_to(Parser::parse_var_stat2) {
+            return Ok(var_stat);
+        }else {
+            Err(self.expect_error("unparseable Variable Statement", "variable statement"))
+        }
+    }
+
+    /*
+    accessibilityModifier? varModifier? ReadOnly? variableDeclarationList SemiColon?
+    */
+    fn parse_var_stat1(&mut self) -> Result<ASTNode<VarStat>, ParserError> {
+        let mut var_stat = VarStat::default();
+        match self.peek_kind() {
+            TokenKind::KeyWord(KeyWordKind::Public)
+            | TokenKind::KeyWord(KeyWordKind::Protected)
+            | TokenKind::KeyWord(KeyWordKind::Private) => {
+                var_stat.set_access_modifier(self.parse_access_modifier()?);
+            }
+            _ => (),
+        }
+
+        match self.peek_kind() {
+            TokenKind::KeyWord(KeyWordKind::Let)
+            | TokenKind::KeyWord(KeyWordKind::Var)
+            | TokenKind::KeyWord(KeyWordKind::Const) => {
+                var_stat.set_var_modifier(self.parse_var_modifier()?);
+            }
+            _ => ()
+        }
+
+        if self.kind_is(TokenKind::KeyWord(KeyWordKind::ReadOnly)) {
+            self.eat(TokenKind::KeyWord(KeyWordKind::ReadOnly))?;
+            var_stat.set_readonly();
+        }
+
+        var_stat.set_var_decl_list(self.parse_var_decl_list()?);
+
+        if self.kind_is(TokenKind::SemiColon) {
+            self.eat(TokenKind::SemiColon)?;
+        }
+
+        Ok(ASTNode::new(var_stat))
+    }
+
+    /*
+    Declare varModifier? variableDeclarationList SemiColon?;
+    */
+    fn parse_var_stat2(&mut self) -> Result<ASTNode<VarStat>, ParserError> {
+        let mut var_stat = VarStat::default();
+        if self.kind_is(TokenKind::KeyWord(KeyWordKind::Declare)) {
+            var_stat.set_declare();
+        }
+
+        match self.peek_kind() {
+            TokenKind::KeyWord(KeyWordKind::Let)
+            | TokenKind::KeyWord(KeyWordKind::Var)
+            | TokenKind::KeyWord(KeyWordKind::Const) => {
+                var_stat.set_var_modifier(self.parse_var_modifier()?);
+            }
+            _ => ()
+        }
+
+        var_stat.set_var_decl_list(self.parse_var_decl_list()?);
+
+        if self.kind_is(TokenKind::SemiColon) {
+            self.eat(TokenKind::SemiColon)?;
+        }
+
+        Ok(ASTNode::new(var_stat))
+    }
+
     fn parse_namespace_decl(&mut self) -> Result<ASTNode<NamespaceDecl>, ParserError> {
         todo!()
+    }
+
+    fn parse_var_modifier(&mut self) -> Result<ASTNode<VarModifier>, ParserError> {
+        match self.peek_kind() {
+            TokenKind::KeyWord(KeyWordKind::Let) => {
+                self.eat(TokenKind::KeyWord(KeyWordKind::Let))?;
+                Ok(ASTNode::new(VarModifier::Let))
+            }
+            TokenKind::KeyWord(KeyWordKind::Var) => {
+                self.eat(TokenKind::KeyWord(KeyWordKind::Var))?;
+                Ok(ASTNode::new(VarModifier::Var))
+            }
+            TokenKind::KeyWord(KeyWordKind::Const) => {
+                self.eat(TokenKind::KeyWord(KeyWordKind::Const))?;
+                Ok(ASTNode::new(VarModifier::Const))
+            }
+            _ => Err(self.expect_error("For Var Statement", "Let or Var or Const")),
+        }
     }
 }

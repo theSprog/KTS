@@ -1,14 +1,16 @@
 use crate::{
     ast::{visulize::Visualizable, ASTNode, AstGraph},
-    lexer::token_kind::KeyWordKind,
+    lexer::token_kind::{KeyWordKind, TokenKind},
 };
 
 use super::{
     body::FuncBody,
-    class::{ClassHeritage, ClassTail, Extends},
+    class::{ClassHeritage, ClassTail, Extends, Accesser},
+    exp::Exp,
     identifier::Identifier,
-    parameter::{FormalParas, TypeAnnotation, TypeParas},
+    parameter::{FormalPara, FormalParas, TypeAnnotation, TypeParas},
     sig::*,
+    stat::VarStat,
     type_::*,
 };
 
@@ -96,18 +98,53 @@ pub enum TypeMember {
     IndexSig(ASTNode<IndexSig>),
 }
 
-#[derive(Visualizable, Default)]
+#[derive(Visualizable)]
 pub struct AbsDecl {
+    abs_member: ASTNode<AbsMember>,
+}
+
+impl AbsDecl {
+    pub(crate) fn new(abs_member: AbsMember) -> Self {
+        Self {
+            abs_member: ASTNode::new(abs_member),
+        }
+    }
+}
+
+#[derive(Visualizable)]
+pub enum AbsMember {
+    AbsMethod(ASTNode<AbsMethod>),
+    AbsVar(ASTNode<AbsVar>),
+    AbsAccesser(ASTNode<Accesser>),
+}
+
+#[derive(Visualizable, Default)]
+pub struct AbsMethod {
     identifier: ASTNode<Identifier>,
     call_sig: ASTNode<CallSig>,
 }
-impl AbsDecl {
-    pub(crate) fn set_identifier(&mut self, identifier: &str) {
-        self.identifier = ASTNode::new(Identifier::new(identifier));
-    }
 
-    pub(crate) fn set_call_sig(&mut self, call_sig: ASTNode<CallSig>) {
-        self.call_sig = call_sig;
+impl AbsMethod {
+    pub(crate) fn set_identifier(&mut self, identifier: &str) {}
+
+    pub(crate) fn set_call_sig(&mut self, call_sig: ASTNode<CallSig>) {}
+
+    pub(crate) fn new(identifier: &str, call_sig: ASTNode<CallSig>) -> Self {
+        Self {
+            identifier: ASTNode::new(Identifier::new(identifier)),
+            call_sig,
+        }
+    }
+}
+
+#[derive(Visualizable)]
+pub struct AbsVar {
+    var_stat: ASTNode<VarStat>,
+}
+
+impl AbsVar {
+    pub(crate) fn new(var_stat: ASTNode<VarStat>) -> Self {
+        Self { var_stat }
     }
 }
 
@@ -153,6 +190,75 @@ impl FuncExpDecl {
 
     pub(crate) fn set_func_body(&mut self, func_body: ASTNode<FuncBody>) {
         self.func_body = func_body;
+    }
+}
+
+#[derive(Default)]
+pub struct ArrowFuncExpDecl {
+    async_: Option<ASTNode<KeyWordKind>>,
+    formal_paras: Option<ASTNode<FormalParas>>,
+    type_annotation: Option<ASTNode<TypeAnnotation>>,
+    func_body: ASTNode<ArrowFuncBody>,
+}
+impl ArrowFuncExpDecl {
+    pub(crate) fn set_async(&mut self) {
+        self.async_ = Some(ASTNode::new(KeyWordKind::Async));
+    }
+
+    pub(crate) fn set_formal_paras(&mut self, formal_paras: ASTNode<FormalParas>) {
+        assert!(self.formal_paras.is_none());
+
+        self.formal_paras = Some(formal_paras);
+    }
+
+    pub(crate) fn set_formal_para(&mut self, formal_para: ASTNode<FormalPara>) {
+        assert!(self.formal_paras.is_none());
+
+        let mut formal_paras = FormalParas::default();
+        formal_paras.push_formal_para(formal_para);
+        self.formal_paras = Some(ASTNode::new(formal_paras));
+    }
+
+    pub(crate) fn set_type_annotation(&mut self, type_annotation: ASTNode<TypeAnnotation>) {
+        self.type_annotation = Some(type_annotation);
+    }
+
+    pub(crate) fn set_func_body(&mut self, func_body: ASTNode<FuncBody>) {
+        self.func_body = ASTNode::new(ArrowFuncBody::FuncBody(func_body));
+    }
+
+    pub(crate) fn set_exp_body(&mut self, exp: ASTNode<Exp>) {
+        self.func_body = ASTNode::new(ArrowFuncBody::ExpBody(exp));
+    }
+}
+
+impl Visualizable for ArrowFuncExpDecl {
+    fn draw(&self, self_id: usize, graph: &mut AstGraph) {
+        graph.put_node(self_id, "ArrowFuncExpDecl");
+
+        self.formal_paras.draw(self_id, graph);
+        self.type_annotation.draw(self_id, graph);
+        self.func_body.draw(self_id, graph);
+        // match &*self.func_body.context {
+        //     ArrowFuncBody::FuncBody(func_body) => {
+        //         func_body.draw(self_id, graph);
+        //     }
+        //     ArrowFuncBody::ExpBody(exp) => {
+        //         exp.draw(self_id, graph);
+        //     }
+        // }
+    }
+}
+
+#[derive(Visualizable)]
+enum ArrowFuncBody {
+    FuncBody(ASTNode<FuncBody>),
+    ExpBody(ASTNode<Exp>),
+}
+
+impl Default for ArrowFuncBody {
+    fn default() -> Self {
+        ArrowFuncBody::FuncBody(ASTNode::new(FuncBody::default()))
     }
 }
 

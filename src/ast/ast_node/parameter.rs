@@ -67,10 +67,6 @@ impl TypeAnnotation {
     }
 }
 
-// pub enum ParaList {
-//     RestPara(ASTNode<RestPara>),
-//     Paras(ASTNode<Paras>),
-// }
 #[derive(Visualizable, Default)]
 pub struct ParaList {
     paras: Vec<ASTNode<Para>>,

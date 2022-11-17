@@ -5,12 +5,13 @@ use crate::ast::AstGraph;
 use crate::ast::{visulize::Visualizable, ASTNode};
 use crate::lexer::token_kind::{KeyWordKind, TokenKind};
 
-#[derive(Default, Visualizable)]
+#[derive(Visualizable, Default)]
 pub struct CallSig {
     type_paras: Option<ASTNode<TypeParas>>,
     para_list: ASTNode<ParaList>,
     type_annotation: Option<ASTNode<TypeAnnotation>>,
 }
+
 impl CallSig {
     pub(crate) fn set_type_paras(&mut self, type_paras: ASTNode<TypeParas>) {
         self.type_paras = Some(type_paras);

@@ -1,9 +1,10 @@
 use std::cmp::PartialOrd;
 use std::collections::HashMap;
 
-use super::decl::FuncExpDecl;
+use super::decl::{FuncExpDecl, ArrowFuncExpDecl};
 use super::identifier::Identifier;
 use super::literal::Literal;
+use super::type_::TypeArgs;
 use crate::ast::Visualizable;
 
 use crate::ast::{ASTNode, AstGraph};
@@ -290,11 +291,14 @@ pub enum Exp {
 
     AssignExp(ASTNode<AssignExp>),
 
-    ParenExp(ASTNode<ParenExp>),
+    GroupExp(ASTNode<GroupExp>),
 
     ArgsExp(ASTNode<ArgsExp>),
 
     FunctionExp(ASTNode<FuncExpDecl>),
+    ArrowFuncExp(ASTNode<ArrowFuncExpDecl>),
+
+    NewExp(ASTNode<NewExp>),
 
     // 单个字面量，如 1, "abc"
     Literal(ASTNode<Literal>),
@@ -398,12 +402,12 @@ impl TernaryExp {
 }
 
 #[derive(Visualizable)]
-pub struct ParenExp {
+pub struct GroupExp {
     left_paren: ASTNode<TokenKind>,
     exp: ASTNode<Exp>,
     right_paren: ASTNode<TokenKind>,
 }
-impl ParenExp {
+impl GroupExp {
     pub(crate) fn new(exp: ASTNode<Exp>) -> Self {
         Self {
             left_paren: ASTNode::new(TokenKind::LeftParen),
@@ -413,14 +417,35 @@ impl ParenExp {
     }
 }
 
-#[derive(Visualizable)]
+#[derive(Visualizable, Default)]
 pub struct ArgsExp {
-    args: ASTNode<ExpSeq>,
+    args: Option<ASTNode<ExpSeq>>,
 }
 
 impl ArgsExp {
     pub(crate) fn new(args: ASTNode<ExpSeq>) -> Self {
-        Self { args }
+        Self { args: Some(args) }
+    }
+}
+
+#[derive(Visualizable, Default)]
+pub struct NewExp {
+    class_name: ASTNode<Identifier>,
+    type_args: Option<ASTNode<TypeArgs>>,
+    args: Option<ASTNode<ExpSeq>>,
+}
+
+impl NewExp {
+    pub(crate) fn set_class_name(&mut self, class_name: &str) {
+        self.class_name = ASTNode::new(Identifier::new(class_name));
+    }
+
+    pub(crate) fn set_type_args(&mut self, type_args: ASTNode<TypeArgs>) {
+        self.type_args = Some(type_args);
+    }
+
+    pub(crate) fn set_args(&mut self, exps: ASTNode<ExpSeq>) {
+        self.args = Some(exps);
     }
 }
 

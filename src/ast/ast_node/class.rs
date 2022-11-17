@@ -198,7 +198,7 @@ impl MethodDeclExp {
 pub struct GetterSetterDeclExp {
     access_modifier: Option<ASTNode<AccessModifier>>,
     static_: Option<ASTNode<KeyWordKind>>,
-    accesser: ASTNode<Accesser>,
+    accesser: Option<ASTNode<Accesser>>,
 }
 impl GetterSetterDeclExp {
     pub(crate) fn new(
@@ -212,7 +212,7 @@ impl GetterSetterDeclExp {
                 true => Some(ASTNode::new(KeyWordKind::Static)),
                 false => None,
             },
-            accesser,
+            accesser: Some(accesser),
         }
     }
 }
@@ -223,13 +223,14 @@ pub enum Accesser {
     GetAccessor(GetAccesser),
 }
 
-#[derive(Visualizable, Default)]
+#[derive(Default, Visualizable)]
 pub struct SetAccesser {
     identifier: ASTNode<Identifier>,
     parameter: ASTNode<Identifier>,
     type_annotation: Option<ASTNode<TypeAnnotation>>,
-    func_body: ASTNode<FuncBody>,
+    func_body: Option<ASTNode<FuncBody>>,
 }
+
 impl SetAccesser {
     pub(crate) fn set_identifier(&mut self, identifier: &str) {
         self.identifier = ASTNode::new(Identifier::new(identifier));
@@ -244,7 +245,7 @@ impl SetAccesser {
     }
 
     pub(crate) fn set_func_body(&mut self, func_body: ASTNode<FuncBody>) {
-        self.func_body = func_body;
+        self.func_body = Some(func_body);
     }
 }
 
@@ -252,7 +253,7 @@ impl SetAccesser {
 pub struct GetAccesser {
     identifier: ASTNode<Identifier>,
     type_annotation: Option<ASTNode<TypeAnnotation>>,
-    func_body: ASTNode<FuncBody>,
+    func_body: Option<ASTNode<FuncBody>>,
 }
 impl GetAccesser {
     pub(crate) fn set_identifier(&mut self, identifier: &str) {
@@ -264,7 +265,7 @@ impl GetAccesser {
     }
 
     pub(crate) fn set_func_body(&mut self, func_body: ASTNode<FuncBody>) {
-        self.func_body = func_body;
+        self.func_body = Some(func_body);
     }
 }
 

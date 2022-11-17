@@ -1,6 +1,6 @@
 use crate::{
     ast::{
-        ast_node::{exp::*, identifier::Identifier},
+        ast_node::{decl::ArrowFuncExpDecl, exp::*, identifier::Identifier},
         ASTNode,
     },
     lexer::token_kind::{KeyWordKind, TokenKind},
@@ -58,8 +58,8 @@ impl Parser {
         | single_exp ? single_exp : single_exp   // 三元表达式
     */
     fn parse_single_exp(&mut self) -> Result<ASTNode<Exp>, ParserError> {
-        let mut exp_stack = Vec::<ASTNode<Exp>>::new();
-        let mut op_stack = Vec::<Op>::new();
+        let mut exp_stack = Vec::new();
+        let mut op_stack = Vec::new();
 
         loop {
             let unary_exp = self.parse_unary_exp()?;
@@ -97,18 +97,24 @@ impl Parser {
 
     // . [] ()
     fn parse_base_exp(&mut self) -> Result<ASTNode<Exp>, ParserError> {
-        let mut exp_stack = Vec::<ASTNode<Exp>>::new();
-        let mut op_stack = Vec::<Op>::new();
+        let mut exp_stack = Vec::new();
+        let mut op_stack = Vec::new();
 
         let atom_exp = self.parse_atom_exp()?;
         exp_stack.push(atom_exp);
 
         loop {
             if self.kind_is(TokenKind::LeftParen) {
+                let args_exp;
                 self.eat(TokenKind::LeftParen)?;
-                let args_exp = ASTNode::new(Exp::ArgsExp(ASTNode::new(ArgsExp::new(
-                    self.parse_exp_seq()?,
-                ))));
+                // 函数调用有可能无参数
+                if self.kind_is(TokenKind::RightParen) {
+                    args_exp = ASTNode::new(Exp::ArgsExp(ASTNode::new(ArgsExp::default())));
+                } else {
+                    args_exp = ASTNode::new(Exp::ArgsExp(ASTNode::new(ArgsExp::new(
+                        self.parse_exp_seq()?,
+                    ))));
+                }
                 self.eat(TokenKind::RightParen)?;
 
                 self.push_op(&mut op_stack, &mut exp_stack, Op::Call)?;
@@ -124,9 +130,9 @@ impl Parser {
             } else if self.kind_is(TokenKind::Dot) {
                 self.eat(TokenKind::Dot)?;
                 let other_atom_exp = self.parse_atom_exp()?;
-                exp_stack.push(other_atom_exp);
 
                 self.push_op(&mut op_stack, &mut exp_stack, Op::Dot)?;
+                exp_stack.push(other_atom_exp);
             } else {
                 break;
             }
@@ -137,9 +143,14 @@ impl Parser {
 
     fn parse_atom_exp(&mut self) -> Result<ASTNode<Exp>, ParserError> {
         match self.peek_kind() {
-            TokenKind::Identifier => Ok(ASTNode::new(Exp::Identifier(ASTNode::new(
-                Identifier::new(&self.extact_identifier()?),
-            )))),
+            TokenKind::Identifier => match self.look_ahead() {
+                // 如果是 a => ...
+                TokenKind::ARROW => Ok(ASTNode::new(Exp::ArrowFuncExp(self.parse_arrow_func()?))),
+
+                _ => Ok(ASTNode::new(Exp::Identifier(ASTNode::new(
+                    Identifier::new(&self.extact_identifier()?),
+                )))),
+            },
 
             _ if self.is_literal() => Ok(ASTNode::new(Exp::Literal(ASTNode::new(
                 self.extact_literal()?,
@@ -155,6 +166,7 @@ impl Parser {
                 Ok(ASTNode::new(Exp::Super(ASTNode::new(KeyWordKind::Super))))
             }
 
+            // parse [...]
             TokenKind::LeftBrace => {
                 let mut array_exp = ArrayExp::default();
 
@@ -174,23 +186,54 @@ impl Parser {
                 Ok(ASTNode::new(Exp::ArrayExp(ASTNode::new(array_exp))))
             }
 
-            // paren atom
+            // parse (...)
             TokenKind::LeftParen => {
-                self.eat(TokenKind::LeftParen)?;
-                let in_paren = self.parse_exp()?;
-                self.eat(TokenKind::RightParen)?;
+                // 先尝试是否是 (...) => ... 箭头函数
+                match self.try_to(Parser::parse_arrow_func) {
+                    Some(arrow_func) => Ok(ASTNode::new(Exp::ArrowFuncExp(arrow_func))),
 
-                Ok(ASTNode::new(Exp::ParenExp(ASTNode::new(ParenExp::new(
-                    in_paren,
-                )))))
+                    // 如果不是,则说明是单个 group
+                    None => Ok(ASTNode::new(Exp::GroupExp(self.parse_group_exp()?))),
+                }
             }
 
-            TokenKind::KeyWord(KeyWordKind::Function) => Ok(ASTNode::new(Exp::FunctionExp(
-                self.parse_func_exp_declaration()?,
-            ))),
+            TokenKind::KeyWord(KeyWordKind::Function) => {
+                Ok(ASTNode::new(Exp::FunctionExp(self.parse_func_exp_decl()?)))
+            }
+
+            TokenKind::KeyWord(KeyWordKind::New) => {
+                Ok(ASTNode::new(Exp::NewExp(self.parse_new_exp_decl()?)))
+            }
 
             _ => Err(self.expect_error("exp", "expression")),
         }
+    }
+
+    fn parse_group_exp(&mut self) -> Result<ASTNode<GroupExp>, ParserError> {
+        self.eat(TokenKind::LeftParen)?;
+        let group = self.parse_exp()?;
+        self.eat(TokenKind::RightParen)?;
+
+        Ok(ASTNode::new(GroupExp::new(group)))
+    }
+
+    // New Identifier typeArguments? (' (exp (',' exp)*)? ')'
+    fn parse_new_exp_decl(&mut self) -> Result<ASTNode<NewExp>, ParserError> {
+        let mut new_exp = NewExp::default();
+        self.eat(TokenKind::KeyWord(KeyWordKind::New))?;
+        new_exp.set_class_name(&self.extact_identifier()?);
+
+        if self.kind_is(TokenKind::LessThan) {
+            new_exp.set_type_args(self.parse_type_args()?);
+        }
+
+        self.eat(TokenKind::LeftParen)?;
+        if !self.kind_is(TokenKind::RightParen) {
+            new_exp.set_args(self.parse_exp_seq()?);
+        }
+        self.eat(TokenKind::RightParen)?;
+
+        Ok(ASTNode::new(new_exp))
     }
 
     fn extract_prefix_op(&mut self) -> Option<Op> {

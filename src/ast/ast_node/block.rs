@@ -1,3 +1,4 @@
+use super::clause::*;
 use super::stat::Stat;
 use crate::ast::AstGraph;
 use crate::ast::{visulize::Visualizable, ASTNode};
@@ -12,9 +13,17 @@ impl Block {
     }
 }
 
-pub struct CaseBlock {}
-impl Visualizable for CaseBlock {
-    fn draw(&self, id: usize, graph: &mut crate::ast::AstGraph) {
-        todo!()
+#[derive(Visualizable, Default)]
+pub struct CaseBlock {
+    case_clauses: Option<ASTNode<CaseClauses>>,
+    default_clause: Option<ASTNode<DefaultClause>>,
+}
+impl CaseBlock {
+    pub(crate) fn set_case_clauses(&mut self, case_clauses: ASTNode<CaseClauses>) {
+        self.case_clauses = Some(case_clauses);
+    }
+
+    pub(crate) fn set_default_clause(&mut self, default_clause: ASTNode<DefaultClause>) {
+        self.default_clause = Some(default_clause);
     }
 }
