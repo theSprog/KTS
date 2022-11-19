@@ -194,6 +194,7 @@ impl Parser {
                 Span::new(begin, self.mark_end()),
             )),
 
+            // -------------------------------------------------------------------
             TokenKind::KeyWord(KeyWordKind::This) => {
                 self.eat(TokenKind::KeyWord(KeyWordKind::This))?;
                 Ok(ASTNode::new(
@@ -205,6 +206,7 @@ impl Parser {
                 ))
             }
 
+            // ----------------------------------------------------------------
             TokenKind::KeyWord(KeyWordKind::Super) => {
                 self.eat(TokenKind::KeyWord(KeyWordKind::Super))?;
                 Ok(ASTNode::new(
@@ -216,6 +218,7 @@ impl Parser {
                 ))
             }
 
+            // ----------------------------------------------------------------
             // parse [...]
             TokenKind::LeftBrace => {
                 let mut array_exp = ArrayExp::default();
@@ -239,6 +242,9 @@ impl Parser {
                 ))
             }
 
+            TokenKind::LeftBracket => Err(self.unsupported_error("objectLiteral expression")),
+
+            // ---------------------------------------------------------------
             // parse (...)
             TokenKind::LeftParen => {
                 // 先尝试是否是 (...) => ... 箭头函数
@@ -256,11 +262,13 @@ impl Parser {
                 }
             }
 
+            // ----------------------------------------------------------------
             TokenKind::KeyWord(KeyWordKind::Function) => Ok(ASTNode::new(
                 Exp::FunctionExp(self.parse_func_exp_decl()?),
                 Span::new(begin, self.mark_end()),
             )),
 
+            // ----------------------------------------------------------------
             TokenKind::KeyWord(KeyWordKind::New) => Ok(ASTNode::new(
                 Exp::NewExp(self.parse_new_exp_decl()?),
                 Span::new(begin, self.mark_end()),
@@ -283,21 +291,30 @@ impl Parser {
         ))
     }
 
-    // New Identifier typeArguments? (' (exp (',' exp)*)? ')'
+    // New NamespaceName typeArguments? (' (exp (',' exp)*)? ')'
     fn parse_new_exp_decl(&mut self) -> Result<ASTNode<NewExp>, ParserError> {
         let begin = self.mark_begin();
         let mut new_exp = NewExp::default();
         self.eat(TokenKind::KeyWord(KeyWordKind::New))?;
-        new_exp.set_class_name(self.parse_identifier()?);
+        new_exp.set_class_name(self.parse_namespace_name()?);
 
         if self.kind_is(TokenKind::LessThan) {
             new_exp.set_type_args(self.parse_type_args()?);
         }
 
         self.eat(TokenKind::LeftParen)?;
-        if !self.kind_is(TokenKind::RightParen) {
-            new_exp.set_args(self.parse_exp_seq()?);
+
+        if self.kind_is(TokenKind::RightParen) {
+            let empty_args = ASTNode::new(ArgsExp::default(), Span::new(begin, self.mark_end()));
+            new_exp.set_args(empty_args)
+        } else {
+            let args_exp = ASTNode::new(
+                ArgsExp::new(self.parse_exp_seq()?),
+                Span::new(begin, self.mark_end()),
+            );
+            new_exp.set_args(args_exp)
         }
+
         self.eat(TokenKind::RightParen)?;
 
         Ok(ASTNode::new(new_exp, Span::new(begin, self.mark_end())))

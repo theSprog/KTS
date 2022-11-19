@@ -1,6 +1,8 @@
 use super::decl::ObjectType;
+use super::decl::TypeQuery;
 use super::identifier::Identifier;
 use super::parameter::ParaList;
+use super::parameter::TypeParas;
 use crate::ast::ASTNode;
 use crate::ast::AstGraph;
 use crate::ast::NodeInfo;
@@ -65,6 +67,7 @@ pub enum PrimaryType {
     ArrayTypeRef(ASTNode<ArrayTypeRef>),
     TupleType(ASTNode<TupleElementTypes>),
     ObjectType(ASTNode<ObjectType>),
+    TypeQuery(ASTNode<TypeQuery>),
 }
 
 #[derive(Visualizable)]
@@ -138,4 +141,24 @@ pub struct TupleElementTypes {
 #[derive(Visualizable)]
 pub struct TupleElement {
     tuple_element: ASTNode<Type>,
+}
+
+#[derive(Visualizable)]
+pub struct TypeAlias {
+    new_type: ASTNode<Identifier>,
+    type_paras: Option<ASTNode<TypeParas>>,
+    type_: ASTNode<Type>,
+}
+impl TypeAlias {
+    pub(crate) fn new(
+        new_type: ASTNode<Identifier>,
+        type_paras: Option<ASTNode<TypeParas>>,
+        type_: ASTNode<Type>,
+    ) -> Self {
+        Self {
+            new_type,
+            type_paras,
+            type_,
+        }
+    }
 }

@@ -19,6 +19,7 @@ mod test_parser {
     // fn test_import() {
     //     test_parser("resource/parser/import/01.ts");
     //     test_parser("resource/parser/import/02.ts");
+    //     test_parser("resource/parser/import/03.ts");
     // }
 
     // #[test]
@@ -34,6 +35,8 @@ mod test_parser {
     //     test_parser("resource/parser/class/04.ts");
     //     test_parser("resource/parser/class/05.ts");
     //     test_parser("resource/parser/class/06.ts");
+    //     test_parser("resource/parser/class/07.ts");
+    //     test_parser("resource/parser/class/08.ts");
     // }
 
     // #[test]
@@ -72,8 +75,14 @@ mod test_parser {
     //     test_parser("resource/parser/exp/07.ts");
     // }
 
+    // #[test]
+    // fn test_var_decl() {
+    //     test_parser("resource/parser/var_decl/01.ts");
+    //     test_parser("resource/parser/var_decl/02.ts");
+    // }
+
     #[test]
     fn test_temp() {
-        test_parser("resource/parser/temp/temp.ts");
+        test_parser("resource/parser/ztemp/temp.ts");
     }
 }

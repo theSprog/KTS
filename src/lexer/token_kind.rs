@@ -24,7 +24,7 @@ pub enum KeyWordKind {
     True,        // true
     False,       // false
     Null,        // null
-    TypeAlias,   // type
+    Type,        // type
     Get,         // get
     Set,         // set
     Constructor, // constructor
@@ -95,7 +95,7 @@ impl Visualizable for KeyWordKind {
             KeyWordKind::True => graph.put_node(info, "true"),
             KeyWordKind::False => graph.put_node(info, "false"),
             KeyWordKind::Null => graph.put_node(info, "null"),
-            KeyWordKind::TypeAlias => graph.put_node(info, "typealias"),
+            KeyWordKind::Type => graph.put_node(info, "typealias"),
             KeyWordKind::Get => graph.put_node(info, "get"),
             KeyWordKind::Set => graph.put_node(info, "set"),
             KeyWordKind::Constructor => graph.put_node(info, "constructor"),
@@ -168,7 +168,7 @@ impl Display for KeyWordKind {
             KeyWordKind::False => token_string!(f, "keyworld-false"),
             KeyWordKind::Null => token_string!(f, "keyworld-null"),
 
-            KeyWordKind::TypeAlias => token_string!(f, "keyworld-typealias"),
+            KeyWordKind::Type => token_string!(f, "keyworld-type"),
             KeyWordKind::Get => token_string!(f, "keyworld-get"),
             KeyWordKind::Set => token_string!(f, "keyworld-set"),
             KeyWordKind::Constructor => token_string!(f, "keyworld-constructor"),

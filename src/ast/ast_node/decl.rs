@@ -9,8 +9,9 @@ use super::{
     identifier::Identifier,
     parameter::{FormalPara, FormalParas, TypeAnnotation, TypeParas},
     sig::*,
+    source_element::SourceElements,
     stat::VarStat,
-    type_::*, source_element::SourceElements,
+    type_::*,
 };
 
 #[derive(Visualizable, Default)]
@@ -85,6 +86,16 @@ pub struct ObjectType {
 impl ObjectType {
     pub(crate) fn push_type_member(&mut self, type_member: ASTNode<TypeMember>) {
         self.type_members.push(type_member);
+    }
+}
+
+#[derive(Visualizable, Default)]
+pub struct TypeQuery {
+    type_query_exp: Vec<ASTNode<Identifier>>,
+}
+impl TypeQuery {
+    pub(crate) fn push_type_path(&mut self, path: ASTNode<Identifier>) {
+        self.type_query_exp.push(path);
     }
 }
 
@@ -222,11 +233,26 @@ impl Default for ArrowFuncBody {
 pub struct GenFuncDecl {}
 
 #[derive(Visualizable, Default)]
-pub struct NamespaceDecl {
+pub struct NamespaceName {
     names: Vec<ASTNode<Identifier>>,
 }
-impl NamespaceDecl {
+impl NamespaceName {
     pub(crate) fn push_name(&mut self, name: ASTNode<Identifier>) {
         self.names.push(name);
+    }
+}
+
+#[derive(Visualizable, Default)]
+pub struct NamespaceDecl {
+    namespace: ASTNode<NamespaceName>,
+    source_elements: Option<ASTNode<SourceElements>>,
+}
+impl NamespaceDecl {
+    pub(crate) fn set_name_space(&mut self, namespace: ASTNode<NamespaceName>) {
+        self.namespace = namespace;
+    }
+
+    pub(crate) fn set_source_elements(&mut self, source_elements: ASTNode<SourceElements>) {
+        self.source_elements = Some(source_elements);
     }
 }

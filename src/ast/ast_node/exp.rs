@@ -1,7 +1,7 @@
 use std::cmp::PartialOrd;
 use std::collections::HashMap;
 
-use super::decl::{ArrowFuncExpDecl, FuncExpDecl};
+use super::decl::{ArrowFuncExpDecl, FuncExpDecl, NamespaceName};
 use super::identifier::Identifier;
 use super::literal::Literal;
 use super::type_::TypeArgs;
@@ -241,11 +241,11 @@ impl Visualizable for Op {
             Op::BitOr => graph.put_node(self_info, "|"),
             Op::Or => graph.put_node(self_info, "||"),
             Op::BitOrAssign => graph.put_node(self_info, "|="),
-            Op::Instanceof => todo!(),
-            Op::In => todo!(),
-            Op::As => todo!(),
-            Op::IdentityEquals => todo!(),
-            Op::IdentityNotEquals => todo!(),
+            Op::Instanceof => graph.put_node(self_info, "instanceof"),
+            Op::In => graph.put_node(self_info, "in"),
+            Op::As => graph.put_node(self_info, "as"),
+            Op::IdentityEquals => graph.put_node(self_info, "==="),
+            Op::IdentityNotEquals => graph.put_node(self_info, "!=="),
             Op::Equals => graph.put_node(self_info, "=="),
             Op::NotEquals => graph.put_node(self_info, "!="),
             Op::MultiplyAssign => graph.put_node(self_info, "*="),
@@ -253,16 +253,16 @@ impl Visualizable for Op {
             Op::ModulusAssign => graph.put_node(self_info, "%="),
             Op::PlusAssign => graph.put_node(self_info, "+="),
             Op::MinusAssign => graph.put_node(self_info, "-="),
-            Op::RightShiftLogicalAssign => todo!(),
-            Op::RightShiftArithmeticAssign => todo!(),
-            Op::RightShiftLogical => todo!(),
-            Op::RightShiftArithmetic => todo!(),
-            Op::LeftShiftArithmeticAssign => todo!(),
-            Op::LeftShiftArithmetic => todo!(),
-            Op::BitXOr => todo!(),
-            Op::BitXorAssign => todo!(),
-            Op::QuestionMark => todo!(),
-            Op::Colon => todo!(),
+            Op::RightShiftLogicalAssign => graph.put_node(self_info, ">>>="),
+            Op::RightShiftArithmeticAssign => graph.put_node(self_info, ">>="),
+            Op::RightShiftLogical => graph.put_node(self_info, ">>>"),
+            Op::RightShiftArithmetic => graph.put_node(self_info, ">>"),
+            Op::LeftShiftArithmeticAssign => graph.put_node(self_info, "<<="),
+            Op::LeftShiftArithmetic => graph.put_node(self_info, "<<"),
+            Op::BitXOr => graph.put_node(self_info, "^"),
+            Op::BitXorAssign => graph.put_node(self_info, "^="),
+            Op::QuestionMark => graph.put_node(self_info, "?"),
+            Op::Colon => graph.put_node(self_info, ":"),
         }
     }
 }
@@ -419,13 +419,13 @@ impl ArgsExp {
 
 #[derive(Visualizable, Default)]
 pub struct NewExp {
-    class_name: ASTNode<Identifier>,
+    class_name: ASTNode<NamespaceName>,
     type_args: Option<ASTNode<TypeArgs>>,
-    args: Option<ASTNode<ExpSeq>>,
+    args: ASTNode<ArgsExp>,
 }
 
 impl NewExp {
-    pub(crate) fn set_class_name(&mut self, class_name: ASTNode<Identifier>) {
+    pub(crate) fn set_class_name(&mut self, class_name: ASTNode<NamespaceName>) {
         self.class_name = class_name;
     }
 
@@ -433,8 +433,8 @@ impl NewExp {
         self.type_args = Some(type_args);
     }
 
-    pub(crate) fn set_args(&mut self, exps: ASTNode<ExpSeq>) {
-        self.args = Some(exps);
+    pub(crate) fn set_args(&mut self, args: ASTNode<ArgsExp>) {
+        self.args = args;
     }
 }
 

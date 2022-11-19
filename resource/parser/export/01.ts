@@ -5,8 +5,8 @@ export * from "abc mod";
 export { };
 export { ; };
 // // statement
-// export default AddTwoNumbers;
-// export const foo: number = Math.PI * Math.sqrt(2);
+export default AddTwoNumbers;
+export const foo: number = Math.PI * Math.sqrt(2);
 
 // // statement -> block
-// export { AddNumbers, SubtractTwoNumbers };
+export { AddNumbers, SubtractTwoNumbers };

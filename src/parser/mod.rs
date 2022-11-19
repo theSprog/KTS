@@ -76,19 +76,6 @@ impl Parser {
     }
 
     fn mark_end(&self) -> usize {
-        // if self.kind_is(TokenKind::RightBracket) 
-        // || self.kind_is(TokenKind::RightParen)
-        // || self.kind_is(TokenKind::RightBrace) {
-        //     return self.peek().unwrap().peek_line();
-        // }
-
-        // if self.prekind_is(TokenKind::SemiColon) 
-        // || self.is_new_line() 
-        // || self.kind_is(TokenKind::EOF) {
-        //     return self.prepeek().peek_line();
-        // }
-        // self.peek().unwrap().peek_line()
-
         self.prepeek().peek_line()
     }
 
@@ -259,7 +246,11 @@ impl Parser {
 
                 TokenKind::Multiply =>  Ok(ASTNode::new(Stat::GenFuncDecl(self.parse_generator_func_decl()?), Span::new(begin, self.mark_end()))),
 
-                _ => Err(self.expect_error("Func", "Identifier, ( or *")),
+                
+                _ => {
+                    self.eat(TokenKind::KeyWord(KeyWordKind::Function))?;
+                    Err(self.expect_error("illegal function declaretion", "Identifier, ( or *"))
+                }
             },
 
             TokenKind::KeyWord(KeyWordKind::Declare)
@@ -271,6 +262,10 @@ impl Parser {
             | TokenKind:: KeyWord(KeyWordKind::Const)
             | TokenKind:: KeyWord(KeyWordKind::ReadOnly) => {
                 Ok(ASTNode::new(Stat::VarStat(self.parse_var_stat()?), Span::new(begin, self.mark_end())))
+            }
+
+            TokenKind::KeyWord(KeyWordKind::Type) => {
+                Ok(ASTNode::new(Stat::TypeAliasStat(self.parse_typealias_stat()?), Span::new(begin, self.mark_end())))
             }
             // todo how to deal with type aliases
             // todo how to deal with enum declarations
@@ -350,15 +345,41 @@ impl Parser {
         }
     }
 
+    /*
+    importAliasDeclaration
+        : Identifier '=' namespaceName SemiColon
+        ;
+    */
     fn set_import_alias_decl(&mut self) -> Result<ASTNode<ImportAssign>, ParserError> {
         let begin = self.mark_begin();
 
         let identifier = self.parse_identifier()?;
         self.eat(TokenKind::Assign)?;
-        let name_space = self.parse_namespace_decl()?;
-        let import_assign = ImportAssign::new(identifier, name_space);
+        let namespace_name = self.parse_namespace_name()?;
+        let import_assign = ImportAssign::new(identifier, namespace_name);
         self.eat(TokenKind::SemiColon)?;
         Ok(ASTNode::new(import_assign, Span::new(begin, self.mark_end())))
+    }
+
+    /*
+    namespaceDeclaration
+        : Namespace namespaceName '{' statementList? '}'
+        ;
+    */
+    fn parse_namespace_decl(&mut self) -> Result<ASTNode<NamespaceDecl>, ParserError> {
+        let begin = self.mark_begin();
+
+        let mut name_space_decl = NamespaceDecl::default();
+
+        self.eat(TokenKind::KeyWord(KeyWordKind::Namespace))?;
+        name_space_decl.set_name_space(self.parse_namespace_name()?);
+        self.eat(TokenKind::LeftBracket)?;
+        if ! self.kind_is(TokenKind::RightBracket) {
+            name_space_decl.set_source_elements(self.parse_source_elements()?);
+        }
+        self.eat(TokenKind::RightBracket)?;
+
+        Ok(ASTNode::new(name_space_decl, Span::new(begin, self.mark_end())))
     }
 
     /*
@@ -366,10 +387,10 @@ impl Parser {
         : Identifier ('.'+ Identifier)*
         ;
     */
-    fn parse_namespace_decl(&mut self) -> Result<ASTNode<NamespaceDecl>, ParserError> {
+    fn parse_namespace_name(&mut self) -> Result<ASTNode<NamespaceName>, ParserError> {
         let begin = self.mark_begin();
 
-        let mut name_space = NamespaceDecl::default();
+        let mut name_space = NamespaceName::default();
         loop {
             let name = self.parse_identifier()?;
             name_space.push_name(name);
@@ -487,8 +508,8 @@ impl Parser {
 
         // 如果不是 from block, 那么说明一定是 stat
         // 之前的 match 保证进入这里面的 stat 一定不是 export 开头
-        if let Some(from_block) = self.try_to(Parser::parse_stat) {
-            export_stat.set_stat(from_block);
+        if let Some(stat) = self.try_to(Parser::parse_stat) {
+            export_stat.set_stat(stat);
             self.eat_eos()?;
             return Ok(ASTNode::new(export_stat, Span::new(begin, self.mark_end())));
         }
@@ -908,6 +929,8 @@ impl Parser {
                 accesser.set_parameter(self.parse_identifier()?);
                 if self.kind_is(TokenKind::Colon) {
                     accesser.set_type_annotation(self.parse_type_annotation()?);
+                }else if self.kind_is(TokenKind::Assign) {
+                    return Err(self.unsupported_error("Set Accesser default parameter"))
                 }
                 self.eat(TokenKind::RightParen)?;
 
@@ -1205,7 +1228,7 @@ impl Parser {
     }
 
     /*
-    variableDeclaration: (Identifier | arrayLiteral | objectLiteral) typeAnnotation? ('=' singleExpression)?;
+    variableDeclaration: (Identifier | arrayLiteral | objectLiteral) typeAnnotation? ('=' expression)?;
     */
     fn parse_var_decl(&mut self) -> Result<ASTNode<VarDecl>, ParserError> {
         let begin = self.mark_begin();
@@ -1222,8 +1245,8 @@ impl Parser {
                 }
                 Ok(ASTNode::new(var_decl,  Span::new(begin, self.mark_end())))
             }
-            TokenKind::LeftBrace => Err(self.unsupported_error("arrayLiteral declare")),
-            TokenKind::LeftBracket => Err(self.unsupported_error("objectLiteral declare")),
+            TokenKind::LeftBrace => Err(self.unsupported_error("Array Matching")),
+            TokenKind::LeftBracket => Err(self.unsupported_error("Object Matching")),
             _ => Err(self.expect_error("Var Decl", "Identifier or arrayLiteral or objectLiteral")),
         }
     }
@@ -1431,6 +1454,10 @@ impl Parser {
 
         if self.kind_is(TokenKind::Colon) {
             func_exp_decl.set_type_annotation(self.parse_type_annotation()?);
+        }
+
+        if self.kind_is(TokenKind::SemiColon) {
+            return Err(self.report_error("Cannot missing defination for function expression"))
         }
 
         self.eat(TokenKind::LeftBracket)?;
@@ -1880,6 +1907,7 @@ impl Parser {
         predefinedType ('[' ']')?					# PredefinedPrimType
         | typeReference	('[' ']')?			       	# ReferencePrimType
         | '[' tupleElementTypes ']'					# TuplePrimType
+        | typeQuery                                 #QueryPrimType
         | objectType								# ObjectPrimType;
     */
     fn parse_primary_type(&mut self) -> Result<ASTNode<PrimaryType>, ParserError> {
@@ -1898,6 +1926,29 @@ impl Parser {
             return Ok(ASTNode::new(PrimaryType::ObjectType(
                 self.parse_object_type()?,
             ), Span::new(begin, self.mark_end())));
+        }
+
+        /*
+        typeQuery
+            : 'typeof' typeQueryExpression
+        typeQueryExpression:
+            : (identifier '.')+ identifier
+    ;
+        */
+        if self.kind_is(TokenKind::KeyWord(KeyWordKind::Typeof)) {
+            let type_query_begin = self.mark_begin();
+            let mut type_query = TypeQuery::default();
+            self.eat(TokenKind::KeyWord(KeyWordKind::Typeof))?;
+            loop {
+                type_query.push_type_path(self.parse_identifier()?);
+                if ! self.kind_is(TokenKind::Dot) {
+                    break;
+                }
+                self.eat(TokenKind::Dot)?;
+            }
+            let type_query = ASTNode::new( type_query, Span::new(type_query_begin, self.mark_end()));
+
+            return Ok(ASTNode::new(PrimaryType::TypeQuery(type_query), Span::new(begin, self.mark_end())))
         }
 
         if self.kind_is(TokenKind::Identifier) {
@@ -2322,6 +2373,30 @@ impl Parser {
             }
             _ => Err(self.expect_error("For Var Statement", "Let or Var or Const")),
         }
+    }
+
+    /*
+    typeAliasDeclaration
+        : 'type' Identifier typeParameters? '=' type_ SemiColon
+    ;
+    */
+    fn parse_typealias_stat(&mut self) -> Result<ASTNode<TypeAlias>, ParserError> {
+        let begin = self.mark_begin();
+        let new_type;
+        let mut type_paras = None;
+        let type_;
+
+        self.eat(TokenKind::KeyWord(KeyWordKind::Type))?;
+        new_type = self.parse_identifier()?;
+        if self.kind_is(TokenKind::LessThan) {
+            type_paras = Some(self.parse_type_paras()?);
+        }
+        self.eat(TokenKind::Assign)?;
+        type_ = self.parse_type()?;
+        self.eat(TokenKind::SemiColon)?;
+
+        let typealias = TypeAlias::new(new_type, type_paras, type_);
+        Ok(ASTNode::new(typealias, Span::new(begin, self.mark_end())))
     }
 
     fn parse_identifier(&mut self) -> Result<ASTNode<Identifier>, ParserError> {

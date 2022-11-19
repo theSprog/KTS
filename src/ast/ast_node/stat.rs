@@ -9,6 +9,7 @@ use super::{
     identifier::Identifier,
     literal::Literal,
     parameter::TypeAnnotation,
+    type_::TypeAlias,
     unknown::Unknown,
 };
 use crate::{
@@ -40,6 +41,8 @@ pub enum Stat {
 
     SwitchStat(ASTNode<SwitchStat>),
     ThrowStat(ASTNode<ThrowStat>),
+
+    TypeAliasStat(ASTNode<TypeAlias>),
 
     DebuggerStat(ASTNode<DebuggerStat>),
     TryStat(ASTNode<TryStat>),
@@ -77,13 +80,16 @@ pub enum ImportBlock {
 #[derive(Visualizable)]
 pub struct ImportAssign {
     identifier: ASTNode<Identifier>,
-    name_space: ASTNode<NamespaceDecl>,
+    namespace_name: ASTNode<NamespaceName>,
 }
 impl ImportAssign {
-    pub(crate) fn new(identifier: ASTNode<Identifier>, name_space: ASTNode<NamespaceDecl>) -> Self {
+    pub(crate) fn new(
+        identifier: ASTNode<Identifier>,
+        namespace_name: ASTNode<NamespaceName>,
+    ) -> Self {
         Self {
             identifier,
-            name_space,
+            namespace_name,
         }
     }
 }
@@ -145,10 +151,16 @@ impl ExportStat {
     }
 
     pub(crate) fn set_from_block(&mut self, from_block: ASTNode<FromBlock>) {
+        assert!(self.from_block.is_none());
+        assert!(self.stat.is_none());
+        
         self.from_block = Some(from_block);
     }
 
     pub(crate) fn set_stat(&mut self, stat: ASTNode<Stat>) {
+        assert!(self.from_block.is_none());
+        assert!(self.stat.is_none());
+
         self.stat = Some(stat);
     }
 }

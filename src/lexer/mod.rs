@@ -72,7 +72,7 @@ lazy_static! {
         map.insert("string", TokenKind::KeyWord(KeyWordKind::String));
         map.insert("symbol", TokenKind::KeyWord(KeyWordKind::Symbol));
 
-        map.insert("type", TokenKind::KeyWord(KeyWordKind::TypeAlias));
+        map.insert("type", TokenKind::KeyWord(KeyWordKind::Type));
         map.insert("get", TokenKind::KeyWord(KeyWordKind::Get));
         map.insert("set", TokenKind::KeyWord(KeyWordKind::Set));
         map.insert("constructor", TokenKind::KeyWord(KeyWordKind::Constructor));
