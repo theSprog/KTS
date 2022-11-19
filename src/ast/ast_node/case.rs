@@ -1,8 +1,4 @@
-use crate::ast::visulize::Visualizable;
+use crate::ast::{ASTNode, AstGraph, NodeInfo, Visualizable};
 
+#[derive(Visualizable)]
 pub struct Case {}
-impl Visualizable for Case {
-    fn draw(&self, id: usize, graph: &mut crate::ast::AstGraph) {
-        todo!()
-    }
-}

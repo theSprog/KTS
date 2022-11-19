@@ -156,6 +156,10 @@ impl Parser {
         self.tokens.get(self.index)
     }
 
+    pub(super) fn prepeek(&self) -> &Token {
+        self.tokens.get(self.index - 1).unwrap()
+    }
+
     pub(super) fn peek_kind(&self) -> TokenKind {
         match self.peek() {
             Some(token) => token.peek_kind(),
@@ -163,12 +167,12 @@ impl Parser {
         }
     }
 
-    pub(super) fn look_ahead(&self) -> TokenKind {
-        match self.tokens.get(self.index + 1) {
-            Some(token) => token.peek_kind(),
-            None =>  TokenKind::EOF,
-        }
-    }
+    // pub(super) fn look_ahead(&self) -> TokenKind {
+    //     match self.tokens.get(self.index + 1) {
+    //         Some(token) => token.peek_kind(),
+    //         None =>  TokenKind::EOF,
+    //     }
+    // }
 
     pub(super) fn look_ahead2(&self) -> Option<TokenKind> {
         match self.tokens.get(self.index + 2) {
@@ -202,8 +206,18 @@ impl Parser {
         }
     }
 
+    pub(super) fn next_peek_kind(&self) -> TokenKind {
+        match self.tokens.get(self.index + 1) {
+            Some(token) => token.peek_kind(),
+            None =>  TokenKind::EOF,
+        }
+    }
+
     pub(super) fn prekind_is(&self, kind: TokenKind) -> bool {
-        let pre_token = &self.tokens[self.index - 1];
-        return pre_token.kind_is(kind);
+        self.pre_peek_kind() == kind
+    }
+
+    pub(super) fn nextkind_is(&self, kind: TokenKind) -> bool {
+        self.next_peek_kind() == kind
     }
 }

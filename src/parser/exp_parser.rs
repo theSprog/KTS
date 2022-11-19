@@ -1,7 +1,7 @@
 use crate::{
     ast::{
         ast_node::{decl::ArrowFuncExpDecl, exp::*, identifier::Identifier},
-        ASTNode,
+        ASTNode, Span,
     },
     lexer::token_kind::{KeyWordKind, TokenKind},
 };
@@ -10,13 +10,19 @@ use super::{error::ParserError, Parser};
 
 impl Parser {
     pub(super) fn parse_exp(&mut self) -> Result<ASTNode<Exp>, ParserError> {
+        let begin = self.mark_begin();
+
         let mut left = self.parse_single_exp()?;
         if self.is_assign_op() {
-            let assign_op = self.extract_op()?;
+            let assign_op = ASTNode::new(self.extract_op()?, Span::new(begin, self.mark_end()));
             let right = self.parse_exp()?;
-            left = ASTNode::new(Exp::AssignExp(ASTNode::new(AssignExp::new(
-                left, assign_op, right,
-            ))));
+            left = ASTNode::new(
+                Exp::AssignExp(ASTNode::new(
+                    AssignExp::new(left, assign_op, right),
+                    Span::new(begin, self.mark_end()),
+                )),
+                Span::new(begin, self.mark_end()),
+            );
         }
 
         Ok(left)
@@ -78,6 +84,8 @@ impl Parser {
     unary: base | prefixOp base | base postfixOp ;
     */
     fn parse_unary_exp(&mut self) -> Result<ASTNode<Exp>, ParserError> {
+        let begin = self.mark_begin();
+
         let prefix = self.extract_prefix_op();
         let base_exp = self.parse_base_exp()?;
         let postfix = self.extract_postfix_op();
@@ -87,9 +95,14 @@ impl Parser {
         }
 
         if let Some(fix_op) = prefix.xor(postfix) {
-            Ok(ASTNode::new(Exp::UnaryExp(ASTNode::new(UnaryExp::new(
-                fix_op, base_exp,
-            )))))
+            let op = ASTNode::new(fix_op, Span::new(begin, self.mark_end()));
+            Ok(ASTNode::new(
+                Exp::UnaryExp(ASTNode::new(
+                    UnaryExp::new(op, base_exp),
+                    Span::new(begin, self.mark_end()),
+                )),
+                Span::new(begin, self.mark_end()),
+            ))
         } else {
             Err(self.report_error("just supports either postfix or prefix"))
         }
@@ -97,6 +110,8 @@ impl Parser {
 
     // . [] ()
     fn parse_base_exp(&mut self) -> Result<ASTNode<Exp>, ParserError> {
+        let begin = self.mark_begin();
+
         let mut exp_stack = Vec::new();
         let mut op_stack = Vec::new();
 
@@ -109,11 +124,21 @@ impl Parser {
                 self.eat(TokenKind::LeftParen)?;
                 // 函数调用有可能无参数
                 if self.kind_is(TokenKind::RightParen) {
-                    args_exp = ASTNode::new(Exp::ArgsExp(ASTNode::new(ArgsExp::default())));
+                    args_exp = ASTNode::new(
+                        Exp::ArgsExp(ASTNode::new(
+                            ArgsExp::default(),
+                            Span::new(begin, self.mark_end()),
+                        )),
+                        Span::new(begin, self.mark_end()),
+                    );
                 } else {
-                    args_exp = ASTNode::new(Exp::ArgsExp(ASTNode::new(ArgsExp::new(
-                        self.parse_exp_seq()?,
-                    ))));
+                    args_exp = ASTNode::new(
+                        Exp::ArgsExp(ASTNode::new(
+                            ArgsExp::new(self.parse_exp_seq()?),
+                            Span::new(begin, self.mark_end()),
+                        )),
+                        Span::new(begin, self.mark_end()),
+                    );
                 }
                 self.eat(TokenKind::RightParen)?;
 
@@ -142,28 +167,53 @@ impl Parser {
     }
 
     fn parse_atom_exp(&mut self) -> Result<ASTNode<Exp>, ParserError> {
-        match self.peek_kind() {
-            TokenKind::Identifier => match self.look_ahead() {
-                // 如果是 a => ...
-                TokenKind::ARROW => Ok(ASTNode::new(Exp::ArrowFuncExp(self.parse_arrow_func()?))),
+        let begin = self.mark_begin();
 
-                _ => Ok(ASTNode::new(Exp::Identifier(ASTNode::new(
-                    Identifier::new(&self.extact_identifier()?),
-                )))),
+        match self.peek_kind() {
+            TokenKind::Identifier => match self.next_peek_kind() {
+                // 如果是 a => ...
+                TokenKind::ARROW => Ok(ASTNode::new(
+                    Exp::ArrowFuncExp(self.parse_arrow_func()?),
+                    Span::new(begin, self.mark_end()),
+                )),
+
+                _ => Ok(ASTNode::new(
+                    Exp::Identifier(ASTNode::new(
+                        Identifier::new(&self.extact_identifier()?),
+                        Span::new(begin, self.mark_end()),
+                    )),
+                    Span::new(begin, self.mark_end()),
+                )),
             },
 
-            _ if self.is_literal() => Ok(ASTNode::new(Exp::Literal(ASTNode::new(
-                self.extact_literal()?,
-            )))),
+            _ if self.is_literal() => Ok(ASTNode::new(
+                Exp::Literal(ASTNode::new(
+                    self.extact_literal()?,
+                    Span::new(begin, self.mark_end()),
+                )),
+                Span::new(begin, self.mark_end()),
+            )),
 
             TokenKind::KeyWord(KeyWordKind::This) => {
                 self.eat(TokenKind::KeyWord(KeyWordKind::This))?;
-                Ok(ASTNode::new(Exp::This(ASTNode::new(KeyWordKind::This))))
+                Ok(ASTNode::new(
+                    Exp::This(ASTNode::new(
+                        KeyWordKind::This,
+                        Span::new(begin, self.mark_end()),
+                    )),
+                    Span::new(begin, self.mark_end()),
+                ))
             }
 
             TokenKind::KeyWord(KeyWordKind::Super) => {
                 self.eat(TokenKind::KeyWord(KeyWordKind::Super))?;
-                Ok(ASTNode::new(Exp::Super(ASTNode::new(KeyWordKind::Super))))
+                Ok(ASTNode::new(
+                    Exp::Super(ASTNode::new(
+                        KeyWordKind::Super,
+                        Span::new(begin, self.mark_end()),
+                    )),
+                    Span::new(begin, self.mark_end()),
+                ))
             }
 
             // parse [...]
@@ -183,45 +233,62 @@ impl Parser {
                 }
                 self.eat(TokenKind::RightBrace)?;
 
-                Ok(ASTNode::new(Exp::ArrayExp(ASTNode::new(array_exp))))
+                Ok(ASTNode::new(
+                    Exp::ArrayExp(ASTNode::new(array_exp, Span::new(begin, self.mark_end()))),
+                    Span::new(begin, self.mark_end()),
+                ))
             }
 
             // parse (...)
             TokenKind::LeftParen => {
                 // 先尝试是否是 (...) => ... 箭头函数
                 match self.try_to(Parser::parse_arrow_func) {
-                    Some(arrow_func) => Ok(ASTNode::new(Exp::ArrowFuncExp(arrow_func))),
+                    Some(arrow_func) => Ok(ASTNode::new(
+                        Exp::ArrowFuncExp(arrow_func),
+                        Span::new(begin, self.mark_end()),
+                    )),
 
                     // 如果不是,则说明是单个 group
-                    None => Ok(ASTNode::new(Exp::GroupExp(self.parse_group_exp()?))),
+                    None => Ok(ASTNode::new(
+                        Exp::GroupExp(self.parse_group_exp()?),
+                        Span::new(begin, self.mark_end()),
+                    )),
                 }
             }
 
-            TokenKind::KeyWord(KeyWordKind::Function) => {
-                Ok(ASTNode::new(Exp::FunctionExp(self.parse_func_exp_decl()?)))
-            }
+            TokenKind::KeyWord(KeyWordKind::Function) => Ok(ASTNode::new(
+                Exp::FunctionExp(self.parse_func_exp_decl()?),
+                Span::new(begin, self.mark_end()),
+            )),
 
-            TokenKind::KeyWord(KeyWordKind::New) => {
-                Ok(ASTNode::new(Exp::NewExp(self.parse_new_exp_decl()?)))
-            }
+            TokenKind::KeyWord(KeyWordKind::New) => Ok(ASTNode::new(
+                Exp::NewExp(self.parse_new_exp_decl()?),
+                Span::new(begin, self.mark_end()),
+            )),
 
             _ => Err(self.expect_error("exp", "expression")),
         }
     }
 
     fn parse_group_exp(&mut self) -> Result<ASTNode<GroupExp>, ParserError> {
+        let begin = self.mark_begin();
+
         self.eat(TokenKind::LeftParen)?;
         let group = self.parse_exp()?;
         self.eat(TokenKind::RightParen)?;
 
-        Ok(ASTNode::new(GroupExp::new(group)))
+        Ok(ASTNode::new(
+            GroupExp::new(group),
+            Span::new(begin, self.mark_end()),
+        ))
     }
 
     // New Identifier typeArguments? (' (exp (',' exp)*)? ')'
     fn parse_new_exp_decl(&mut self) -> Result<ASTNode<NewExp>, ParserError> {
+        let begin = self.mark_begin();
         let mut new_exp = NewExp::default();
         self.eat(TokenKind::KeyWord(KeyWordKind::New))?;
-        new_exp.set_class_name(&self.extact_identifier()?);
+        new_exp.set_class_name(self.parse_identifier()?);
 
         if self.kind_is(TokenKind::LessThan) {
             new_exp.set_type_args(self.parse_type_args()?);
@@ -233,7 +300,7 @@ impl Parser {
         }
         self.eat(TokenKind::RightParen)?;
 
-        Ok(ASTNode::new(new_exp))
+        Ok(ASTNode::new(new_exp, Span::new(begin, self.mark_end())))
     }
 
     fn extract_prefix_op(&mut self) -> Option<Op> {
@@ -371,8 +438,14 @@ impl Parser {
         if op.is_bin_op() {
             let op = op_stack.pop().unwrap();
             if let (Some(right), Some(left)) = (exp_stack.pop(), exp_stack.pop()) {
-                let exp = Exp::BinaryExp(ASTNode::new(BinaryExp::new(left, op, right)));
-                exp_stack.push(ASTNode::new(exp));
+                let begin = left.info.span.get_begin();
+                let end = right.info.span.get_end();
+                let op = ASTNode::new(op, Span::new(begin, end));
+                let exp = Exp::BinaryExp(ASTNode::new(
+                    BinaryExp::new(left, op, right),
+                    Span::new(begin, end),
+                ));
+                exp_stack.push(ASTNode::new(exp, Span::new(begin, end)));
             } else {
                 return Err(self.report_error(&format!(
                     "{:?} is binary operater but expression missing",
@@ -408,8 +481,14 @@ impl Parser {
             let true_br = exp_stack.pop().unwrap();
             let cond = exp_stack.pop().unwrap();
 
-            let exp = Exp::TernaryExp(ASTNode::new(TernaryExp::new(cond, true_br, false_br)));
-            exp_stack.push(ASTNode::new(exp));
+            let begin = cond.info.span.get_begin();
+            let end = false_br.info.span.get_end();
+
+            let exp = Exp::TernaryExp(ASTNode::new(
+                TernaryExp::new(cond, true_br, false_br),
+                Span::new(begin, end),
+            ));
+            exp_stack.push(ASTNode::new(exp, Span::new(begin, end)));
         } else {
             unreachable!()
         }

@@ -1,10 +1,8 @@
-use crate::ast::ASTNode;
-use crate::ast::AstGraph;
-use crate::ast::Visualizable;
+use crate::ast::{ASTNode, AstGraph, NodeInfo, Visualizable};
 use crate::lexer::token_kind::KeyWordKind;
 use crate::lexer::token_kind::TokenKind;
 
-use super::body::FuncBody;
+use super::decl::FuncBody;
 use super::decl::AbsDecl;
 use super::exp::Exp;
 use super::identifier::Identifier;
@@ -21,16 +19,16 @@ pub enum AccessModifier {
 }
 
 impl Visualizable for AccessModifier {
-    fn draw(&self, self_id: usize, graph: &mut AstGraph) {
+    fn draw(&self, self_info: NodeInfo, graph: &mut AstGraph) {
         match self {
             AccessModifier::Public => {
-                graph.put_node(self_id, "public");
+                graph.put_node(self_info, "public");
             }
             AccessModifier::Protected => {
-                graph.put_node(self_id, "protected");
+                graph.put_node(self_info, "protected");
             }
             AccessModifier::Private => {
-                graph.put_node(self_id, "private");
+                graph.put_node(self_info, "private");
             }
         }
     }
@@ -42,12 +40,12 @@ pub struct ClassHeritage {
     implemented: Option<ASTNode<Implement>>,
 }
 impl ClassHeritage {
-    pub(crate) fn set_extends(&mut self, extend: Extends) {
-        self.extends = Some(ASTNode::new(extend));
+    pub(crate) fn set_extends(&mut self, extend: ASTNode<Extends>) {
+        self.extends = Some(extend);
     }
 
-    pub(crate) fn set_implement(&mut self, implemented: Implement) {
-        self.implemented = Some(ASTNode::new(implemented));
+    pub(crate) fn set_implement(&mut self, implemented: ASTNode<Implement>) {
+        self.implemented = Some(implemented);
     }
 }
 
@@ -121,10 +119,10 @@ pub enum PropertyMemberDecl {
 #[derive(Visualizable, Default)]
 pub struct PropertyDeclExp {
     access_modifier: Option<ASTNode<AccessModifier>>,
-    static_: Option<ASTNode<KeyWordKind>>,
-    readonly: Option<ASTNode<KeyWordKind>>,
+    static_: Option<KeyWordKind>,
+    readonly: Option<KeyWordKind>,
     identifier: ASTNode<Identifier>,
-    question_mark: Option<ASTNode<TokenKind>>,
+    question_mark: Option<TokenKind>,
     type_annotation: Option<ASTNode<TypeAnnotation>>,
     initializer: Option<ASTNode<Exp>>,
 }
@@ -134,19 +132,19 @@ impl PropertyDeclExp {
     }
 
     pub(crate) fn set_static(&mut self) {
-        self.static_ = Some(ASTNode::new(KeyWordKind::Static));
+        self.static_ = Some(KeyWordKind::Static);
     }
 
     pub(crate) fn set_readonly(&mut self) {
-        self.readonly = Some(ASTNode::new(KeyWordKind::ReadOnly));
+        self.readonly = Some(KeyWordKind::ReadOnly);
     }
 
-    pub(crate) fn set_identifier(&mut self, identifier: &str) {
-        self.identifier = ASTNode::new(Identifier::new(identifier));
+    pub(crate) fn set_identifier(&mut self, identifier: ASTNode<Identifier>) {
+        self.identifier = identifier;
     }
 
     pub(crate) fn set_question_mark(&mut self) {
-        self.question_mark = Some(ASTNode::new(TokenKind::QuestionMark));
+        self.question_mark = Some(TokenKind::QuestionMark);
     }
 
     pub(crate) fn set_type_annotation(&mut self, type_annotation: ASTNode<TypeAnnotation>) {
@@ -161,8 +159,8 @@ impl PropertyDeclExp {
 #[derive(Visualizable, Default)]
 pub struct MethodDeclExp {
     access_modifier: Option<ASTNode<AccessModifier>>,
-    static_: Option<ASTNode<KeyWordKind>>,
-    async_: Option<ASTNode<KeyWordKind>>,
+    static_: Option<KeyWordKind>,
+    async_: Option<KeyWordKind>,
     identifier: ASTNode<Identifier>,
     call_signature: ASTNode<CallSig>,
     func_body: Option<ASTNode<FuncBody>>,
@@ -174,15 +172,15 @@ impl MethodDeclExp {
     }
 
     pub(crate) fn set_static(&mut self) {
-        self.static_ = Some(ASTNode::new(KeyWordKind::Static));
+        self.static_ = Some(KeyWordKind::Static);
     }
 
     pub(crate) fn set_async(&mut self) {
-        self.async_ = Some(ASTNode::new(KeyWordKind::Async));
+        self.async_ = Some(KeyWordKind::Async);
     }
 
-    pub(crate) fn set_identifier(&mut self, identifier: &str) {
-        self.identifier = ASTNode::new(Identifier::new(identifier));
+    pub(crate) fn set_identifier(&mut self, identifier: ASTNode<Identifier>) {
+        self.identifier = identifier;
     }
 
     pub(crate) fn set_call_sig(&mut self, call_signature: ASTNode<CallSig>) {
@@ -197,7 +195,7 @@ impl MethodDeclExp {
 #[derive(Visualizable)]
 pub struct GetterSetterDeclExp {
     access_modifier: Option<ASTNode<AccessModifier>>,
-    static_: Option<ASTNode<KeyWordKind>>,
+    static_: Option<KeyWordKind>,
     accesser: Option<ASTNode<Accesser>>,
 }
 impl GetterSetterDeclExp {
@@ -209,7 +207,7 @@ impl GetterSetterDeclExp {
         Self {
             access_modifier,
             static_: match static_ {
-                true => Some(ASTNode::new(KeyWordKind::Static)),
+                true => Some(KeyWordKind::Static),
                 false => None,
             },
             accesser: Some(accesser),
@@ -232,12 +230,12 @@ pub struct SetAccesser {
 }
 
 impl SetAccesser {
-    pub(crate) fn set_identifier(&mut self, identifier: &str) {
-        self.identifier = ASTNode::new(Identifier::new(identifier));
+    pub(crate) fn set_identifier(&mut self, identifier: ASTNode<Identifier>) {
+        self.identifier = identifier;
     }
 
-    pub(crate) fn set_parameter(&mut self, identifier: &str) {
-        self.parameter = ASTNode::new(Identifier::new(identifier));
+    pub(crate) fn set_parameter(&mut self, identifier: ASTNode<Identifier>) {
+        self.parameter = identifier;
     }
 
     pub(crate) fn set_type_annotation(&mut self, type_annotation: ASTNode<TypeAnnotation>) {
@@ -256,8 +254,8 @@ pub struct GetAccesser {
     func_body: Option<ASTNode<FuncBody>>,
 }
 impl GetAccesser {
-    pub(crate) fn set_identifier(&mut self, identifier: &str) {
-        self.identifier = ASTNode::new(Identifier::new(identifier));
+    pub(crate) fn set_identifier(&mut self, identifier: ASTNode<Identifier>) {
+        self.identifier = identifier;
     }
 
     pub(crate) fn set_type_annotation(&mut self, type_annotation: ASTNode<TypeAnnotation>) {

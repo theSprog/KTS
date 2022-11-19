@@ -3,7 +3,7 @@ use super::decorator::Decorators;
 use super::type_::*;
 use super::{exp::Exp, identifier::Identifier};
 use crate::ast::AstGraph;
-use crate::ast::{visulize::Visualizable, ASTNode};
+use crate::ast::{visulize::Visualizable, ASTNode, NodeInfo};
 use crate::lexer::token_kind::{KeyWordKind, TokenKind};
 
 #[derive(Visualizable, Default)]
@@ -17,34 +17,35 @@ impl FormalParas {
         self.formal_paras.push(formal_para);
     }
 
-    pub(crate) fn set_last_para_arg(&mut self, last_para_arg: &str) {
-        self.last_para_arg = Some(ASTNode::new(Identifier::new(last_para_arg)));
+    pub(crate) fn set_last_para_arg(&mut self, last_para_arg: ASTNode<Identifier>) {
+        self.last_para_arg = Some(last_para_arg);
     }
 }
 
 #[derive(Visualizable, Default)]
 pub struct FormalPara {
-    decorator: Option<ASTNode<TokenKind>>,
-    access_modifier: Option<ASTNode<KeyWordKind>>,
+    decorator: Option<TokenKind>,
+    access_modifier: Option<KeyWordKind>,
     identifier: ASTNode<Identifier>,
-    question_mark: Option<ASTNode<TokenKind>>,
+    question_mark: Option<TokenKind>,
     type_annotation: Option<ASTNode<TypeAnnotation>>,
 }
 
 impl FormalPara {
     pub(crate) fn set_decorator(&mut self) {
-        self.decorator = Some(ASTNode::new(TokenKind::At));
+        self.decorator = Some(TokenKind::At);
     }
 
     pub(crate) fn set_access_modifier(&mut self, access_modifier: KeyWordKind) {
-        self.access_modifier = Some(ASTNode::new(access_modifier));
+        self.access_modifier = Some(access_modifier);
     }
-    pub(crate) fn set_identifier(&mut self, ident_str: &str) {
-        self.identifier = ASTNode::new(Identifier::new(ident_str));
+
+    pub(crate) fn set_identifier(&mut self, identifier: ASTNode<Identifier>) {
+        self.identifier = identifier;
     }
 
     pub(crate) fn set_question_mark(&mut self) {
-        self.decorator = Some(ASTNode::new(TokenKind::QuestionMark));
+        self.decorator = Some(TokenKind::QuestionMark);
     }
 
     pub(crate) fn set_type_annotation(&mut self, type_annotation: ASTNode<TypeAnnotation>) {
@@ -94,16 +95,12 @@ pub struct Para {
     decorators: Option<ASTNode<Decorators>>,
     access_modifier: Option<ASTNode<AccessModifier>>,
     para_name: ASTNode<Identifier>,
-    question_mark: Option<ASTNode<TokenKind>>,
+    question_mark: Option<TokenKind>,
     type_annotation: Option<ASTNode<TypeAnnotation>>,
     initializer: Option<ASTNode<Initializer>>,
 }
 
 impl Para {
-    pub(crate) fn set_para_name(&mut self, para_name: &str) {
-        self.para_name = ASTNode::new(Identifier::new(para_name));
-    }
-
     pub(crate) fn set_decorators(&mut self, decorators: ASTNode<Decorators>) {
         self.decorators = Some(decorators);
     }
@@ -112,25 +109,29 @@ impl Para {
         self.access_modifier = Some(access_modifier);
     }
 
+    pub(crate) fn set_para_name(&mut self, para_name: ASTNode<Identifier>) {
+        self.para_name = para_name;
+    }
+
     pub(crate) fn set_question_mark(&mut self) {
-        self.question_mark = Some(ASTNode::new(TokenKind::QuestionMark));
+        self.question_mark = Some(TokenKind::QuestionMark);
     }
 
     pub(crate) fn set_type_annotation(&mut self, type_annotation: ASTNode<TypeAnnotation>) {
         self.type_annotation = Some(type_annotation);
     }
 
-    pub(crate) fn set_initializer(&mut self, single_exp: ASTNode<Exp>) {
-        self.initializer = Some(ASTNode::new(Initializer::new(single_exp)));
+    pub(crate) fn set_initializer(&mut self, initializer: ASTNode<Initializer>) {
+        self.initializer = Some(initializer);
     }
 }
 
 #[derive(Visualizable)]
 pub struct Initializer {
-    single_exp: ASTNode<Exp>,
+    exp: ASTNode<Exp>,
 }
 impl Initializer {
-    fn new(single_exp: ASTNode<Exp>) -> Self {
-        Self { single_exp }
+    pub(crate) fn new(exp: ASTNode<Exp>) -> Self {
+        Self { exp }
     }
 }

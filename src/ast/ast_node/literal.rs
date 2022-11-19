@@ -1,4 +1,4 @@
-use crate::ast::{visulize::Visualizable, AstGraph};
+use crate::ast::{visulize::Visualizable, AstGraph, NodeInfo};
 
 #[derive(Debug, Default)]
 pub enum Literal {
@@ -12,24 +12,24 @@ pub enum Literal {
 }
 
 impl Visualizable for Literal {
-    fn draw(&self, self_id: usize, graph: &mut AstGraph) {
+    fn draw(&self, self_info: NodeInfo, graph: &mut AstGraph) {
         match self {
             Literal::Number(number) => {
-                graph.put_node(self_id, &number.to_string());
+                graph.put_node(self_info, &number.to_string());
             }
             Literal::Integer(integer) => {
-                graph.put_node(self_id, &integer.to_string());
+                graph.put_node(self_info, &integer.to_string());
             }
             Literal::String(string) => {
                 let string = format!("\\\"{}\\\"", string);
-                graph.put_node(self_id, &string);
+                graph.put_node(self_info, &string);
             }
             Literal::Boolean(boolean) => {
                 let boolean_str = if *boolean { "true" } else { "false" };
-                graph.put_node(self_id, boolean_str);
+                graph.put_node(self_info, boolean_str);
             }
             Literal::Null => {
-                graph.put_node(self_id, "null");
+                graph.put_node(self_info, "null");
             }
         }
     }

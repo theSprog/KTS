@@ -2,7 +2,7 @@ use super::identifier::Identifier;
 use super::parameter::*;
 use super::type_::{PredefinedType, Type};
 use crate::ast::AstGraph;
-use crate::ast::{visulize::Visualizable, ASTNode};
+use crate::ast::{visulize::Visualizable, ASTNode, NodeInfo};
 use crate::lexer::token_kind::{KeyWordKind, TokenKind};
 
 #[derive(Visualizable, Default)]
@@ -28,23 +28,23 @@ impl CallSig {
 
 #[derive(Default, Visualizable)]
 pub struct PropertySig {
-    readonly: Option<ASTNode<KeyWordKind>>,
+    readonly: Option<KeyWordKind>,
     property_name: ASTNode<Identifier>,
-    question_mark: Option<ASTNode<TokenKind>>,
+    question_mark: Option<TokenKind>,
     type_annotation: Option<ASTNode<TypeAnnotation>>,
 }
 
 impl PropertySig {
     pub(crate) fn set_readonly(&mut self) {
-        self.readonly = Some(ASTNode::new(KeyWordKind::ReadOnly));
+        self.readonly = Some(KeyWordKind::ReadOnly);
     }
 
-    pub(crate) fn set_property_name(&mut self, identifier: &str) {
-        self.property_name = ASTNode::new(Identifier::new(identifier));
+    pub(crate) fn set_property_name(&mut self, identifier: ASTNode<Identifier>) {
+        self.property_name = identifier;
     }
 
     pub(crate) fn set_question_mark(&mut self) {
-        self.question_mark = Some(ASTNode::new(TokenKind::QuestionMark));
+        self.question_mark = Some(TokenKind::QuestionMark);
     }
 
     pub(crate) fn set_type_annotation(&mut self, type_annotation: ASTNode<TypeAnnotation>) {
@@ -55,17 +55,17 @@ impl PropertySig {
 #[derive(Default, Visualizable)]
 pub struct MethodSig {
     method_name: ASTNode<Identifier>,
-    question_mark: Option<ASTNode<TokenKind>>,
+    question_mark: Option<TokenKind>,
     call_sig: ASTNode<CallSig>,
     type_: Option<ASTNode<Type>>,
 }
 impl MethodSig {
-    pub(crate) fn set_method_name(&mut self, identifier: &str) {
-        self.method_name = ASTNode::new(Identifier::new(identifier));
+    pub(crate) fn set_method_name(&mut self, method_name: ASTNode<Identifier>) {
+        self.method_name = method_name;
     }
 
     pub(crate) fn set_question_mark(&mut self) {
-        self.question_mark = Some(ASTNode::new(TokenKind::QuestionMark));
+        self.question_mark = Some(TokenKind::QuestionMark);
     }
 
     pub(crate) fn set_call_sig(&mut self, call_sig: ASTNode<CallSig>) {
@@ -85,12 +85,12 @@ pub struct IndexSig {
 }
 impl IndexSig {
     pub(crate) fn new(
-        index_name: &str,
+        index_name: ASTNode<Identifier>,
         type_: Option<ASTNode<PredefinedType>>,
         type_annotation: ASTNode<TypeAnnotation>,
     ) -> Self {
         Self {
-            index_name: ASTNode::new(Identifier::new(index_name)),
+            index_name,
             type_,
             type_annotation,
         }

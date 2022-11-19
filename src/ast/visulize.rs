@@ -1,48 +1,52 @@
-use super::{ASTNode, AstGraph};
+use super::{ASTNode, AstGraph, NodeInfo, AST, Span};
 
 pub trait Visualizable {
-    fn draw(&self, self_id: usize, graph: &mut AstGraph);
+    fn draw(&self, self_info: NodeInfo, graph: &mut AstGraph);
 }
 
 impl<T: Visualizable> Visualizable for Vec<ASTNode<T>> {
-    fn draw(&self, self_id: usize, graph: &mut AstGraph) {
-        // for node in self {
-        //     node.draw(self_id, graph);
-        // }
+    fn draw(&self, self_info: NodeInfo, graph: &mut AstGraph) {
+        self.into_iter()
+            .for_each(|node| node.draw(self_info, graph));
+    }
+}
 
-        self.into_iter().for_each(|node| node.draw(self_id, graph));
+impl<T: Visualizable> Visualizable for Vec<T> {
+    fn draw(&self, self_info: NodeInfo, graph: &mut AstGraph) {
+        self.into_iter()
+            .for_each(|node| node.draw(self_info, graph));
     }
 }
 
 impl<T: Visualizable> Visualizable for Vec<Box<ASTNode<T>>> {
-    fn draw(&self, self_id: usize, graph: &mut AstGraph) {
-        // for node in self {
-        //     node.draw(self_id, graph);
-        // }
-
-        self.into_iter().for_each(|node| node.draw(self_id, graph));
+    fn draw(&self, self_info: NodeInfo, graph: &mut AstGraph) {
+        self.into_iter()
+            .for_each(|node| node.draw(self_info, graph));
     }
 }
 
 impl<T: Visualizable> Visualizable for Option<ASTNode<T>> {
-    fn draw(&self, self_id: usize, graph: &mut AstGraph) {
+    fn draw(&self, self_info: NodeInfo, graph: &mut AstGraph) {
         if let Some(node) = self {
-            node.draw(self_id, graph);
+            node.draw(self_info, graph);
+        }
+    }
+}
+
+impl<T: Visualizable> Visualizable for Option<T> {
+    fn draw(&self, father_info: NodeInfo, graph: &mut AstGraph) {
+        if let Some(node) = self {
+            let self_id = AST::gen_id();
+            graph.put_edge(father_info.id, self_id);
+            node.draw(NodeInfo::new(self_id, Span::default()), graph);
         }
     }
 }
 
 impl<T: Visualizable> Visualizable for Option<Box<ASTNode<T>>> {
-    fn draw(&self, self_id: usize, graph: &mut AstGraph) {
-        // match self {
-        //     Some(nodes) => {
-        //         nodes.draw(self_id, graph);
-        //     }
-        //     None => (),
-        // }
-
+    fn draw(&self, self_info: NodeInfo, graph: &mut AstGraph) {
         if let Some(node) = self {
-            node.draw(self_id, graph);
+            node.draw(self_info, graph);
         }
     }
 }

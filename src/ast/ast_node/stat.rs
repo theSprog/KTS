@@ -12,19 +12,9 @@ use super::{
     unknown::Unknown,
 };
 use crate::{
-    ast::{visulize::Visualizable, ASTNode},
+    ast::{visulize::Visualizable, ASTNode, NodeInfo},
     lexer::token_kind::{KeyWordKind, TokenKind},
 };
-
-pub struct StatList {
-    stats: Vec<ASTNode<Stat>>,
-}
-
-impl Visualizable for StatList {
-    fn draw(&self, id: usize, graph: &mut AstGraph) {
-        todo!()
-    }
-}
 
 #[derive(Visualizable)]
 pub enum Stat {
@@ -70,110 +60,88 @@ impl Default for Stat {
 
 #[derive(Visualizable)]
 pub struct ImportStat {
-    import_kw: ASTNode<KeyWordKind>,
-    from_block: ASTNode<FromBlock>,
+    import_block: ImportBlock,
 }
-
-impl Default for ImportStat {
-    fn default() -> Self {
-        ImportStat {
-            import_kw: ASTNode::new(KeyWordKind::Import),
-            from_block: Default::default(),
-        }
-    }
-}
-
 impl ImportStat {
-    pub(crate) fn set_from_block(&mut self, from_block: ASTNode<FromBlock>) {
-        self.from_block = from_block
+    pub(crate) fn new(import_block: ImportBlock) -> Self {
+        Self { import_block }
     }
 }
 
 #[derive(Visualizable)]
-pub struct FromBlock {
-    all: Option<ASTNode<TokenKind>>,        // *
-    alias: Option<ASTNode<Identifier>>,     // alias of *
-    imported: Option<ASTNode<Identifier>>,  // imported can not be alias
-    importeds: Vec<ASTNode<ImportedAlias>>, // {a as b, c as d, ...}
-    from_value: ASTNode<Literal>,
+pub enum ImportBlock {
+    FromBlock(ASTNode<FromBlock>),
+    ImportAssign(ASTNode<ImportAssign>),
 }
 
-impl Default for FromBlock {
-    fn default() -> Self {
-        FromBlock {
-            all: None,
-            alias: None,
-            imported: None,
-            importeds: Default::default(),
-            from_value: Default::default(),
+#[derive(Visualizable)]
+pub struct ImportAssign {
+    identifier: ASTNode<Identifier>,
+    name_space: ASTNode<NamespaceDecl>,
+}
+impl ImportAssign {
+    pub(crate) fn new(identifier: ASTNode<Identifier>, name_space: ASTNode<NamespaceDecl>) -> Self {
+        Self {
+            identifier,
+            name_space,
         }
     }
+}
+
+#[derive(Visualizable, Default)]
+pub struct FromBlock {
+    all: Option<TokenKind>,                // *
+    alias: Option<ASTNode<Identifier>>,    // alias of *
+    imported: Option<ASTNode<Identifier>>, // imported can not be alias
+    importeds: Vec<ASTNode<PortedAlias>>,  // {a as b, c as d, ...}
+    from_value: ASTNode<Literal>,
 }
 
 impl FromBlock {
     pub(crate) fn set_all(&mut self) {
-        self.all = Some(ASTNode::new(TokenKind::Multiply));
+        self.all = Some(TokenKind::Multiply);
     }
 
-    pub(crate) fn set_all_alias(&mut self, context: &str) {
-        self.alias = Some(ASTNode::new(Identifier::new(context)));
+    pub(crate) fn set_all_alias(&mut self, context: ASTNode<Identifier>) {
+        self.alias = Some(context);
     }
 
-    pub(crate) fn set_imported(&mut self, imported: &str) {
-        self.imported = Some(ASTNode::new(Identifier::new(imported)));
+    pub(crate) fn set_imported(&mut self, imported: ASTNode<Identifier>) {
+        self.imported = Some(imported);
     }
 
-    pub(crate) fn push_imported_alias(&mut self, imported: &str, alias: Option<&str>) {
-        self.importeds
-            .push(ASTNode::new(ImportedAlias::new(imported, alias)));
+    pub(crate) fn push_imported_alias(&mut self, imported_alias: ASTNode<PortedAlias>) {
+        self.importeds.push(imported_alias);
     }
 
-    pub(crate) fn set_from_value(&mut self, from_value: &str) {
-        self.from_value = ASTNode::new(Literal::String(String::from(from_value)));
+    pub(crate) fn set_from_value(&mut self, from_value: ASTNode<Literal>) {
+        self.from_value = from_value;
+        //  Literal::String(String::from(from_value));
     }
 }
 
 #[derive(Visualizable)]
-pub struct ImportedAlias {
-    imported: ASTNode<Identifier>,
+pub struct PortedAlias {
+    ported: ASTNode<Identifier>,
     alias: Option<ASTNode<Identifier>>,
 }
 
-impl ImportedAlias {
-    fn new(imported: &str, alias: Option<&str>) -> Self {
-        let alias = match alias {
-            Some(alias) => Some(ASTNode::new(Identifier::new(alias))),
-            None => None,
-        };
-
-        let imported = ASTNode::new(Identifier::new(imported));
-
-        Self { imported, alias }
+impl PortedAlias {
+    pub(crate) fn new(ported: ASTNode<Identifier>, alias: Option<ASTNode<Identifier>>) -> Self {
+        Self { ported, alias }
     }
 }
 
-#[derive(Visualizable)]
+#[derive(Visualizable, Default)]
 pub struct ExportStat {
-    export_kw: ASTNode<KeyWordKind>,
-    default: Option<ASTNode<KeyWordKind>>, // default keyword
+    default: Option<KeyWordKind>, // default keyword
     from_block: Option<ASTNode<FromBlock>>,
     stat: Option<ASTNode<Stat>>,
 }
 
-impl Default for ExportStat {
-    fn default() -> Self {
-        ExportStat {
-            export_kw: ASTNode::new(KeyWordKind::Export),
-            default: None,
-            from_block: None,
-            stat: None,
-        }
-    }
-}
-
 impl ExportStat {
     pub(crate) fn set_default(&mut self) {
-        self.default = Some(ASTNode::new(KeyWordKind::Default));
+        self.default = Some(KeyWordKind::Default);
     }
 
     pub(crate) fn set_from_block(&mut self, from_block: ASTNode<FromBlock>) {
@@ -195,9 +163,9 @@ impl EmptyStat {
 #[derive(Visualizable, Default)]
 pub struct VarStat {
     access_modifier: Option<ASTNode<AccessModifier>>,
-    declare: Option<ASTNode<KeyWordKind>>,
+    declare: Option<KeyWordKind>,
     var_modifier: Option<ASTNode<VarModifier>>,
-    readonly: Option<ASTNode<KeyWordKind>>,
+    readonly: Option<KeyWordKind>,
     var_decl_list: ASTNode<VarDeclList>,
 }
 impl VarStat {
@@ -206,7 +174,7 @@ impl VarStat {
     }
 
     pub(crate) fn set_declare(&mut self) {
-        self.declare = Some(ASTNode::new(KeyWordKind::Declare));
+        self.declare = Some(KeyWordKind::Declare);
     }
 
     pub(crate) fn set_var_modifier(&mut self, var_modifier: ASTNode<VarModifier>) {
@@ -214,7 +182,7 @@ impl VarStat {
     }
 
     pub(crate) fn set_readonly(&mut self) {
-        self.readonly = Some(ASTNode::new(KeyWordKind::ReadOnly));
+        self.readonly = Some(KeyWordKind::ReadOnly);
     }
 
     pub(crate) fn set_var_decl_list(&mut self, var_decl_list: ASTNode<VarDeclList>) {
@@ -340,11 +308,11 @@ pub enum VarModifier {
     Var,
 }
 impl Visualizable for VarModifier {
-    fn draw(&self, self_id: usize, graph: &mut AstGraph) {
+    fn draw(&self, self_info: NodeInfo, graph: &mut AstGraph) {
         match self {
-            VarModifier::Let => graph.put_node(self_id, "let"),
-            VarModifier::Const => graph.put_node(self_id, "const"),
-            VarModifier::Var => graph.put_node(self_id, "var"),
+            VarModifier::Let => graph.put_node(self_info, "let"),
+            VarModifier::Const => graph.put_node(self_info, "const"),
+            VarModifier::Var => graph.put_node(self_info, "var"),
         }
     }
 }
@@ -366,9 +334,9 @@ pub struct VarDecl {
     initializer: Option<ASTNode<Exp>>,
 }
 impl VarDecl {
-    pub(crate) fn new(var_name: &str) -> Self {
+    pub(crate) fn new(var_name: ASTNode<Identifier>) -> Self {
         Self {
-            var_name: ASTNode::new(Identifier::new(var_name)),
+            var_name,
             type_annotation: None,
             initializer: None,
         }
@@ -388,8 +356,8 @@ pub struct ContinueStat {
     identifier: Option<ASTNode<Identifier>>,
 }
 impl ContinueStat {
-    pub(crate) fn set_identifier(&mut self, identifier: &str) {
-        self.identifier = Some(ASTNode::new(Identifier::new(identifier)));
+    pub(crate) fn set_identifier(&mut self, identifier: ASTNode<Identifier>) {
+        self.identifier = Some(identifier);
     }
 }
 
@@ -398,8 +366,8 @@ pub struct BreakStat {
     identifier: Option<ASTNode<Identifier>>,
 }
 impl BreakStat {
-    pub(crate) fn set_identifier(&mut self, identifier: &str) {
-        self.identifier = Some(ASTNode::new(Identifier::new(identifier)));
+    pub(crate) fn set_identifier(&mut self, identifier: ASTNode<Identifier>) {
+        self.identifier = Some(identifier);
     }
 }
 
@@ -440,11 +408,8 @@ pub struct LabelledStat {
     stat: ASTNode<Stat>,
 }
 impl LabelledStat {
-    pub(crate) fn new(identifier: &str, stat: ASTNode<Stat>) -> Self {
-        Self {
-            identifier: ASTNode::new(Identifier::new(identifier)),
-            stat,
-        }
+    pub(crate) fn new(identifier: ASTNode<Identifier>, stat: ASTNode<Stat>) -> Self {
+        Self { identifier, stat }
     }
 }
 

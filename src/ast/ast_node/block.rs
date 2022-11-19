@@ -1,7 +1,7 @@
 use super::clause::*;
 use super::stat::Stat;
 use crate::ast::AstGraph;
-use crate::ast::{visulize::Visualizable, ASTNode};
+use crate::ast::{visulize::Visualizable, ASTNode, NodeInfo};
 
 #[derive(Visualizable, Default)]
 pub struct Block {

@@ -1,13 +1,13 @@
 use std::cmp::PartialOrd;
 use std::collections::HashMap;
 
-use super::decl::{FuncExpDecl, ArrowFuncExpDecl};
+use super::decl::{ArrowFuncExpDecl, FuncExpDecl};
 use super::identifier::Identifier;
 use super::literal::Literal;
 use super::type_::TypeArgs;
 use crate::ast::Visualizable;
 
-use crate::ast::{ASTNode, AstGraph};
+use crate::ast::{ASTNode, AstGraph, NodeInfo};
 use crate::lexer::token_kind::{KeyWordKind, TokenKind};
 use lazy_static::lazy_static;
 
@@ -208,51 +208,51 @@ impl Op {
 }
 
 impl Visualizable for Op {
-    fn draw(&self, self_id: usize, graph: &mut AstGraph) {
+    fn draw(&self, self_info: NodeInfo, graph: &mut AstGraph) {
         match self {
-            Op::PostInc => graph.put_node(self_id, "++(post)"),
-            Op::PostDec => graph.put_node(self_id, "--(post)"),
-            Op::PreInc => graph.put_node(self_id, "++(pre)"),
-            Op::PreDec => graph.put_node(self_id, "--(pre)"),
-            Op::UnaryPlus => graph.put_node(self_id, "+"),
-            Op::UnaryMinus => graph.put_node(self_id, "-"),
-            Op::BitNot => graph.put_node(self_id, "~"),
-            Op::Not => graph.put_node(self_id, "!"),
-            Op::New => graph.put_node(self_id, "new"),
-            Op::Delete => graph.put_node(self_id, "delete"),
-            Op::Typeof => graph.put_node(self_id, "typeof"),
-            Op::Plus => graph.put_node(self_id, "+"),
+            Op::PostInc => graph.put_node(self_info, "++(post)"),
+            Op::PostDec => graph.put_node(self_info, "--(post)"),
+            Op::PreInc => graph.put_node(self_info, "++(pre)"),
+            Op::PreDec => graph.put_node(self_info, "--(pre)"),
+            Op::UnaryPlus => graph.put_node(self_info, "+"),
+            Op::UnaryMinus => graph.put_node(self_info, "-"),
+            Op::BitNot => graph.put_node(self_info, "~"),
+            Op::Not => graph.put_node(self_info, "!"),
+            Op::New => graph.put_node(self_info, "new"),
+            Op::Delete => graph.put_node(self_info, "delete"),
+            Op::Typeof => graph.put_node(self_info, "typeof"),
+            Op::Plus => graph.put_node(self_info, "+"),
 
-            Op::Assign => graph.put_node(self_id, "="),
-            Op::Dot => graph.put_node(self_id, "."),
-            Op::Index => graph.put_node(self_id, "[]"),
-            Op::Call => graph.put_node(self_id, "call"),
-            Op::Multiply => graph.put_node(self_id, "*"),
-            Op::Divide => graph.put_node(self_id, "/"),
-            Op::Mod => graph.put_node(self_id, "%"),
-            Op::Minus => graph.put_node(self_id, "-"),
-            Op::GreaterThanEquals => graph.put_node(self_id, ">="),
-            Op::MoreThan => graph.put_node(self_id, ">"),
-            Op::LessThanEquals => graph.put_node(self_id, "<="),
-            Op::LessThan => graph.put_node(self_id, "<"),
-            Op::BitAnd => graph.put_node(self_id, "&"),
-            Op::And => graph.put_node(self_id, "&&"),
-            Op::BitAndAssign => graph.put_node(self_id, "&="),
-            Op::BitOr => graph.put_node(self_id, "|"),
-            Op::Or => graph.put_node(self_id, "||"),
-            Op::BitOrAssign => graph.put_node(self_id, "|="),
+            Op::Assign => graph.put_node(self_info, "="),
+            Op::Dot => graph.put_node(self_info, "."),
+            Op::Index => graph.put_node(self_info, "[]"),
+            Op::Call => graph.put_node(self_info, "call"),
+            Op::Multiply => graph.put_node(self_info, "*"),
+            Op::Divide => graph.put_node(self_info, "/"),
+            Op::Mod => graph.put_node(self_info, "%"),
+            Op::Minus => graph.put_node(self_info, "-"),
+            Op::GreaterThanEquals => graph.put_node(self_info, ">="),
+            Op::MoreThan => graph.put_node(self_info, ">"),
+            Op::LessThanEquals => graph.put_node(self_info, "<="),
+            Op::LessThan => graph.put_node(self_info, "<"),
+            Op::BitAnd => graph.put_node(self_info, "&"),
+            Op::And => graph.put_node(self_info, "&&"),
+            Op::BitAndAssign => graph.put_node(self_info, "&="),
+            Op::BitOr => graph.put_node(self_info, "|"),
+            Op::Or => graph.put_node(self_info, "||"),
+            Op::BitOrAssign => graph.put_node(self_info, "|="),
             Op::Instanceof => todo!(),
             Op::In => todo!(),
             Op::As => todo!(),
             Op::IdentityEquals => todo!(),
             Op::IdentityNotEquals => todo!(),
-            Op::Equals => graph.put_node(self_id, "=="),
-            Op::NotEquals => graph.put_node(self_id, "!="),
-            Op::MultiplyAssign => graph.put_node(self_id, "*="),
-            Op::DivideAssign => graph.put_node(self_id, "/="),
-            Op::ModulusAssign => graph.put_node(self_id, "%="),
-            Op::PlusAssign => graph.put_node(self_id, "+="),
-            Op::MinusAssign => graph.put_node(self_id, "-="),
+            Op::Equals => graph.put_node(self_info, "=="),
+            Op::NotEquals => graph.put_node(self_info, "!="),
+            Op::MultiplyAssign => graph.put_node(self_info, "*="),
+            Op::DivideAssign => graph.put_node(self_info, "/="),
+            Op::ModulusAssign => graph.put_node(self_info, "%="),
+            Op::PlusAssign => graph.put_node(self_info, "+="),
+            Op::MinusAssign => graph.put_node(self_info, "-="),
             Op::RightShiftLogicalAssign => todo!(),
             Op::RightShiftArithmeticAssign => todo!(),
             Op::RightShiftLogical => todo!(),
@@ -321,27 +321,24 @@ pub struct UnaryExp {
 }
 
 impl UnaryExp {
-    pub fn new(op: Op, exp: ASTNode<Exp>) -> Self {
-        Self {
-            op: ASTNode::new(op),
-            exp,
-        }
+    pub fn new(op: ASTNode<Op>, exp: ASTNode<Exp>) -> Self {
+        Self { op, exp }
     }
 }
 
 // 因为要区分前置和后置，手动实现 Visualizable
 impl Visualizable for UnaryExp {
-    fn draw(&self, self_id: usize, graph: &mut AstGraph) {
-        graph.put_node(self_id, "UnaryExp");
+    fn draw(&self, self_info: NodeInfo, graph: &mut AstGraph) {
+        graph.put_node(self_info, "UnaryExp");
 
         match *self.op.context {
             Op::PostDec | Op::PostInc => {
-                self.exp.draw(self_id, graph);
-                self.op.draw(self_id, graph);
+                self.exp.draw(self_info, graph);
+                self.op.draw(self_info, graph);
             }
             _ => {
-                self.op.draw(self_id, graph);
-                self.exp.draw(self_id, graph);
+                self.op.draw(self_info, graph);
+                self.exp.draw(self_info, graph);
             }
         }
     }
@@ -355,12 +352,8 @@ pub struct BinaryExp {
 }
 
 impl BinaryExp {
-    pub fn new(left: ASTNode<Exp>, op: Op, right: ASTNode<Exp>) -> Self {
-        Self {
-            left,
-            op: ASTNode::new(op),
-            right,
-        }
+    pub fn new(left: ASTNode<Exp>, op: ASTNode<Op>, right: ASTNode<Exp>) -> Self {
+        Self { left, op, right }
     }
 }
 
@@ -372,12 +365,8 @@ pub struct AssignExp {
 }
 
 impl AssignExp {
-    pub fn new(left: ASTNode<Exp>, op: Op, right: ASTNode<Exp>) -> Self {
-        Self {
-            left,
-            op: ASTNode::new(op),
-            right,
-        }
+    pub fn new(left: ASTNode<Exp>, op: ASTNode<Op>, right: ASTNode<Exp>) -> Self {
+        Self { left, op, right }
     }
 }
 
@@ -403,16 +392,16 @@ impl TernaryExp {
 
 #[derive(Visualizable)]
 pub struct GroupExp {
-    left_paren: ASTNode<TokenKind>,
+    left_paren: TokenKind,
     exp: ASTNode<Exp>,
-    right_paren: ASTNode<TokenKind>,
+    right_paren: TokenKind,
 }
 impl GroupExp {
     pub(crate) fn new(exp: ASTNode<Exp>) -> Self {
         Self {
-            left_paren: ASTNode::new(TokenKind::LeftParen),
+            left_paren: TokenKind::LeftParen,
             exp,
-            right_paren: ASTNode::new(TokenKind::RightParen),
+            right_paren: TokenKind::RightParen,
         }
     }
 }
@@ -436,8 +425,8 @@ pub struct NewExp {
 }
 
 impl NewExp {
-    pub(crate) fn set_class_name(&mut self, class_name: &str) {
-        self.class_name = ASTNode::new(Identifier::new(class_name));
+    pub(crate) fn set_class_name(&mut self, class_name: ASTNode<Identifier>) {
+        self.class_name = class_name;
     }
 
     pub(crate) fn set_type_args(&mut self, type_args: ASTNode<TypeArgs>) {

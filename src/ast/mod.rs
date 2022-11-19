@@ -48,9 +48,8 @@ impl AstGraph {
         ));
     }
 
-    pub(crate) fn put_node(&mut self, id: usize, desc: &str) {
-        self.graph
-            .push_str(&AstGraph::label(&AstGraph::node_name(id), desc));
+    pub(crate) fn put_node(&mut self, info: NodeInfo, desc: &str) {
+        self.graph.push_str(&AstGraph::label(info, desc));
     }
 
     fn node_name(id: usize) -> String {
@@ -61,10 +60,17 @@ impl AstGraph {
         format!("\t{} -- {}\n", a, b)
     }
 
-    pub(crate) fn label(node: &str, desc: &str) -> String {
-        match KEYWORD.contains_key(desc) {
-            true => format!("\t{}[label=\"{}\", color=red]\n", node, desc),
-            false => format!("\t{}[label=\"{}\"]\n", node, desc),
+    pub(crate) fn label(info: NodeInfo, desc: &str) -> String {
+        let node = &AstGraph::node_name(info.id);
+
+        if info.span.begin == 0 {
+            format!("\t{}[label=\"{}\", color=red]\n", node, format!("{}", desc))
+        } else {
+            format!(
+                "\t{}[label=\"{}\"]\n",
+                node,
+                format!("{}\n[{}, {}]", desc, info.span.begin, info.span.end)
+            )
         }
     }
 }
@@ -83,12 +89,12 @@ impl Counter {
 }
 
 pub struct AST {
-    program: Program,
+    program: ASTNode<Program>,
     graph: AstGraph,
 }
 
 impl AST {
-    pub fn new(program: Program) -> AST {
+    pub fn new(program: ASTNode<Program>) -> AST {
         AST {
             graph: AstGraph::new(),
             program,
@@ -109,55 +115,88 @@ impl AST {
                 .unwrap(),
         );
 
-        self.program.draw(&mut self.graph);
+        self.program.draw(NodeInfo::default(), &mut self.graph);
         match self.graph.write(&mut writer) {
             Ok(_) => {}
             Err(err) => err_exit(err),
         }
 
+        let png_path = &to_path.replace("dot", "png");
+        let dot_path = to_path;
         Command::new("dot")
-            .arg("-Tpng")
-            .arg(to_path)
-            .arg("-o")
-            .arg(to_path.replace("dot", "png"))
+            .args(["-Tpng", dot_path, "-o", png_path])
             .spawn()
             .expect("dot command failed to start")
             .wait()
             .expect("dot command failed to run");
 
-        fs::remove_file(to_path).expect("Removing dot file failed");
+        fs::remove_file(dot_path).unwrap();
     }
 }
 
 #[derive(Debug, Default)]
 pub struct ASTNode<T: Visualizable> {
-    id: usize,
+    pub(crate) info: NodeInfo,
     context: Box<T>,
 }
 
 impl<T: Visualizable> ASTNode<T> {
-    pub(crate) fn new(context: T) -> ASTNode<T> {
-        let self_id = AST::gen_id();
+    pub(crate) fn new(context: T, span: Span) -> ASTNode<T> {
+        let info = NodeInfo::new(AST::gen_id(), span);
         ASTNode {
-            id: self_id,
+            info,
             context: Box::new(context),
         }
     }
 
-    fn draw(&self, father_id: usize, graph: &mut AstGraph) {
-        graph.put_edge(father_id, self.id);
+    fn draw(&self, father_info: NodeInfo, graph: &mut AstGraph) {
+        if father_info.id != 0 {
+            graph.put_edge(father_info.id, self.info.id);
+        }
 
         // if it is true, there must be something wrong
-        assert_ne!(self.id, 0);
+        assert_ne!(self.info.id, 0);
 
-        self.context.draw(self.id, graph);
+        self.context.draw(self.info, graph);
+    }
+}
+
+#[derive(Debug, Default, Clone, Copy)]
+pub struct Span {
+    pub(crate) begin: usize,
+    pub(crate) end: usize,
+}
+
+impl Span {
+    pub(crate) fn new(begin: usize, end: usize) -> Self {
+        Self { begin, end }
+    }
+
+    pub(crate) fn get_begin(&self) -> usize {
+        self.begin
+    }
+
+    pub(crate) fn get_end(&self) -> usize {
+        self.end
+    }
+}
+
+#[derive(Debug, Default, Clone, Copy)]
+pub struct NodeInfo {
+    pub(crate) id: usize,
+    pub(crate) span: Span,
+}
+
+impl NodeInfo {
+    fn new(id: usize, span: Span) -> NodeInfo {
+        Self { id, span }
     }
 }
 
 impl ASTNode<Unknown> {
     pub fn dummy() -> ASTNode<Unknown> {
         ASTNode {
-            id: 0,
+            info: Default::default(),
             context: Box::new(Unknown::new()),
         }
     }

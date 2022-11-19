@@ -1,22 +1,21 @@
 use crate::{
-    ast::{visulize::Visualizable, ASTNode, AstGraph},
+    ast::{visulize::Visualizable, ASTNode, AstGraph, NodeInfo, Span},
     lexer::token_kind::{KeyWordKind, TokenKind},
 };
 
 use super::{
-    body::FuncBody,
-    class::{ClassHeritage, ClassTail, Extends, Accesser},
+    class::{Accesser, ClassHeritage, ClassTail, Extends},
     exp::Exp,
     identifier::Identifier,
     parameter::{FormalPara, FormalParas, TypeAnnotation, TypeParas},
     sig::*,
     stat::VarStat,
-    type_::*,
+    type_::*, source_element::SourceElements,
 };
 
 #[derive(Visualizable, Default)]
 pub struct ClassDecl {
-    abstr: Option<ASTNode<KeyWordKind>>,
+    abstr: Option<KeyWordKind>,
     class_name: ASTNode<Identifier>,
     type_paras: Option<ASTNode<TypeParas>>,
     class_heritage: Option<ASTNode<ClassHeritage>>,
@@ -24,11 +23,11 @@ pub struct ClassDecl {
 }
 impl ClassDecl {
     pub(crate) fn set_abstract(&mut self) {
-        self.abstr = Some(ASTNode::new(KeyWordKind::Abstract));
+        self.abstr = Some(KeyWordKind::Abstract);
     }
 
-    pub(crate) fn set_class_name(&mut self, class_name: &str) {
-        self.class_name = ASTNode::new(Identifier::new(class_name));
+    pub(crate) fn set_class_name(&mut self, class_name: ASTNode<Identifier>) {
+        self.class_name = class_name;
     }
 
     pub(crate) fn set_type_paras(&mut self, type_paras: ASTNode<TypeParas>) {
@@ -46,8 +45,8 @@ impl ClassDecl {
 
 #[derive(Visualizable, Default)]
 pub struct InterfaceDecl {
-    export: Option<ASTNode<KeyWordKind>>,
-    declare: Option<ASTNode<KeyWordKind>>,
+    export: Option<KeyWordKind>,
+    declare: Option<KeyWordKind>,
     interface_name: ASTNode<Identifier>,
     type_paras: Option<ASTNode<TypeParas>>,
     extends: Vec<ASTNode<Extends>>,
@@ -55,15 +54,15 @@ pub struct InterfaceDecl {
 }
 impl InterfaceDecl {
     pub(crate) fn set_export(&mut self) {
-        self.export = Some(ASTNode::new(KeyWordKind::Export));
+        self.export = Some(KeyWordKind::Export);
     }
 
     pub(crate) fn set_declare(&mut self) {
-        self.declare = Some(ASTNode::new(KeyWordKind::Declare));
+        self.declare = Some(KeyWordKind::Declare);
     }
 
-    pub(crate) fn set_identifier(&mut self, identifier: &str) {
-        self.interface_name = ASTNode::new(Identifier::new(identifier));
+    pub(crate) fn set_interface_name(&mut self, interface_name: ASTNode<Identifier>) {
+        self.interface_name = interface_name;
     }
 
     pub(crate) fn push_extends(&mut self, extends: ASTNode<Extends>) {
@@ -104,10 +103,8 @@ pub struct AbsDecl {
 }
 
 impl AbsDecl {
-    pub(crate) fn new(abs_member: AbsMember) -> Self {
-        Self {
-            abs_member: ASTNode::new(abs_member),
-        }
+    pub(crate) fn new(abs_member: ASTNode<AbsMember>) -> Self {
+        Self { abs_member }
     }
 }
 
@@ -129,9 +126,9 @@ impl AbsMethod {
 
     pub(crate) fn set_call_sig(&mut self, call_sig: ASTNode<CallSig>) {}
 
-    pub(crate) fn new(identifier: &str, call_sig: ASTNode<CallSig>) -> Self {
+    pub(crate) fn new(identifier: ASTNode<Identifier>, call_sig: ASTNode<CallSig>) -> Self {
         Self {
-            identifier: ASTNode::new(Identifier::new(identifier)),
+            identifier,
             call_sig,
         }
     }
@@ -149,26 +146,6 @@ impl AbsVar {
 }
 
 #[derive(Visualizable, Default)]
-pub struct FuncDecl {
-    func_name: ASTNode<Identifier>,
-    call_sig: ASTNode<CallSig>,
-    func_body: Option<ASTNode<FuncBody>>,
-}
-impl FuncDecl {
-    pub(crate) fn set_func_name(&mut self, func_name: &str) {
-        self.func_name = ASTNode::new(Identifier::new(func_name));
-    }
-
-    pub(crate) fn set_call_sig(&mut self, call_sig: ASTNode<CallSig>) {
-        self.call_sig = call_sig;
-    }
-
-    pub(crate) fn set_func_body(&mut self, func_body: ASTNode<FuncBody>) {
-        self.func_body = Some(func_body);
-    }
-}
-
-#[derive(Visualizable, Default)]
 pub struct FuncExpDecl {
     func_name: Option<ASTNode<Identifier>>,
     formal_paras: Option<ASTNode<FormalParas>>,
@@ -176,8 +153,8 @@ pub struct FuncExpDecl {
     func_body: ASTNode<FuncBody>,
 }
 impl FuncExpDecl {
-    pub(crate) fn set_func_name(&mut self, func_name: &str) {
-        self.func_name = Some(ASTNode::new(Identifier::new(func_name)));
+    pub(crate) fn set_func_name(&mut self, func_name: ASTNode<Identifier>) {
+        self.func_name = Some(func_name);
     }
 
     pub(crate) fn set_formal_paras(&mut self, formal_paras: ASTNode<FormalParas>) {
@@ -193,72 +170,51 @@ impl FuncExpDecl {
     }
 }
 
-#[derive(Default)]
+#[derive(Visualizable, Default)]
+pub struct FuncBody {
+    source_elements: Option<ASTNode<SourceElements>>,
+}
+impl FuncBody {
+    pub(crate) fn set_func_body(&mut self, source_elements: ASTNode<SourceElements>) {
+        self.source_elements = Some(source_elements);
+    }
+}
+
+#[derive(Visualizable, Default)]
 pub struct ArrowFuncExpDecl {
-    async_: Option<ASTNode<KeyWordKind>>,
-    formal_paras: Option<ASTNode<FormalParas>>,
+    async_: Option<KeyWordKind>,
+    formal_paras: ASTNode<FormalParas>,
     type_annotation: Option<ASTNode<TypeAnnotation>>,
     func_body: ASTNode<ArrowFuncBody>,
 }
 impl ArrowFuncExpDecl {
     pub(crate) fn set_async(&mut self) {
-        self.async_ = Some(ASTNode::new(KeyWordKind::Async));
+        self.async_ = Some(KeyWordKind::Async);
     }
 
+    // (a, b, c) => ...
     pub(crate) fn set_formal_paras(&mut self, formal_paras: ASTNode<FormalParas>) {
-        assert!(self.formal_paras.is_none());
-
-        self.formal_paras = Some(formal_paras);
-    }
-
-    pub(crate) fn set_formal_para(&mut self, formal_para: ASTNode<FormalPara>) {
-        assert!(self.formal_paras.is_none());
-
-        let mut formal_paras = FormalParas::default();
-        formal_paras.push_formal_para(formal_para);
-        self.formal_paras = Some(ASTNode::new(formal_paras));
+        self.formal_paras = formal_paras;
     }
 
     pub(crate) fn set_type_annotation(&mut self, type_annotation: ASTNode<TypeAnnotation>) {
         self.type_annotation = Some(type_annotation);
     }
 
-    pub(crate) fn set_func_body(&mut self, func_body: ASTNode<FuncBody>) {
-        self.func_body = ASTNode::new(ArrowFuncBody::FuncBody(func_body));
-    }
-
-    pub(crate) fn set_exp_body(&mut self, exp: ASTNode<Exp>) {
-        self.func_body = ASTNode::new(ArrowFuncBody::ExpBody(exp));
-    }
-}
-
-impl Visualizable for ArrowFuncExpDecl {
-    fn draw(&self, self_id: usize, graph: &mut AstGraph) {
-        graph.put_node(self_id, "ArrowFuncExpDecl");
-
-        self.formal_paras.draw(self_id, graph);
-        self.type_annotation.draw(self_id, graph);
-        self.func_body.draw(self_id, graph);
-        // match &*self.func_body.context {
-        //     ArrowFuncBody::FuncBody(func_body) => {
-        //         func_body.draw(self_id, graph);
-        //     }
-        //     ArrowFuncBody::ExpBody(exp) => {
-        //         exp.draw(self_id, graph);
-        //     }
-        // }
+    pub(crate) fn set_func_body(&mut self, func_body: ASTNode<ArrowFuncBody>) {
+        self.func_body = func_body;
     }
 }
 
 #[derive(Visualizable)]
-enum ArrowFuncBody {
+pub enum ArrowFuncBody {
     FuncBody(ASTNode<FuncBody>),
     ExpBody(ASTNode<Exp>),
 }
 
 impl Default for ArrowFuncBody {
     fn default() -> Self {
-        ArrowFuncBody::FuncBody(ASTNode::new(FuncBody::default()))
+        ArrowFuncBody::FuncBody(ASTNode::new(FuncBody::default(), Span::default()))
     }
 }
 
@@ -266,4 +222,11 @@ impl Default for ArrowFuncBody {
 pub struct GenFuncDecl {}
 
 #[derive(Visualizable, Default)]
-pub struct NamespaceDecl {}
+pub struct NamespaceDecl {
+    names: Vec<ASTNode<Identifier>>,
+}
+impl NamespaceDecl {
+    pub(crate) fn push_name(&mut self, name: ASTNode<Identifier>) {
+        self.names.push(name);
+    }
+}
