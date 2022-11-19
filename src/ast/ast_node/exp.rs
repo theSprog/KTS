@@ -1,11 +1,11 @@
 use std::cmp::PartialOrd;
 use std::collections::HashMap;
 
-use super::decl::{ArrowFuncExpDecl, FuncExpDecl, NamespaceName};
+use super::decl::{ArrowFuncExpDecl, ClassExp, FuncExpDecl, NamespaceName};
 use super::identifier::Identifier;
 use super::literal::Literal;
 use super::type_::TypeArgs;
-use crate::ast::Visualizable;
+use crate::ast::{Span, Visualizable, AST};
 
 use crate::ast::{ASTNode, AstGraph, NodeInfo};
 use crate::lexer::token_kind::{KeyWordKind, TokenKind};
@@ -296,6 +296,8 @@ pub enum Exp {
     ArgsExp(ASTNode<ArgsExp>),
 
     FunctionExp(ASTNode<FuncExpDecl>),
+    ClassExp(ASTNode<ClassExp>),
+
     ArrowFuncExp(ASTNode<ArrowFuncExpDecl>),
 
     NewExp(ASTNode<NewExp>),
@@ -321,8 +323,11 @@ pub struct UnaryExp {
 }
 
 impl UnaryExp {
-    pub fn new(op: ASTNode<Op>, exp: ASTNode<Exp>) -> Self {
-        Self { op, exp }
+    pub fn new(op: Op, exp: ASTNode<Exp>) -> Self {
+        Self {
+            op: ASTNode::new(op, Span::default()),
+            exp,
+        }
     }
 }
 
@@ -352,8 +357,12 @@ pub struct BinaryExp {
 }
 
 impl BinaryExp {
-    pub fn new(left: ASTNode<Exp>, op: ASTNode<Op>, right: ASTNode<Exp>) -> Self {
-        Self { left, op, right }
+    pub fn new(left: ASTNode<Exp>, op: Op, right: ASTNode<Exp>) -> Self {
+        Self {
+            left,
+            op: ASTNode::new(op, Span::default()),
+            right,
+        }
     }
 }
 
@@ -392,16 +401,16 @@ impl TernaryExp {
 
 #[derive(Visualizable)]
 pub struct GroupExp {
-    left_paren: TokenKind,
+    left_paren: ASTNode<TokenKind>,
     exp: ASTNode<Exp>,
-    right_paren: TokenKind,
+    right_paren: ASTNode<TokenKind>,
 }
 impl GroupExp {
     pub(crate) fn new(exp: ASTNode<Exp>) -> Self {
         Self {
-            left_paren: TokenKind::LeftParen,
+            left_paren: ASTNode::new(TokenKind::LeftParen, Span::default()),
             exp,
-            right_paren: TokenKind::RightParen,
+            right_paren: ASTNode::new(TokenKind::RightParen, Span::default()),
         }
     }
 }

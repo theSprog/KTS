@@ -1,6 +1,13 @@
-use crate::{lexer::{token_kind::{TokenKind, KeyWordKind}, token::Token}, compiler_internal_error, ast::ast_node::literal::Literal};
+use crate::{
+    ast::ast_node::literal::Literal,
+    compiler_internal_error,
+    lexer::{
+        token::Token,
+        token_kind::{KeyWordKind, TokenKind},
+    },
+};
 
-use super::{Parser, error::ParserError};
+use super::{error::ParserError, Parser};
 
 impl Parser {
     // expect token error
@@ -32,10 +39,9 @@ impl Parser {
                             "you might forgot ';' in the end of line[{}]",
                             self.tokens.get(self.index - 1).unwrap().peek_line()
                         )))
-                    }else {
+                    } else {
                         Err(self.expect_error("Token Dismatch", &kind.to_string()))
                     }
-
                 }
             }
         } else {
@@ -58,8 +64,8 @@ impl Parser {
 
     pub(super) fn eat_eos(&mut self) -> Result<(), ParserError> {
         if self.is_eos() {
-            if self.peek_kind() == TokenKind::SemiColon {
-                self.eat(TokenKind::SemiColon)?;
+            if self.kind_is(TokenKind::SemiColon) {
+                self.forward();
                 return Ok(());
             }
             return Ok(());
@@ -84,19 +90,13 @@ impl Parser {
 
     // 注意，该函数在 extract 的同时也会 eat Token
     pub(super) fn extact_identifier(&mut self) -> Result<String, ParserError> {
-        let ident = match self.peek_kind() {
-            TokenKind::Identifier => {
-                self.eat(TokenKind::Identifier)?;
-                self.tokens
-                    .get(self.index - 1)
-                    .unwrap()
-                    .peek_value()
-                    .as_str()
-            }
-            _ => return Err(self.expect_error("Identifier", "identifier")),
-        };
+        let ident = String::from(match self.peek_kind() {
+            TokenKind::Identifier => self.peek().unwrap().peek_value().as_str(),
+            _ => return Err(self.expect_error("Parsing Identifier failed", "identifier")),
+        });
 
-        Ok(String::from(ident))
+        self.forward();
+        Ok(ident)
     }
 
     // 注意，该函数在 extract 的同时也会 eat Token
@@ -106,8 +106,16 @@ impl Parser {
 
             TokenKind::Number => {
                 let string_value = self.peek().unwrap().peek_value().clone();
-                // 先处理其余进制
-                if string_value.starts_with("0") {
+                // 先处理小数
+                if string_value.starts_with("0.") {
+                    if let Ok(float) = string_value.parse::<f64>() {
+                        Literal::Number(float)
+                    } else {
+                        return Err(self.report_error("Unrecognized number"));
+                    }
+                }
+                // 处理其余进制
+                else if string_value.starts_with("0") {
                     Literal::Integer(match string_value.as_bytes() {
                         // 只是单个 0
                         [b'0'] => 0i32,
@@ -116,6 +124,7 @@ impl Parser {
                         [b'0', b'0'..=b'7', _rest @ ..] => {
                             i32::from_str_radix(&string_value[1..], 8).unwrap()
                         }
+
                         // 一般情况
                         [f, s, rest @ ..] => {
                             let rest = std::str::from_utf8(rest).unwrap();
@@ -127,7 +136,7 @@ impl Parser {
                             }
                         }
 
-                        _ => compiler_internal_error!("Why it can be here?"),
+                        _ => unreachable!(),
                     })
                 } else {
                     // 再处理最常见的两种情况
@@ -148,7 +157,7 @@ impl Parser {
             _ => return Err(self.expect_error("Literal", "literal")),
         };
 
-        self.index += 1;
+        self.forward();
         Ok(literal)
     }
 
@@ -167,17 +176,14 @@ impl Parser {
         }
     }
 
-    // pub(super) fn look_ahead(&self) -> TokenKind {
-    //     match self.tokens.get(self.index + 1) {
-    //         Some(token) => token.peek_kind(),
-    //         None =>  TokenKind::EOF,
-    //     }
-    // }
+    pub(super) fn forward(&mut self) {
+        self.index += 1;
+    }
 
-    pub(super) fn look_ahead2(&self) -> Option<TokenKind> {
-        match self.tokens.get(self.index + 2) {
-            Some(token) => Some(token.peek_kind()),
-            None => None,
+    pub(super) fn lookahead(&self, distance: usize) -> TokenKind {
+        match self.tokens.get(self.index + distance) {
+            Some(token) => token.peek_kind(),
+            None => TokenKind::EOF,
         }
     }
 
@@ -198,7 +204,8 @@ impl Parser {
         }
     }
 
-    pub(super) fn pre_peek_kind(&self) -> TokenKind {
+    pub(super) fn pre_kind(&self) -> TokenKind {
+        assert_ne!(self.index, 0);
         let pre_token = self.tokens.get(self.index - 1);
         match pre_token {
             Some(pre_token) => pre_token.peek_kind(),
@@ -206,18 +213,15 @@ impl Parser {
         }
     }
 
-    pub(super) fn next_peek_kind(&self) -> TokenKind {
-        match self.tokens.get(self.index + 1) {
-            Some(token) => token.peek_kind(),
-            None =>  TokenKind::EOF,
-        }
+    pub(super) fn next_kind(&self) -> TokenKind {
+        return self.lookahead(1);
     }
 
     pub(super) fn prekind_is(&self, kind: TokenKind) -> bool {
-        self.pre_peek_kind() == kind
+        self.pre_kind() == kind
     }
 
     pub(super) fn nextkind_is(&self, kind: TokenKind) -> bool {
-        self.next_peek_kind() == kind
+        self.next_kind() == kind
     }
 }

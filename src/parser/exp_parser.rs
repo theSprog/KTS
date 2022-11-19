@@ -1,6 +1,10 @@
 use crate::{
     ast::{
-        ast_node::{decl::ArrowFuncExpDecl, exp::*, identifier::Identifier},
+        ast_node::{
+            decl::{ArrowFuncExpDecl, ClassExp},
+            exp::*,
+            identifier::Identifier,
+        },
         ASTNode, Span,
     },
     lexer::token_kind::{KeyWordKind, TokenKind},
@@ -94,8 +98,7 @@ impl Parser {
             return Ok(base_exp);
         }
 
-        if let Some(fix_op) = prefix.xor(postfix) {
-            let op = ASTNode::new(fix_op, Span::new(begin, self.mark_end()));
+        if let Some(op) = prefix.xor(postfix) {
             Ok(ASTNode::new(
                 Exp::UnaryExp(ASTNode::new(
                     UnaryExp::new(op, base_exp),
@@ -170,7 +173,7 @@ impl Parser {
         let begin = self.mark_begin();
 
         match self.peek_kind() {
-            TokenKind::Identifier => match self.next_peek_kind() {
+            TokenKind::Identifier => match self.next_kind() {
                 // 如果是 a => ...
                 TokenKind::ARROW => Ok(ASTNode::new(
                     Exp::ArrowFuncExp(self.parse_arrow_func()?),
@@ -194,9 +197,27 @@ impl Parser {
                 Span::new(begin, self.mark_end()),
             )),
 
+            // Class Identifier? classTail
+            TokenKind::KeyWord(KeyWordKind::Class) => {
+                self.eat(TokenKind::KeyWord(KeyWordKind::Class))?;
+
+                let mut class_exp = ClassExp::default();
+                if self.kind_is(TokenKind::Identifier) {
+                    class_exp.set_class_name(self.parse_identifier()?);
+                }
+
+                class_exp.set_class_tail(self.parse_class_tail()?);
+                let class_exp = ASTNode::new(class_exp, Span::new(begin, self.mark_end()));
+
+                Ok(ASTNode::new(
+                    Exp::ClassExp(class_exp),
+                    Span::new(begin, self.mark_end()),
+                ))
+            }
+
             // -------------------------------------------------------------------
             TokenKind::KeyWord(KeyWordKind::This) => {
-                self.eat(TokenKind::KeyWord(KeyWordKind::This))?;
+                self.forward();
                 Ok(ASTNode::new(
                     Exp::This(ASTNode::new(
                         KeyWordKind::This,
@@ -208,7 +229,7 @@ impl Parser {
 
             // ----------------------------------------------------------------
             TokenKind::KeyWord(KeyWordKind::Super) => {
-                self.eat(TokenKind::KeyWord(KeyWordKind::Super))?;
+                self.forward();
                 Ok(ASTNode::new(
                     Exp::Super(ASTNode::new(
                         KeyWordKind::Super,
@@ -224,14 +245,13 @@ impl Parser {
                 let mut array_exp = ArrayExp::default();
 
                 self.eat(TokenKind::LeftBrace)?;
-                if !self.kind_is(TokenKind::RightBrace) {
-                    loop {
-                        array_exp.push_element(self.parse_exp()?);
-                        if self.kind_is(TokenKind::Comma) {
-                            self.eat(TokenKind::Comma)?;
-                        } else {
-                            break;
-                        }
+                loop {
+                    if self.kind_is(TokenKind::RightBrace) {
+                        break;
+                    }
+                    array_exp.push_element(self.parse_exp()?);
+                    if self.kind_is(TokenKind::Comma) {
+                        self.forward();
                     }
                 }
                 self.eat(TokenKind::RightBrace)?;
@@ -351,58 +371,57 @@ impl Parser {
     }
 
     fn extract_op(&mut self) -> Result<Op, ParserError> {
-        match self.peek_kind() {
-            TokenKind::Assign => Ok(Op::Assign),
-            TokenKind::PlusAssign => Ok(Op::PlusAssign),
-            TokenKind::MinusAssign => Ok(Op::MinusAssign),
-            TokenKind::MultiplyAssign => Ok(Op::MultiplyAssign),
-            TokenKind::DivideAssign => Ok(Op::DivideAssign),
-            TokenKind::ModulusAssign => Ok(Op::ModulusAssign),
-            TokenKind::BitAndAssign => Ok(Op::BitAndAssign),
-            TokenKind::BitOrAssign => Ok(Op::BitOrAssign),
-            TokenKind::BitXorAssign => Ok(Op::BitXorAssign),
-            TokenKind::LeftShiftArithmeticAssign => Ok(Op::LeftShiftArithmeticAssign),
-            TokenKind::RightShiftArithmeticAssign => Ok(Op::RightShiftArithmeticAssign),
-            TokenKind::RightShiftLogicalAssign => Ok(Op::RightShiftLogicalAssign),
+        let op = match self.peek_kind() {
+            TokenKind::Assign => Op::Assign,
+            TokenKind::PlusAssign => Op::PlusAssign,
+            TokenKind::MinusAssign => Op::MinusAssign,
+            TokenKind::MultiplyAssign => Op::MultiplyAssign,
+            TokenKind::DivideAssign => Op::DivideAssign,
+            TokenKind::ModulusAssign => Op::ModulusAssign,
+            TokenKind::BitAndAssign => Op::BitAndAssign,
+            TokenKind::BitOrAssign => Op::BitOrAssign,
+            TokenKind::BitXorAssign => Op::BitXorAssign,
+            TokenKind::LeftShiftArithmeticAssign => Op::LeftShiftArithmeticAssign,
+            TokenKind::RightShiftArithmeticAssign => Op::RightShiftArithmeticAssign,
+            TokenKind::RightShiftLogicalAssign => Op::RightShiftLogicalAssign,
 
             // ? :
-            TokenKind::QuestionMark => Ok(Op::QuestionMark),
-            TokenKind::Colon => Ok(Op::Colon),
+            TokenKind::QuestionMark => Op::QuestionMark,
+            TokenKind::Colon => Op::Colon,
 
-            TokenKind::Plus => Ok(Op::Plus),
-            TokenKind::Minus => Ok(Op::Minus),
-            TokenKind::Multiply => Ok(Op::Multiply),
-            TokenKind::Divide => Ok(Op::Divide),
+            TokenKind::Plus => Op::Plus,
+            TokenKind::Minus => Op::Minus,
+            TokenKind::Multiply => Op::Multiply,
+            TokenKind::Divide => Op::Divide,
 
-            TokenKind::Or => Ok(Op::Or),
-            TokenKind::And => Ok(Op::And),
-            TokenKind::BitOr => Ok(Op::BitOr),
-            TokenKind::BitXOr => Ok(Op::BitXOr),
-            TokenKind::BitAnd => Ok(Op::BitAnd),
+            TokenKind::Or => Op::Or,
+            TokenKind::And => Op::And,
+            TokenKind::BitOr => Op::BitOr,
+            TokenKind::BitXOr => Op::BitXOr,
+            TokenKind::BitAnd => Op::BitAnd,
 
-            TokenKind::Equals => Ok(Op::Equals),
-            TokenKind::NotEquals => Ok(Op::NotEquals),
-            TokenKind::IdentityEquals => Ok(Op::IdentityEquals),
-            TokenKind::IdentityNotEquals => Ok(Op::IdentityNotEquals),
+            TokenKind::Equals => Op::Equals,
+            TokenKind::NotEquals => Op::NotEquals,
+            TokenKind::IdentityEquals => Op::IdentityEquals,
+            TokenKind::IdentityNotEquals => Op::IdentityNotEquals,
 
-            TokenKind::LessThan => Ok(Op::LessThan),
-            TokenKind::LessThanEquals => Ok(Op::LessThanEquals),
-            TokenKind::MoreThan => Ok(Op::MoreThan),
-            TokenKind::GreaterThanEquals => Ok(Op::GreaterThanEquals),
-            TokenKind::KeyWord(KeyWordKind::In) => Ok(Op::In),
-            TokenKind::KeyWord(KeyWordKind::Instanceof) => Ok(Op::Instanceof),
-            TokenKind::KeyWord(KeyWordKind::As) => Ok(Op::As),
+            TokenKind::LessThan => Op::LessThan,
+            TokenKind::LessThanEquals => Op::LessThanEquals,
+            TokenKind::MoreThan => Op::MoreThan,
+            TokenKind::GreaterThanEquals => Op::GreaterThanEquals,
+            TokenKind::KeyWord(KeyWordKind::In) => Op::In,
+            TokenKind::KeyWord(KeyWordKind::Instanceof) => Op::Instanceof,
+            TokenKind::KeyWord(KeyWordKind::As) => Op::As,
 
-            TokenKind::LeftShiftArithmetic => Ok(Op::LeftShiftArithmetic),
-            TokenKind::RightShiftArithmetic => Ok(Op::RightShiftArithmetic),
-            TokenKind::RightShiftLogical => Ok(Op::RightShiftLogical),
+            TokenKind::LeftShiftArithmetic => Op::LeftShiftArithmetic,
+            TokenKind::RightShiftArithmetic => Op::RightShiftArithmetic,
+            TokenKind::RightShiftLogical => Op::RightShiftLogical,
 
             _ => unreachable!(),
-        }
-        .map(|op| {
-            self.index += 1;
-            op
-        })
+        };
+
+        self.forward();
+        Ok(op)
     }
 
     fn extract_exp_from_stack(
@@ -457,7 +476,6 @@ impl Parser {
             if let (Some(right), Some(left)) = (exp_stack.pop(), exp_stack.pop()) {
                 let begin = left.info.span.get_begin();
                 let end = right.info.span.get_end();
-                let op = ASTNode::new(op, Span::new(begin, end));
                 let exp = Exp::BinaryExp(ASTNode::new(
                     BinaryExp::new(left, op, right),
                     Span::new(begin, end),

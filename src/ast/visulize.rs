@@ -1,4 +1,4 @@
-use super::{ASTNode, AstGraph, NodeInfo, AST, Span};
+use super::{ASTNode, AstGraph, NodeInfo, Span, AST};
 
 pub trait Visualizable {
     fn draw(&self, self_info: NodeInfo, graph: &mut AstGraph);

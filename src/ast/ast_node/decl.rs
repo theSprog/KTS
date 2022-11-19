@@ -15,6 +15,26 @@ use super::{
 };
 
 #[derive(Visualizable, Default)]
+pub struct FuncDecl {
+    func_name: ASTNode<Identifier>,
+    call_sig: ASTNode<CallSig>,
+    func_body: Option<ASTNode<FuncBody>>,
+}
+impl FuncDecl {
+    pub(crate) fn new(
+        func_name: ASTNode<Identifier>,
+        call_sig: ASTNode<CallSig>,
+        func_body: Option<ASTNode<FuncBody>>,
+    ) -> Self {
+        Self {
+            func_name,
+            call_sig,
+            func_body,
+        }
+    }
+}
+
+#[derive(Visualizable, Default)]
 pub struct ClassDecl {
     abstr: Option<KeyWordKind>,
     class_name: ASTNode<Identifier>,
@@ -188,6 +208,21 @@ pub struct FuncBody {
 impl FuncBody {
     pub(crate) fn set_func_body(&mut self, source_elements: ASTNode<SourceElements>) {
         self.source_elements = Some(source_elements);
+    }
+}
+
+#[derive(Visualizable, Default)]
+pub struct ClassExp {
+    class_name: Option<ASTNode<Identifier>>,
+    class_tail: ASTNode<ClassTail>,
+}
+impl ClassExp {
+    pub(crate) fn set_class_name(&mut self, class_name: ASTNode<Identifier>) {
+        self.class_name = Some(class_name);
+    }
+
+    pub(crate) fn set_class_tail(&mut self, class_tail: ASTNode<ClassTail>) {
+        self.class_tail = class_tail;
     }
 }
 

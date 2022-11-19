@@ -512,7 +512,17 @@ impl<'a> Lexer<'a> {
 
                 // if the current character is a escaped character
                 Some(b'\\') => {
-                    todo!()
+                    match self.bytes {
+                        [b'\\', b'n', _rest @ ..] => value.push(b'\n'),
+                        [b'\\', b'\\', _rest @ ..] => value.push(b'\\'),
+                        [b'\\', b't', _rest @ ..] => value.push(b'\t'),
+                        [b'\\', b'r', _rest @ ..] => value.push(b'\r'),
+
+                        [b'\\', b'\'', _rest @ ..] => value.push(b'\''),
+                        [b'\\', b'\"', _rest @ ..] => value.push(b'\"'),
+                        _ => todo!(),
+                    }
+                    self.forward(2);
                 }
                 Some(b'\n') => {
                     self.forward(1);

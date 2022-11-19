@@ -8,7 +8,7 @@ use super::{
     exp::{Exp, ExpSeq},
     identifier::Identifier,
     literal::Literal,
-    parameter::TypeAnnotation,
+    parameter::{Initializer, TypeAnnotation},
     type_::TypeAlias,
     unknown::Unknown,
 };
@@ -28,7 +28,10 @@ pub enum Stat {
     AbsDecl(ASTNode<AbsDecl>),
     NamespaceDecl(ASTNode<NamespaceDecl>),
 
+    FuncDecl(ASTNode<FuncDecl>),
+
     VarStat(ASTNode<VarStat>),
+    EnumStat(ASTNode<EnumStat>),
 
     IfStat(ASTNode<IfStat>),
     IterStat(ASTNode<IterStat>),
@@ -153,7 +156,7 @@ impl ExportStat {
     pub(crate) fn set_from_block(&mut self, from_block: ASTNode<FromBlock>) {
         assert!(self.from_block.is_none());
         assert!(self.stat.is_none());
-        
+
         self.from_block = Some(from_block);
     }
 
@@ -448,6 +451,53 @@ impl TryStat {
         self.block = block;
     }
 }
+
+#[derive(Visualizable, Default)]
+pub struct EnumStat {
+    const_: Option<KeyWordKind>,
+    enum_name: ASTNode<Identifier>,
+    enum_body: ASTNode<EnumBody>,
+}
+impl EnumStat {
+    pub(crate) fn set_const(&mut self) {
+        self.const_ = Some(KeyWordKind::Const)
+    }
+
+    pub(crate) fn set_enum_name(&mut self, enum_name: ASTNode<Identifier>) {
+        self.enum_name = enum_name;
+    }
+
+    pub(crate) fn set_enum_body(&mut self, enum_body: ASTNode<EnumBody>) {
+        self.enum_body = enum_body;
+    }
+}
+
+#[derive(Visualizable, Default)]
+pub struct EnumBody {
+    enum_members: Vec<ASTNode<EnumMember>>,
+}
+impl EnumBody {
+    pub(crate) fn push_enum_member(&mut self, enum_member: ASTNode<EnumMember>) {
+        self.enum_members.push(enum_member);
+    }
+}
+
+#[derive(Visualizable, Default)]
+pub struct EnumMember {
+    enum_member_name: ASTNode<Identifier>,
+    initializer: Option<ASTNode<Initializer>>,
+}
+impl EnumMember {
+    pub(crate) fn set_enum_member_name(&mut self, enum_member_name: ASTNode<Identifier>) {
+        self.enum_member_name = enum_member_name;
+    }
+
+    pub(crate) fn set_initializer(&mut self, initializer: ASTNode<Initializer>) {
+        self.initializer = Some(initializer);
+    }
+}
+
+impl TryStat {}
 
 #[derive(Visualizable)]
 pub struct DebuggerStat {}

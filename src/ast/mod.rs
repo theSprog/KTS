@@ -64,6 +64,7 @@ impl AstGraph {
         let node = &AstGraph::node_name(info.id);
 
         if info.span.begin == 0 {
+            assert_eq!(info.span.begin, info.span.end);
             format!("\t{}[label=\"{}\", color=red]\n", node, format!("{}", desc))
         } else {
             format!(

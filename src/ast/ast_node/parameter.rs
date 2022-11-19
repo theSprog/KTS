@@ -25,7 +25,7 @@ impl FormalParas {
 #[derive(Visualizable, Default)]
 pub struct FormalPara {
     decorator: Option<TokenKind>,
-    access_modifier: Option<KeyWordKind>,
+    access_modifier: Option<ASTNode<AccessModifier>>,
     identifier: ASTNode<Identifier>,
     question_mark: Option<TokenKind>,
     type_annotation: Option<ASTNode<TypeAnnotation>>,
@@ -36,7 +36,7 @@ impl FormalPara {
         self.decorator = Some(TokenKind::At);
     }
 
-    pub(crate) fn set_access_modifier(&mut self, access_modifier: KeyWordKind) {
+    pub(crate) fn set_access_modifier(&mut self, access_modifier: ASTNode<AccessModifier>) {
         self.access_modifier = Some(access_modifier);
     }
 

@@ -1,3 +1,4 @@
+use super::decl::NamespaceName;
 use super::decl::ObjectType;
 use super::decl::TypeQuery;
 use super::identifier::Identifier;
@@ -8,19 +9,35 @@ use crate::ast::AstGraph;
 use crate::ast::NodeInfo;
 use crate::ast::Visualizable;
 
-#[derive(Visualizable, Default)]
+#[derive(Visualizable)]
 pub struct TypeRef {
-    type_name: ASTNode<Identifier>,
+    type_name: TypeName,
     type_generic: Option<ASTNode<TypeGeneric>>,
 }
 impl TypeRef {
-    pub(crate) fn set_type_name(&mut self, type_name: ASTNode<Identifier>) {
-        self.type_name = type_name;
-    }
-
     pub(crate) fn set_type_generic(&mut self, type_generic: ASTNode<TypeGeneric>) {
         self.type_generic = Some(type_generic);
     }
+
+    pub(crate) fn new_identifier(type_name: ASTNode<Identifier>) -> Self {
+        Self {
+            type_name: TypeName::Identifer(type_name),
+            type_generic: None,
+        }
+    }
+
+    pub(crate) fn new_namespace(type_name: ASTNode<NamespaceName>) -> Self {
+        Self {
+            type_name: TypeName::Namespace(type_name),
+            type_generic: None,
+        }
+    }
+}
+
+#[derive(Visualizable)]
+pub enum TypeName {
+    Identifer(ASTNode<Identifier>),
+    Namespace(ASTNode<NamespaceName>),
 }
 
 #[derive(Visualizable, Default)]

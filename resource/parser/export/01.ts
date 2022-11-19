@@ -1,6 +1,6 @@
 // from block
-export { variable1 as name1, variable2 as name2, nameN } from "abc mod";
-export default { name1, name2, nameN } from "xxx";
+// export { variable1 as name1, variable2 as name2, nameN } from "abc mod";
+// export default { name1, name2, nameN } from "xxx";
 export * from "abc mod";
 export { };
 export { ; };

@@ -2,8 +2,8 @@ use crate::ast::{ASTNode, AstGraph, NodeInfo, Visualizable};
 use crate::lexer::token_kind::KeyWordKind;
 use crate::lexer::token_kind::TokenKind;
 
-use super::decl::FuncBody;
 use super::decl::AbsDecl;
+use super::decl::FuncBody;
 use super::exp::Exp;
 use super::identifier::Identifier;
 use super::parameter::FormalParas;
@@ -49,7 +49,7 @@ impl ClassHeritage {
     }
 }
 
-#[derive(Visualizable, Default)]
+#[derive(Visualizable)]
 pub struct Extends {
     type_ref: ASTNode<TypeRef>,
 }
