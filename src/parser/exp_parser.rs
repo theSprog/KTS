@@ -18,13 +18,10 @@ impl Parser {
 
         let mut left = self.parse_single_exp()?;
         if self.is_assign_op() {
-            let assign_op = ASTNode::new(self.extract_op()?, Span::new(begin, self.mark_end()));
+            let assign_op = self.extract_op()?;
             let right = self.parse_exp()?;
             left = ASTNode::new(
-                Exp::AssignExp(ASTNode::new(
-                    AssignExp::new(left, assign_op, right),
-                    Span::new(begin, self.mark_end()),
-                )),
+                Exp::AssignExp(AssignExp::new(left, assign_op, right)),
                 Span::new(begin, self.mark_end()),
             );
         }
@@ -80,6 +77,17 @@ impl Parser {
             // 由于不是 single_exp_op 的都 break 了，此处提取出来的必是 single_exp_op
             let op = self.extract_op()?;
             self.push_op(&mut op_stack, &mut exp_stack, op)?;
+
+            // 特殊的 as cast operator
+            if op == Op::As {
+                let type_ = self.parse_type()?;
+                let span = type_.info.span.clone();
+                let cast_exp = ASTNode::new(Exp::CastExp(CastExp::new(type_)), span.clone());
+                exp_stack.push(cast_exp);
+                if !self.is_single_exp_op() {
+                    break;
+                }
+            }
         }
         self.extract_exp_from_stack(op_stack, exp_stack)
     }
@@ -100,10 +108,7 @@ impl Parser {
 
         if let Some(op) = prefix.xor(postfix) {
             Ok(ASTNode::new(
-                Exp::UnaryExp(ASTNode::new(
-                    UnaryExp::new(op, base_exp),
-                    Span::new(begin, self.mark_end()),
-                )),
+                Exp::UnaryExp(UnaryExp::new(op, base_exp)),
                 Span::new(begin, self.mark_end()),
             ))
         } else {
@@ -128,18 +133,12 @@ impl Parser {
                 // 函数调用有可能无参数
                 if self.kind_is(TokenKind::RightParen) {
                     args_exp = ASTNode::new(
-                        Exp::ArgsExp(ASTNode::new(
-                            ArgsExp::default(),
-                            Span::new(begin, self.mark_end()),
-                        )),
+                        Exp::ArgsExp(ArgsExp::default()),
                         Span::new(begin, self.mark_end()),
                     );
                 } else {
                     args_exp = ASTNode::new(
-                        Exp::ArgsExp(ASTNode::new(
-                            ArgsExp::new(self.parse_exp_seq()?),
-                            Span::new(begin, self.mark_end()),
-                        )),
+                        Exp::ArgsExp(ArgsExp::new(self.parse_exp_seq()?)),
                         Span::new(begin, self.mark_end()),
                     );
                 }
@@ -176,24 +175,18 @@ impl Parser {
             TokenKind::Identifier => match self.next_kind() {
                 // 如果是 a => ...
                 TokenKind::ARROW => Ok(ASTNode::new(
-                    Exp::ArrowFuncExp(self.parse_arrow_func()?),
+                    Exp::ArrowFuncExp(self.parse_arrow_func()?.ctx()),
                     Span::new(begin, self.mark_end()),
                 )),
 
                 _ => Ok(ASTNode::new(
-                    Exp::Identifier(ASTNode::new(
-                        Identifier::new(&self.extact_identifier()?),
-                        Span::new(begin, self.mark_end()),
-                    )),
+                    Exp::Identifier(self.parse_identifier()?.ctx()),
                     Span::new(begin, self.mark_end()),
                 )),
             },
 
             _ if self.is_literal() => Ok(ASTNode::new(
-                Exp::Literal(ASTNode::new(
-                    self.extact_literal()?,
-                    Span::new(begin, self.mark_end()),
-                )),
+                Exp::Literal(self.extact_literal()?),
                 Span::new(begin, self.mark_end()),
             )),
 
@@ -207,7 +200,6 @@ impl Parser {
                 }
 
                 class_exp.set_class_tail(self.parse_class_tail()?);
-                let class_exp = ASTNode::new(class_exp, Span::new(begin, self.mark_end()));
 
                 Ok(ASTNode::new(
                     Exp::ClassExp(class_exp),
@@ -219,10 +211,7 @@ impl Parser {
             TokenKind::KeyWord(KeyWordKind::This) => {
                 self.forward();
                 Ok(ASTNode::new(
-                    Exp::This(ASTNode::new(
-                        KeyWordKind::This,
-                        Span::new(begin, self.mark_end()),
-                    )),
+                    Exp::This(KeyWordKind::This),
                     Span::new(begin, self.mark_end()),
                 ))
             }
@@ -231,10 +220,7 @@ impl Parser {
             TokenKind::KeyWord(KeyWordKind::Super) => {
                 self.forward();
                 Ok(ASTNode::new(
-                    Exp::Super(ASTNode::new(
-                        KeyWordKind::Super,
-                        Span::new(begin, self.mark_end()),
-                    )),
+                    Exp::Super(KeyWordKind::Super),
                     Span::new(begin, self.mark_end()),
                 ))
             }
@@ -257,7 +243,7 @@ impl Parser {
                 self.eat(TokenKind::RightBrace)?;
 
                 Ok(ASTNode::new(
-                    Exp::ArrayExp(ASTNode::new(array_exp, Span::new(begin, self.mark_end()))),
+                    Exp::ArrayExp(array_exp),
                     Span::new(begin, self.mark_end()),
                 ))
             }
@@ -270,27 +256,31 @@ impl Parser {
                 // 先尝试是否是 (...) => ... 箭头函数
                 match self.try_to(Parser::parse_arrow_func) {
                     Some(arrow_func) => Ok(ASTNode::new(
-                        Exp::ArrowFuncExp(arrow_func),
+                        Exp::ArrowFuncExp(arrow_func.ctx()),
                         Span::new(begin, self.mark_end()),
                     )),
 
                     // 如果不是,则说明是单个 group
                     None => Ok(ASTNode::new(
-                        Exp::GroupExp(self.parse_group_exp()?),
+                        Exp::GroupExp(self.parse_group_exp()?.ctx()),
                         Span::new(begin, self.mark_end()),
                     )),
                 }
             }
 
             // ----------------------------------------------------------------
+            // TokenKind::KeyWord(KeyWordKind::Function) => Ok(ASTNode::new(
+            //     Exp::FunctionExp(self.parse_func_exp_decl()?),
+            //     Span::new(begin, self.mark_end()),
+            // )),
             TokenKind::KeyWord(KeyWordKind::Function) => Ok(ASTNode::new(
-                Exp::FunctionExp(self.parse_func_exp_decl()?),
+                Exp::FunctionExp(self.parse_func_exp_decl()?.ctx()),
                 Span::new(begin, self.mark_end()),
             )),
 
             // ----------------------------------------------------------------
             TokenKind::KeyWord(KeyWordKind::New) => Ok(ASTNode::new(
-                Exp::NewExp(self.parse_new_exp_decl()?),
+                Exp::NewExp(self.parse_new_exp_decl()?.ctx()),
                 Span::new(begin, self.mark_end()),
             )),
 
@@ -476,10 +466,7 @@ impl Parser {
             if let (Some(right), Some(left)) = (exp_stack.pop(), exp_stack.pop()) {
                 let begin = left.info.span.get_begin();
                 let end = right.info.span.get_end();
-                let exp = Exp::BinaryExp(ASTNode::new(
-                    BinaryExp::new(left, op, right),
-                    Span::new(begin, end),
-                ));
+                let exp = Exp::BinaryExp(BinaryExp::new(left, op, right));
                 exp_stack.push(ASTNode::new(exp, Span::new(begin, end)));
             } else {
                 return Err(self.report_error(&format!(
@@ -519,10 +506,7 @@ impl Parser {
             let begin = cond.info.span.get_begin();
             let end = false_br.info.span.get_end();
 
-            let exp = Exp::TernaryExp(ASTNode::new(
-                TernaryExp::new(cond, true_br, false_br),
-                Span::new(begin, end),
-            ));
+            let exp = Exp::TernaryExp(TernaryExp::new(cond, true_br, false_br));
             exp_stack.push(ASTNode::new(exp, Span::new(begin, end)));
         } else {
             unreachable!()

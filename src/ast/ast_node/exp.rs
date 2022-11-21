@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use super::decl::{ArrowFuncExpDecl, ClassExp, FuncExpDecl, NamespaceName};
 use super::identifier::Identifier;
 use super::literal::Literal;
-use super::type_::TypeArgs;
+use super::type_::{Type, TypeArgs};
 use crate::ast::{Span, Visualizable, AST};
 
 use crate::ast::{ASTNode, AstGraph, NodeInfo};
@@ -214,8 +214,8 @@ impl Visualizable for Op {
             Op::PostDec => graph.put_node(self_info, "--(post)"),
             Op::PreInc => graph.put_node(self_info, "++(pre)"),
             Op::PreDec => graph.put_node(self_info, "--(pre)"),
-            Op::UnaryPlus => graph.put_node(self_info, "+"),
-            Op::UnaryMinus => graph.put_node(self_info, "-"),
+            Op::UnaryPlus => graph.put_node(self_info, "+(unary)"),
+            Op::UnaryMinus => graph.put_node(self_info, "-(unary)"),
             Op::BitNot => graph.put_node(self_info, "~"),
             Op::Not => graph.put_node(self_info, "!"),
             Op::New => graph.put_node(self_info, "new"),
@@ -285,49 +285,47 @@ impl PartialOrd for Op {
 
 #[derive(Visualizable)]
 pub enum Exp {
-    UnaryExp(ASTNode<UnaryExp>),
-    BinaryExp(ASTNode<BinaryExp>),
-    TernaryExp(ASTNode<TernaryExp>),
+    UnaryExp(UnaryExp),
+    BinaryExp(BinaryExp),
+    TernaryExp(TernaryExp),
 
-    AssignExp(ASTNode<AssignExp>),
+    AssignExp(AssignExp),
 
-    GroupExp(ASTNode<GroupExp>),
+    GroupExp(GroupExp),
 
-    ArgsExp(ASTNode<ArgsExp>),
+    ArgsExp(ArgsExp),
 
-    FunctionExp(ASTNode<FuncExpDecl>),
-    ClassExp(ASTNode<ClassExp>),
+    FunctionExp(FuncExpDecl),
+    ClassExp(ClassExp),
 
-    ArrowFuncExp(ASTNode<ArrowFuncExpDecl>),
+    ArrowFuncExp(ArrowFuncExpDecl),
 
-    NewExp(ASTNode<NewExp>),
+    NewExp(NewExp),
+    CastExp(CastExp),
 
     // 单个字面量，如 1, "abc"
-    Literal(ASTNode<Literal>),
+    Literal(Literal),
 
     // this
-    This(ASTNode<KeyWordKind>),
+    This(KeyWordKind),
     // super
-    Super(ASTNode<KeyWordKind>),
+    Super(KeyWordKind),
 
     // 其他单个标识符, 如 a, something
-    Identifier(ASTNode<Identifier>),
+    Identifier(Identifier),
 
     // 数组
-    ArrayExp(ASTNode<ArrayExp>),
+    ArrayExp(ArrayExp),
 }
 
 pub struct UnaryExp {
-    op: ASTNode<Op>,
+    op: Op,
     exp: ASTNode<Exp>,
 }
 
 impl UnaryExp {
     pub fn new(op: Op, exp: ASTNode<Exp>) -> Self {
-        Self {
-            op: ASTNode::new(op, Span::default()),
-            exp,
-        }
+        Self { op, exp }
     }
 }
 
@@ -336,7 +334,7 @@ impl Visualizable for UnaryExp {
     fn draw(&self, self_info: NodeInfo, graph: &mut AstGraph) {
         graph.put_node(self_info, "UnaryExp");
 
-        match *self.op.context {
+        match self.op {
             Op::PostDec | Op::PostInc => {
                 self.exp.draw(self_info, graph);
                 self.op.draw(self_info, graph);
@@ -352,29 +350,25 @@ impl Visualizable for UnaryExp {
 #[derive(Visualizable)]
 pub struct BinaryExp {
     left: ASTNode<Exp>,
-    op: ASTNode<Op>,
+    op: Op,
     right: ASTNode<Exp>,
 }
 
 impl BinaryExp {
     pub fn new(left: ASTNode<Exp>, op: Op, right: ASTNode<Exp>) -> Self {
-        Self {
-            left,
-            op: ASTNode::new(op, Span::default()),
-            right,
-        }
+        Self { left, op, right }
     }
 }
 
 #[derive(Visualizable)]
 pub struct AssignExp {
     left: ASTNode<Exp>,
-    op: ASTNode<Op>,
+    op: Op,
     right: ASTNode<Exp>,
 }
 
 impl AssignExp {
-    pub fn new(left: ASTNode<Exp>, op: ASTNode<Op>, right: ASTNode<Exp>) -> Self {
+    pub fn new(left: ASTNode<Exp>, op: Op, right: ASTNode<Exp>) -> Self {
         Self { left, op, right }
     }
 }
@@ -415,14 +409,19 @@ impl GroupExp {
     }
 }
 
+// // #[derive(Visualizable)]
+// type ArgsExp = ExpSeq;
+
 #[derive(Visualizable, Default)]
 pub struct ArgsExp {
-    args: Option<ASTNode<ExpSeq>>,
+    args: Vec<ASTNode<Exp>>,
 }
 
 impl ArgsExp {
     pub(crate) fn new(args: ASTNode<ExpSeq>) -> Self {
-        Self { args: Some(args) }
+        Self {
+            args: args.ctx().exps,
+        }
     }
 }
 
@@ -444,6 +443,16 @@ impl NewExp {
 
     pub(crate) fn set_args(&mut self, args: ASTNode<ArgsExp>) {
         self.args = args;
+    }
+}
+
+#[derive(Visualizable)]
+pub struct CastExp {
+    type_: ASTNode<Type>,
+}
+impl CastExp {
+    pub(crate) fn new(type_: ASTNode<Type>) -> Self {
+        Self { type_ }
     }
 }
 

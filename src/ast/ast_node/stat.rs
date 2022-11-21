@@ -19,48 +19,49 @@ use crate::{
 
 #[derive(Visualizable)]
 pub enum Stat {
-    ImportStat(ASTNode<ImportStat>),
-    ExportStat(ASTNode<ExportStat>),
-    EmptyStat(ASTNode<EmptyStat>),
-    Block(ASTNode<Block>),
-    ClassDecl(ASTNode<ClassDecl>),
-    InterfaceDecl(ASTNode<InterfaceDecl>),
-    AbsDecl(ASTNode<AbsDecl>),
-    NamespaceDecl(ASTNode<NamespaceDecl>),
+    ImportStat(ImportStat),
+    ExportStat(ExportStat),
+    EmptyStat(EmptyStat),
+    Block(Block),
+    ClassDecl(ClassDecl),
+    InterfaceDecl(InterfaceDecl),
+    AbsDecl(AbsDecl),
+    NamespaceDecl(NamespaceDecl),
 
-    FuncDecl(ASTNode<FuncDecl>),
+    FuncDecl(FuncDecl),
 
-    VarStat(ASTNode<VarStat>),
-    EnumStat(ASTNode<EnumStat>),
+    VarStat(VarStat),
+    EnumStat(EnumStat),
 
-    IfStat(ASTNode<IfStat>),
-    IterStat(ASTNode<IterStat>),
+    IfStat(IfStat),
+    IterStat(IterStat),
 
-    ContinueStat(ASTNode<ContinueStat>),
-    BreakStat(ASTNode<BreakStat>),
-    ReturnStat(ASTNode<ReturnStat>),
-    YieldStat(ASTNode<YieldStat>),
-    WithStat(ASTNode<WithStat>),
+    ContinueStat(ContinueStat),
+    BreakStat(BreakStat),
+    ReturnStat(ReturnStat),
+    YieldStat(YieldStat),
+    WithStat(WithStat),
 
-    SwitchStat(ASTNode<SwitchStat>),
-    ThrowStat(ASTNode<ThrowStat>),
+    SwitchStat(SwitchStat),
+    ThrowStat(ThrowStat),
 
-    TypeAliasStat(ASTNode<TypeAlias>),
+    TypeAliasStat(TypeAlias),
 
-    DebuggerStat(ASTNode<DebuggerStat>),
-    TryStat(ASTNode<TryStat>),
+    DebuggerStat(DebuggerStat),
+    TryStat(TryStat),
 
-    FuncExpDecl(ASTNode<FuncExpDecl>),
-    GenFuncDecl(ASTNode<GenFuncDecl>),
+    FuncExpDecl(FuncExpDecl),
+    GenFuncDecl(GenFuncDecl),
+    LabelledStat(LabelledStat),
 
-    ExpStat(ASTNode<ExpSeq>),
+    ExpStat(ExpSeq),
 
-    Unknown(ASTNode<Unknown>),
+    Unknown(Unknown),
 }
 
 impl Default for Stat {
     fn default() -> Self {
-        Stat::Unknown(ASTNode::dummy())
+        Stat::Unknown(Unknown::new())
     }
 }
 

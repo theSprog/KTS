@@ -7,7 +7,7 @@ pub struct Unknown {}
 
 impl Unknown {
     pub fn new() -> Self {
-        Unknown {}
+        Self {}
     }
 }
 

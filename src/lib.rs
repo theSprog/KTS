@@ -13,4 +13,5 @@ pub mod error;
 mod ast;
 mod lexer;
 mod parser;
+mod symbol;
 mod utils;

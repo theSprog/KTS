@@ -70,7 +70,7 @@ fn derive_enum(input: &syn::DataEnum, ident: &Ident) -> TokenStream {
     quote!(
         impl Visualizable for #ident {
             fn draw(&self, self_info: NodeInfo, graph: &mut AstGraph) {
-                graph.put_node(self_info, #enum_name_str);
+                // graph.put_node(self_info, #enum_name_str);
 
                 match self {
                     #(

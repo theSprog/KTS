@@ -3,7 +3,7 @@ use crate::{
     compiler_internal_error,
     lexer::{
         token::Token,
-        token_kind::{KeyWordKind, TokenKind},
+        token_kind::{KeyWordKind, TokenKind}, KEYWORD,
     },
 };
 
@@ -27,25 +27,24 @@ impl Parser {
     }
 
     pub(super) fn eat(&mut self, kind: TokenKind) -> Result<(), ParserError> {
-        if let Some(token) = self.peek() {
-            match token.peek_kind() == kind {
-                true => {
-                    self.index += 1;
-                    Ok(())
-                }
-                false => {
-                    if kind == TokenKind::SemiColon && self.is_new_line() {
-                        Err(self.report_error(&format!(
-                            "you might forgot ';' in the end of line[{}]",
-                            self.tokens.get(self.index - 1).unwrap().peek_line()
-                        )))
-                    } else {
-                        Err(self.expect_error("Token Dismatch", &kind.to_string()))
-                    }
-                }
+        if self.kind_is(kind) {
+            self.forward();
+            Ok(())
+        }else {
+            if kind == TokenKind::SemiColon && self.is_new_line() {
+                Err(self.report_error(&format!(
+                    "you might forgot ';' in the end of line[{}]",
+                    self.tokens.get(self.index - 1).unwrap().peek_line()
+                )))
+            } else if KEYWORD.contains_key(self.peek().unwrap().peek_value()) {
+                Err(self.report_error(&format!(
+                    "can not use keyword as identifier in Line[{}]",
+                    self.tokens.get(self.index).unwrap().peek_line()
+                )))
             }
-        } else {
-            compiler_internal_error!("Can not eat token because there is no token");
+            else {
+                Err(self.expect_error("Token Dismatch", &kind.to_string()))
+            }
         }
     }
 
@@ -90,22 +89,27 @@ impl Parser {
 
     // 注意，该函数在 extract 的同时也会 eat Token
     pub(super) fn extact_identifier(&mut self) -> Result<String, ParserError> {
-        let ident = String::from(match self.peek_kind() {
-            TokenKind::Identifier => self.peek().unwrap().peek_value().as_str(),
-            _ => return Err(self.expect_error("Parsing Identifier failed", "identifier")),
-        });
-
-        self.forward();
-        Ok(ident)
+        if self.kind_is(TokenKind::Identifier) {
+            let ident = self.peek().unwrap().peek_value().to_string();
+            self.forward();
+            Ok(ident)
+        }else {
+            let token = self.tokens.get(self.index).unwrap();
+            Err(self.report_error(&format!(
+                "can not use keyword [{}] as identifier in Line[{}]",
+                token.peek_value(),
+                token.peek_line()
+            )))
+        }
     }
 
     // 注意，该函数在 extract 的同时也会 eat Token
     pub(super) fn extact_literal(&mut self) -> Result<Literal, ParserError> {
         let literal = match self.peek_kind() {
-            TokenKind::String => Literal::String(self.peek().unwrap().peek_value().clone()),
+            TokenKind::String => Literal::String(self.peek().unwrap().peek_value().to_string()),
 
             TokenKind::Number => {
-                let string_value = self.peek().unwrap().peek_value().clone();
+                let string_value = self.peek().unwrap().peek_value();
                 // 先处理小数
                 if string_value.starts_with("0.") {
                     if let Ok(float) = string_value.parse::<f64>() {

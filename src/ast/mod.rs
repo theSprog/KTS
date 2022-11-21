@@ -138,7 +138,7 @@ impl AST {
 #[derive(Debug, Default)]
 pub struct ASTNode<T: Visualizable> {
     pub(crate) info: NodeInfo,
-    context: Box<T>,
+    pub(crate) context: Box<T>,
 }
 
 impl<T: Visualizable> ASTNode<T> {
@@ -159,6 +159,14 @@ impl<T: Visualizable> ASTNode<T> {
         assert_ne!(self.info.id, 0);
 
         self.context.draw(self.info, graph);
+    }
+
+    pub(crate) fn ctx(self) -> T {
+        *self.context
+    }
+
+    pub(crate) fn ctx_ref(&self) -> &T {
+        &self.context
     }
 }
 
@@ -191,14 +199,5 @@ pub struct NodeInfo {
 impl NodeInfo {
     fn new(id: usize, span: Span) -> NodeInfo {
         Self { id, span }
-    }
-}
-
-impl ASTNode<Unknown> {
-    pub fn dummy() -> ASTNode<Unknown> {
-        ASTNode {
-            info: Default::default(),
-            context: Box::new(Unknown::new()),
-        }
     }
 }

@@ -82,9 +82,9 @@ impl ClassTail {
 
 #[derive(Visualizable)]
 pub enum ClassElement {
-    ConstructorDecl(ASTNode<ConstructorDecl>),
-    PropertyMemberDecl(ASTNode<PropertyMemberDecl>),
-    IndexMemberDecl(ASTNode<IndexMemberDecl>),
+    ConstructorDecl(ConstructorDecl),
+    PropertyMemberDecl(PropertyMemberDecl),
+    IndexMemberDecl(IndexMemberDecl),
 }
 
 #[derive(Visualizable, Default)]
@@ -110,10 +110,10 @@ impl ConstructorDecl {
 
 #[derive(Visualizable)]
 pub enum PropertyMemberDecl {
-    PropertyDeclExp(ASTNode<PropertyDeclExp>),
-    MethodDeclExp(ASTNode<MethodDeclExp>),
-    GetterSetterDeclExp(ASTNode<GetterSetterDeclExp>),
-    AbsMemberDecl(ASTNode<AbsDecl>),
+    PropertyDeclExp(PropertyDeclExp),
+    MethodDeclExp(MethodDeclExp),
+    GetterSetterDeclExp(GetterSetterDeclExp),
+    AbsMemberDecl(AbsDecl),
 }
 
 #[derive(Visualizable, Default)]

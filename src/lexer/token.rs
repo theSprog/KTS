@@ -27,7 +27,7 @@ impl Token {
         self.kind
     }
 
-    pub(crate) fn peek_value(&self) -> &String {
+    pub(crate) fn peek_value(&self) -> &str {
         &self.value
     }
 

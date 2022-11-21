@@ -141,9 +141,9 @@ impl AbsDecl {
 
 #[derive(Visualizable)]
 pub enum AbsMember {
-    AbsMethod(ASTNode<AbsMethod>),
-    AbsVar(ASTNode<AbsVar>),
-    AbsAccesser(ASTNode<Accesser>),
+    AbsMethod(AbsMethod),
+    AbsVar(AbsVar),
+    AbsAccesser(Accesser),
 }
 
 #[derive(Visualizable, Default)]
