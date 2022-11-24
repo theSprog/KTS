@@ -2,7 +2,6 @@ use std::{collections::HashMap, ptr};
 
 use super::symbol::Symbol;
 
-
 #[derive(Debug)]
 pub(crate) struct Env {
     table: HashMap<String, Symbol>,

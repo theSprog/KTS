@@ -3,7 +3,8 @@ use crate::{
     compiler_internal_error,
     lexer::{
         token::Token,
-        token_kind::{KeyWordKind, TokenKind}, KEYWORD,
+        token_kind::{KeyWordKind, TokenKind},
+        KEYWORD,
     },
 };
 
@@ -30,7 +31,7 @@ impl Parser {
         if self.kind_is(kind) {
             self.forward();
             Ok(())
-        }else {
+        } else {
             if kind == TokenKind::SemiColon && self.is_new_line() {
                 Err(self.report_error(&format!(
                     "you might forgot ';' in the end of line[{}]",
@@ -41,8 +42,7 @@ impl Parser {
                     "can not use keyword as identifier in Line[{}]",
                     self.tokens.get(self.index).unwrap().peek_line()
                 )))
-            }
-            else {
+            } else {
                 Err(self.expect_error("Token Dismatch", &kind.to_string()))
             }
         }
@@ -51,7 +51,7 @@ impl Parser {
     pub(super) fn is_eos(&mut self) -> bool {
         match self.peek_kind() {
         // 用分号可以  xxx; yyy
-            TokenKind::SemiColon 
+            TokenKind::SemiColon
         // 收尾可以
             | TokenKind::RightBracket
         // 结尾也可以
@@ -93,7 +93,7 @@ impl Parser {
             let ident = self.peek().unwrap().peek_value().to_string();
             self.forward();
             Ok(ident)
-        }else {
+        } else {
             let token = self.tokens.get(self.index).unwrap();
             Err(self.report_error(&format!(
                 "can not use keyword [{}] as identifier in Line[{}]",

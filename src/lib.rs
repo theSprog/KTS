@@ -11,7 +11,9 @@ pub mod error;
 
 // 声明本 crate 的 module tree
 mod ast;
+mod ir;
 mod lexer;
 mod parser;
 mod symbol;
 mod utils;
+mod walker;

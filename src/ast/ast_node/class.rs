@@ -1,4 +1,5 @@
-use crate::ast::{ASTNode, AstGraph, NodeInfo, Visualizable};
+use crate::ast::visulize::AstGraph;
+use crate::ast::{ASTNode, NodeInfo, Visualizable};
 use crate::lexer::token_kind::KeyWordKind;
 use crate::lexer::token_kind::TokenKind;
 

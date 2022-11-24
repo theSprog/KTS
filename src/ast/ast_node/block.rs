@@ -1,6 +1,6 @@
 use super::clause::*;
 use super::stat::Stat;
-use crate::ast::AstGraph;
+use crate::ast::visulize::AstGraph;
 use crate::ast::{visulize::Visualizable, ASTNode, NodeInfo};
 
 #[derive(Visualizable, Default)]

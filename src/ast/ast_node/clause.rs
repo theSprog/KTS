@@ -1,5 +1,6 @@
+use crate::ast::visulize::AstGraph;
 use crate::ast::visulize::Visualizable;
-use crate::ast::{ASTNode, AstGraph, NodeInfo};
+use crate::ast::{ASTNode, NodeInfo};
 
 use super::exp::Exp;
 use super::source_element::SourceElements;

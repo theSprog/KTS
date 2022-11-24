@@ -1,5 +1,6 @@
+use crate::ast::visulize::AstGraph;
 use crate::{
-    ast::{visulize::Visualizable, AstGraph, NodeInfo},
+    ast::{visulize::Visualizable, NodeInfo},
     compiler_internal_error,
 };
 

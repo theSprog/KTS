@@ -4,7 +4,7 @@ use super::source_element::SourceElements;
 
 #[derive(Default)]
 pub struct Program {
-    source_elements: Option<ASTNode<SourceElements>>,
+    pub(crate) source_elements: Option<ASTNode<SourceElements>>,
 }
 impl Program {
     pub(crate) fn set_source_elements(&mut self, source_elements: ASTNode<SourceElements>) {

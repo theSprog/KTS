@@ -2,7 +2,7 @@ use super::class::AccessModifier;
 use super::decorator::Decorators;
 use super::type_::*;
 use super::{exp::Exp, identifier::Identifier};
-use crate::ast::AstGraph;
+use crate::ast::visulize::AstGraph;
 use crate::ast::{visulize::Visualizable, ASTNode, NodeInfo};
 use crate::lexer::token_kind::{KeyWordKind, TokenKind};
 

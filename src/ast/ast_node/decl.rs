@@ -1,5 +1,6 @@
+use crate::ast::visulize::AstGraph;
 use crate::{
-    ast::{visulize::Visualizable, ASTNode, AstGraph, NodeInfo, Span},
+    ast::{visulize::Visualizable, ASTNode, NodeInfo, Span},
     lexer::token_kind::{KeyWordKind, TokenKind},
 };
 

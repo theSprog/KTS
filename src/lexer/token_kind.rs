@@ -1,7 +1,8 @@
 use std::fmt::{Display, Formatter};
 
+use crate::ast::visulize::AstGraph;
 use crate::ast::visulize::Visualizable;
-use crate::ast::{AstGraph, NodeInfo};
+use crate::ast::NodeInfo;
 
 macro_rules! token_string {
     // macth like arm for macro

@@ -16,94 +16,23 @@ use crate::lexer::KEYWORD;
 
 use self::ast_node::program::Program;
 use self::ast_node::unknown::Unknown;
-use self::visulize::Visualizable;
-
-lazy_static! {
-    static ref COUNTER: Mutex<Counter> = Mutex::new(Counter::new());
-}
-
-pub struct AstGraph {
-    graph: String,
-}
-
-impl AstGraph {
-    pub fn new() -> AstGraph {
-        Self {
-            graph: String::new(),
-        }
-    }
-
-    fn write(&self, writer: &mut BufWriter<File>) -> io::Result<()> {
-        writer.write_all(b"graph vis {\n")?;
-        writer.write_all(self.graph.as_bytes())?;
-        writer.write_all(b"}\n")?;
-        writer.flush()?;
-        Ok(())
-    }
-
-    pub(crate) fn put_edge(&mut self, father: usize, child: usize) {
-        self.graph.push_str(&AstGraph::node_link(
-            &AstGraph::node_name(father),
-            &AstGraph::node_name(child),
-        ));
-    }
-
-    pub(crate) fn put_node(&mut self, info: NodeInfo, desc: &str) {
-        self.graph.push_str(&AstGraph::label(info, desc));
-    }
-
-    fn node_name(id: usize) -> String {
-        format!("node{}", id)
-    }
-
-    fn node_link(a: &String, b: &String) -> String {
-        format!("\t{} -- {}\n", a, b)
-    }
-
-    pub(crate) fn label(info: NodeInfo, desc: &str) -> String {
-        let node = &AstGraph::node_name(info.id);
-
-        if info.span.begin == 0 {
-            assert_eq!(info.span.begin, info.span.end);
-            format!("\t{}[label=\"{}\", color=red]\n", node, format!("{}", desc))
-        } else {
-            format!(
-                "\t{}[label=\"{}\"]\n",
-                node,
-                format!("{}\n[{}, {}]", desc, info.span.begin, info.span.end)
-            )
-        }
-    }
-}
-
-struct Counter(usize);
-
-impl Counter {
-    fn new() -> Self {
-        Self(0)
-    }
-
-    fn get_id(&mut self) -> usize {
-        self.0 += 1;
-        self.0
-    }
-}
+use self::visulize::{AstGraph, Visualizable, COUNTER};
 
 pub struct AST {
-    program: ASTNode<Program>,
-    graph: AstGraph,
+    pub program: ASTNode<Program>,
 }
 
 impl AST {
     pub fn new(program: ASTNode<Program>) -> AST {
-        AST {
-            graph: AstGraph::new(),
-            program,
-        }
+        AST { program }
     }
 
     pub fn gen_id() -> usize {
         COUNTER.lock().unwrap().get_id()
+    }
+
+    pub fn get_program_ref(&self) -> &ASTNode<Program> {
+        &self.program
     }
 
     pub fn vis(&mut self, to_path: &str) {
@@ -116,10 +45,10 @@ impl AST {
                 .unwrap(),
         );
 
-        self.program.draw(NodeInfo::default(), &mut self.graph);
-        match self.graph.write(&mut writer) {
-            Ok(_) => {}
-            Err(err) => err_exit(err),
+        let mut graph = AstGraph::new();
+        self.program.draw(NodeInfo::default(), &mut graph);
+        if let Err(err) = graph.write(&mut writer) {
+            err_exit(err);
         }
 
         let png_path = &to_path.replace("dot", "png");
@@ -143,15 +72,14 @@ pub struct ASTNode<T: Visualizable> {
 
 impl<T: Visualizable> ASTNode<T> {
     pub(crate) fn new(context: T, span: Span) -> ASTNode<T> {
-        let info = NodeInfo::new(AST::gen_id(), span);
         ASTNode {
-            info,
+            info: NodeInfo::new(AST::gen_id(), span),
             context: Box::new(context),
         }
     }
 
     fn draw(&self, father_info: NodeInfo, graph: &mut AstGraph) {
-        if father_info.id != 0 {
+        if father_info.id != EMPTY_ID {
             graph.put_edge(father_info.id, self.info.id);
         }
 
@@ -190,6 +118,8 @@ impl Span {
     }
 }
 
+const EMPTY_ID: usize = 0;
+
 #[derive(Debug, Default, Clone, Copy)]
 pub struct NodeInfo {
     pub(crate) id: usize,
@@ -198,6 +128,7 @@ pub struct NodeInfo {
 
 impl NodeInfo {
     fn new(id: usize, span: Span) -> NodeInfo {
+        assert_ne!(id, EMPTY_ID);
         Self { id, span }
     }
 }
