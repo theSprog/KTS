@@ -2,15 +2,22 @@ use std::fmt::Display;
 
 // define lexical-related errors
 #[derive(Debug, Clone)]
-pub struct ParserError(String);
+pub struct ParserError {
+    filename: String,
+    err: String,
+}
+
 impl ParserError {
-    pub(crate) fn new(s: String) -> Self {
-        ParserError(s)
+    pub(crate) fn new(filename: &str, err: String) -> Self {
+        Self {
+            filename: filename.to_owned(),
+            err,
+        }
     }
 }
 
 impl Display for ParserError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{}:\nParserError: {}", self.filename, self.err)
     }
 }

@@ -1,2 +1,2 @@
-import Entry from "./components/Entry";
+import Entry fromm "./components/Entry";
 

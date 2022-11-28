@@ -124,11 +124,8 @@ impl<'a> Lexer<'a> {
         Ok(tokens)
     }
 
-    fn report_error(&self, s: &str) -> LexerError {
-        LexerError::new(format!(
-            "{}: TokenError: Line[{}]: {}",
-            self.filename, self.line, s
-        ))
+    fn report_error(&self, msg: &str) -> LexerError {
+        LexerError::new(&self.filename, format!("Line[{}]:\n{}", self.line, msg))
     }
 
     pub(crate) fn next_token(&mut self) -> Result<Token, LexerError> {

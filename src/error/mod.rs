@@ -13,7 +13,7 @@ pub mod compiler_internal_error;
 
 pub fn err_exit<E: Error>(err: E) -> ! {
     eprintln!("Error: {}", format!("{}", err).red());
-    process::exit(1);
+    process::exit(0);
 }
 
 // 定义抽象的解析错误

@@ -63,12 +63,10 @@ impl Parser {
             return self.error_most_possible.clone().unwrap();
         }
 
-        ParserError::new(format!(
-            "{}: SyntaxError: near Line[{}]:\n{}",
-            self.filename,
-            cur.peek_line(),
-            msg
-        ))
+        ParserError::new(
+            &self.filename,
+            format!("near Line[{}]:\n{}", cur.peek_line(), msg),
+        )
     }
 
     fn mark_begin(&self) -> usize {
