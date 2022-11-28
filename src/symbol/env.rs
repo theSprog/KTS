@@ -1,6 +1,6 @@
 use std::{collections::HashMap, ptr};
 
-use super::symbol::Symbol;
+use super::Symbol;
 
 #[derive(Debug)]
 pub(crate) struct Env {

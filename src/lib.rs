@@ -16,4 +16,4 @@ mod lexer;
 mod parser;
 mod symbol;
 mod utils;
-mod walker;
+mod sematics;
