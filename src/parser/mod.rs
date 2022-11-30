@@ -64,7 +64,7 @@ impl Parser {
         }
 
         ParserError::new(
-            &self.filename,
+            self.filename.clone(),
             format!("near Line[{}]:\n{}", cur.peek_line(), msg),
         )
     }
@@ -640,7 +640,7 @@ impl Parser {
                     Span::new(begin, self.mark_end()),
                 ))
             }
-            _ => return Err(self.expect_error("ClassHeritage Stat", "Extends or implements")),
+            _ => Err(self.expect_error("ClassHeritage Stat", "Extends or implements")),
         }
     }
 
@@ -692,7 +692,7 @@ impl Parser {
         }
 
         self.eat(TokenKind::RightBracket)?;
-        return Ok(ASTNode::new(class_tail, Span::new(begin, self.mark_end())));
+        Ok(ASTNode::new(class_tail, Span::new(begin, self.mark_end())))
     }
 
     /*
@@ -759,12 +759,10 @@ impl Parser {
                 )),
             },
 
-            _ => {
-                return Err(self.expect_error(
-                    "Class Element",
-                    "constructorDeclaration or propertyMemberDeclaration or indexMemberDeclaration",
-                ))
-            }
+            _ => Err(self.expect_error(
+                "Class Element",
+                "constructorDeclaration or propertyMemberDeclaration or indexMemberDeclaration",
+            )),
         }
     }
 
@@ -815,9 +813,9 @@ impl Parser {
         match self.peek_kind() {
             TokenKind::KeyWord(KeyWordKind::Abstract) => {
                 // abstractDeclaration
-                return Ok(PropertyMemberDecl::AbsMemberDecl(
+                Ok(PropertyMemberDecl::AbsMemberDecl(
                     self.parse_abstract_decl()?.ctx(),
-                ));
+                ))
             }
 
             _ => {
@@ -1325,8 +1323,8 @@ impl Parser {
         if self.kind_is(TokenKind::Identifier) {
             continue_stat.set_identifier(self.parse_identifier()?);
         }
-        let eos = self.eat_eos()?;
-        return Ok(continue_stat);
+        self.eat_eos()?;
+        Ok(continue_stat)
     }
 
     /*
@@ -1340,8 +1338,8 @@ impl Parser {
         if self.kind_is(TokenKind::Identifier) {
             break_stat.set_identifier(self.parse_identifier()?);
         }
-        let eos = self.eat_eos()?;
-        return Ok(break_stat);
+        self.eat_eos()?;
+        Ok(break_stat)
     }
 
     /*
@@ -1364,7 +1362,7 @@ impl Parser {
         let mut yield_stat = YieldStat::default();
         self.eat(TokenKind::KeyWord(KeyWordKind::Yield))?;
         yield_stat.set_exp_seq(self.parse_exp_seq()?);
-        let eos = self.eat_eos()?;
+        self.eat_eos()?;
         Ok(yield_stat)
     }
 
@@ -1479,7 +1477,7 @@ impl Parser {
     fn parse_throw_stat(&mut self) -> Result<ThrowStat, ParserError> {
         self.eat(TokenKind::KeyWord(KeyWordKind::Throw))?;
         let exp_seq = self.parse_exp_seq()?;
-        let eos = self.eat_eos()?;
+        self.eat_eos()?;
         todo!()
     }
 
@@ -1598,7 +1596,7 @@ impl Parser {
         if self.kind_is(TokenKind::Colon) {
             arrow_func.set_type_annotation(self.parse_type_annotation()?);
         }
-        self.eat(TokenKind::ARROW)?;
+        self.eat(TokenKind::Arrow)?;
         if self.kind_is(TokenKind::LeftBracket) {
             self.eat(TokenKind::LeftBracket)?;
 
@@ -2060,13 +2058,11 @@ impl Parser {
         }
 
         if self.kind_is(TokenKind::Identifier) {
-            let type_ref;
-
-            if self.nextkind_is(TokenKind::Dot) {
-                type_ref = TypeRef::new_namespace(self.parse_namespace_name()?);
+            let type_ref = if self.nextkind_is(TokenKind::Dot) {
+                TypeRef::new_namespace(self.parse_namespace_name()?)
             } else {
-                type_ref = TypeRef::new_identifier(self.parse_identifier()?);
-            }
+                TypeRef::new_identifier(self.parse_identifier()?)
+            };
 
             if self.kind_is(TokenKind::LeftBrace) {
                 self.eat(TokenKind::LeftBrace)?;
@@ -2152,7 +2148,7 @@ impl Parser {
             para_list = Some(self.parse_para_list()?);
         }
         self.eat(TokenKind::RightParen)?;
-        self.eat(TokenKind::ARROW)?;
+        self.eat(TokenKind::Arrow)?;
         type_ = self.parse_type()?;
 
         Ok(ASTNode::new(
@@ -2376,9 +2372,9 @@ impl Parser {
     */
     fn parse_var_stat(&mut self) -> Result<ASTNode<VarStat>, ParserError> {
         if self.kind_is(TokenKind::KeyWord(KeyWordKind::Declare)) {
-            return self.parse_var_stat2();
+            self.parse_var_stat2()
         } else {
-            return self.parse_var_stat1();
+            self.parse_var_stat1()
         }
     }
 

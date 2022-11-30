@@ -3,6 +3,7 @@ use crate::lexer::token_kind::{KeyWordKind, TokenKind};
 use lazy_static::lazy_static;
 use regex::Regex;
 
+use std::str::FromStr;
 use std::{collections::HashMap, str};
 
 use self::{error::LexerError, token::Token};
@@ -117,7 +118,7 @@ impl<'a> Lexer<'a> {
                         break;
                     }
                 }
-                Err(e) => return Err(e.into()),
+                Err(e) => return Err(e),
             }
         }
 
@@ -125,7 +126,10 @@ impl<'a> Lexer<'a> {
     }
 
     fn report_error(&self, msg: &str) -> LexerError {
-        LexerError::new(&self.filename, format!("Line[{}]:\n{}", self.line, msg))
+        LexerError::new(
+            self.filename.clone(),
+            format!("Line[{}]:\n{}", self.line, msg),
+        )
     }
 
     pub(crate) fn next_token(&mut self) -> Result<Token, LexerError> {
@@ -250,7 +254,7 @@ impl<'a> Lexer<'a> {
                     Ok(self.make_token("===", self.line, TokenKind::IdentityEquals))
                 }
                 [b'=', b'=', _res @ ..] => Ok(self.make_token("==", self.line, TokenKind::Equals)),
-                [b'=', b'>', _res @ ..] => Ok(self.make_token("=>", self.line, TokenKind::ARROW)),
+                [b'=', b'>', _res @ ..] => Ok(self.make_token("=>", self.line, TokenKind::Arrow)),
                 _ => Ok(self.make_token("=", self.line, TokenKind::Assign)),
             },
             b'&' => match self.bytes {
@@ -276,7 +280,13 @@ impl<'a> Lexer<'a> {
                 _ => Ok(self.make_token("|", self.line, TokenKind::BitOr)),
             },
 
-            _ => Err(self.report_error("Unexpected character [Our compiler just supports ASCII]")),
+            _ => {
+                let src = String::from_utf8_lossy(self.bytes);
+                Err(self.report_error(&format!(
+                    "Unexpected character [{}] [Our compiler just supports ASCII]",
+                    src.chars().next().unwrap(),
+                )))
+            }
         }
     }
 
@@ -288,18 +298,11 @@ impl<'a> Lexer<'a> {
     }
 
     fn is_comment(&self) -> bool {
-        match self.bytes {
-            [b'/', b'/' | b'*', _res @ ..] => true,
-            _ => false,
-        }
+        matches!(self.bytes, [b'/', b'/' | b'*', _res @ ..])
     }
 
     fn is_number(&self) -> bool {
-        match self.bytes {
-            [b'0'..=b'9', _res @ ..] => true,
-            [b'.', b'0'..=b'9', _res @ ..] => true,
-            _ => false,
-        }
+        matches!(self.bytes, [b'0'..=b'9', _res @ ..] | [b'.', b'0'..=b'9', _res @ ..])
     }
 
     fn skip_unrelated(&mut self) {
@@ -368,7 +371,7 @@ impl<'a> Lexer<'a> {
     }
 
     fn peek(&self) -> Option<u8> {
-        match self.bytes.len() > 0 {
+        match !self.bytes.is_empty() {
             true => Some(self.bytes[0]),
             false => None,
         }
@@ -461,15 +464,15 @@ impl<'a> Lexer<'a> {
             (Some(decimal1), _) => {
                 let decimal1 = decimal1.get(1).unwrap().as_str();
                 self.forward(decimal1.len());
-                return Ok(Token::new(decimal1, self.line, TokenKind::Number));
+                Ok(Token::new(decimal1, self.line, TokenKind::Number))
             }
             (None, Some(decimal3)) => {
                 let decimal3 = decimal3.get(1).unwrap().as_str();
                 self.forward(decimal3.len());
-                return Ok(Token::new(decimal3, self.line, TokenKind::Number));
+                Ok(Token::new(decimal3, self.line, TokenKind::Number))
             }
 
-            (None, None) => return Err(self.report_error("unknown decimal")),
+            (None, None) => Err(self.report_error("unknown decimal")),
         }
     }
 

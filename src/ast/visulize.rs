@@ -12,22 +12,19 @@ pub trait Visualizable {
 
 impl<T: Visualizable> Visualizable for Vec<ASTNode<T>> {
     fn draw(&self, self_info: NodeInfo, graph: &mut AstGraph) {
-        self.into_iter()
-            .for_each(|node| node.draw(self_info, graph));
+        self.iter().for_each(|node| node.draw(self_info, graph));
     }
 }
 
 impl<T: Visualizable> Visualizable for Vec<T> {
     fn draw(&self, self_info: NodeInfo, graph: &mut AstGraph) {
-        self.into_iter()
-            .for_each(|node| node.draw(self_info, graph));
+        self.iter().for_each(|node| node.draw(self_info, graph));
     }
 }
 
 impl<T: Visualizable> Visualizable for Vec<Box<ASTNode<T>>> {
     fn draw(&self, self_info: NodeInfo, graph: &mut AstGraph) {
-        self.into_iter()
-            .for_each(|node| node.draw(self_info, graph));
+        self.iter().for_each(|node| node.draw(self_info, graph));
     }
 }
 
@@ -100,7 +97,7 @@ impl AstGraph {
 
         if info.span.begin == 0 {
             assert_eq!(info.span.begin, info.span.end);
-            format!("\t{}[label=\"{}\", color=red]\n", node, format!("{}", desc))
+            format!("\t{}[label=\"{}\", color=red]\n", node, desc)
         } else {
             format!(
                 "\t{}[label=\"{}\"]\n",

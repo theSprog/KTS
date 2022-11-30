@@ -81,8 +81,8 @@ impl Parser {
             // 特殊的 as cast operator
             if op == Op::As {
                 let type_ = self.parse_type()?;
-                let span = type_.info.span.clone();
-                let cast_exp = ASTNode::new(Exp::CastExp(CastExp::new(type_)), span.clone());
+                let span = type_.info.span; // span 实现了 copy
+                let cast_exp = ASTNode::new(Exp::CastExp(CastExp::new(type_)), span);
                 exp_stack.push(cast_exp);
                 if !self.is_single_exp_op() {
                     break;
@@ -128,20 +128,19 @@ impl Parser {
 
         loop {
             if self.kind_is(TokenKind::LeftParen) {
-                let args_exp;
                 self.eat(TokenKind::LeftParen)?;
                 // 函数调用有可能无参数
-                if self.kind_is(TokenKind::RightParen) {
-                    args_exp = ASTNode::new(
+                let args_exp = if self.kind_is(TokenKind::RightParen) {
+                    ASTNode::new(
                         Exp::ArgsExp(ArgsExp::default()),
                         Span::new(begin, self.mark_end()),
-                    );
+                    )
                 } else {
-                    args_exp = ASTNode::new(
+                    ASTNode::new(
                         Exp::ArgsExp(ArgsExp::new(self.parse_exp_seq()?)),
                         Span::new(begin, self.mark_end()),
-                    );
-                }
+                    )
+                };
                 self.eat(TokenKind::RightParen)?;
 
                 self.push_op(&mut op_stack, &mut exp_stack, Op::Call)?;
@@ -174,7 +173,7 @@ impl Parser {
         match self.peek_kind() {
             TokenKind::Identifier => match self.next_kind() {
                 // 如果是 a => ...
-                TokenKind::ARROW => Ok(ASTNode::new(
+                TokenKind::Arrow => Ok(ASTNode::new(
                     Exp::ArrowFuncExp(self.parse_arrow_func()?.ctx()),
                     Span::new(begin, self.mark_end()),
                 )),
@@ -442,7 +441,7 @@ impl Parser {
             }
 
             // 如果优先级无法爬山
-            if let Some(true) = op_stack.last().and_then(|top_op| Some(op.hold(top_op))) {
+            if let Some(true) = op_stack.last().map(|top_op| op.hold(top_op)) {
                 op_stack.push(op);
                 break;
             }

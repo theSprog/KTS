@@ -287,7 +287,7 @@ pub enum TokenKind {
 
     IdentityEquals, // ===
     Equals,         // ==
-    ARROW,          // =>
+    Arrow,          // =>
     Assign,         // =
 
     And,          // &&
@@ -355,7 +355,7 @@ impl Visualizable for TokenKind {
             TokenKind::LessThan => graph.put_node(info, "<"),
             TokenKind::IdentityEquals => graph.put_node(info, "==="),
             TokenKind::Equals => graph.put_node(info, "=="),
-            TokenKind::ARROW => graph.put_node(info, "=>"),
+            TokenKind::Arrow => graph.put_node(info, "=>"),
             TokenKind::Assign => graph.put_node(info, "="),
             TokenKind::And => graph.put_node(info, "&&"),
             TokenKind::BitAndAssign => graph.put_node(info, "&="),
@@ -430,7 +430,7 @@ impl Display for TokenKind {
 
             TokenKind::IdentityEquals => token_string!(f, "identity equals"),
             TokenKind::Equals => token_string!(f, "equals"),
-            TokenKind::ARROW => token_string!(f, "arrow"),
+            TokenKind::Arrow => token_string!(f, "arrow"),
             TokenKind::Assign => token_string!(f, "assign"),
 
             TokenKind::And => token_string!(f, "and"),

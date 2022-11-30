@@ -18,6 +18,8 @@ pub(crate) struct SematicsWalker {}
 /*
 语义分析任务
 1. 生成符号表
+    a. 不允许重复定义
+    b. ...
 2. 类型检查
 3. 变量使用前必须先定义
 4. ...
@@ -26,7 +28,7 @@ impl SematicsWalker {
     pub(crate) fn walk(program: &ASTNode<Program>) -> Result<Env, SematicsError> {
         let mut gloabel_env = Env::new_global();
         // 生成符号表
-        SymbolWalker::new(&mut gloabel_env).walk(program);
+        SymbolWalker::new(&mut gloabel_env).walk(program)?;
         // 类型检查
         TypeChecker::check(&gloabel_env)?;
         Ok(gloabel_env)

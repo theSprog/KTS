@@ -7,6 +7,8 @@ use crate::{
     symbol::{env::Env, Symbol},
 };
 
+use super::error::SematicsError;
+
 pub(super) struct SymbolWalker<'a> {
     env: &'a mut Env,
 }
@@ -17,21 +19,26 @@ impl<'a, 'b: 'a> SymbolWalker<'a> {
         Self { env }
     }
 
-    pub(super) fn walk(&mut self, node: &ASTNode<Program>) {
+    pub(super) fn walk(&mut self, node: &ASTNode<Program>) -> Result<(), SematicsError> {
         let Program { source_elements } = node.ctx_ref();
         if let Some(source_elements) = source_elements {
-            self.walk_source_elements(source_elements);
+            self.walk_source_elements(source_elements)?;
         }
+        Ok(())
     }
 
-    fn walk_source_elements(&mut self, source_elements: &ASTNode<SourceElements>) {
+    fn walk_source_elements(
+        &mut self,
+        source_elements: &ASTNode<SourceElements>,
+    ) -> Result<(), SematicsError> {
         let SourceElements { stats } = source_elements.ctx_ref();
         for stat in stats {
-            self.walk_stat(stat);
+            self.walk_stat(stat)?;
         }
+        Ok(())
     }
 
-    fn walk_stat(&mut self, stat: &ASTNode<Stat>) {
+    fn walk_stat(&mut self, stat: &ASTNode<Stat>) -> Result<(), SematicsError> {
         match stat.ctx_ref() {
             Stat::ImportStat(import_stat) => (),
             Stat::ExportStat(_) => todo!(),
@@ -62,5 +69,6 @@ impl<'a, 'b: 'a> SymbolWalker<'a> {
             Stat::ExpStat(_) => todo!(),
             Stat::Unknown(_) => unreachable!(),
         }
+        Ok(())
     }
 }

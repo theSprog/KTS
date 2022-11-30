@@ -12,12 +12,11 @@ pub(crate) struct Env {
 
 impl Env {
     pub(crate) fn new(parent: &Env) -> Self {
-        let child = Self {
+        Self {
             table: HashMap::new(),
             parent: parent as *const Env,
             children: Vec::new(),
-        };
-        child
+        }
     }
 
     pub(crate) fn new_global() -> Self {
@@ -51,7 +50,8 @@ impl Env {
                 }
             }
         } else {
-            return sym;
+            // 有则直接返回
+            sym
         }
     }
 }

@@ -4,7 +4,7 @@ use std::error::Error;
 macro_rules! compiler_internal_error {
     ($s:expr) => {{
         crate::error::err_exit(
-            crate::error::compiler_internal_error::CompilerInternalError::new(format!(
+            $crate::error::compiler_internal_error::CompilerInternalError::new(format!(
                 "CompilerInternalError: {}",
                 $s
             )),

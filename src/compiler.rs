@@ -21,7 +21,7 @@ impl Compiler {
         let mut parser = Parser::new(token_stream, &self.filename);
         let mut ast = parser.parse()?;
         ast.vis(&format!("{}.dot", self.filename));
-        let env = SematicsWalker::walk(ast.get_program_ref())?;
+        // let env = SematicsWalker::walk(ast.get_program_ref())?;
         // let ir = IR::gen_ir(ast);
 
         Ok(())

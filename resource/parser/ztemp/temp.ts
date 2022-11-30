@@ -1,2 +1,1 @@
-import Entry fromm "./components/Entry";
-
+(b + c * x[2][p * q(s)])

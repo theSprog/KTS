@@ -8,11 +8,8 @@ pub struct SematicsError {
 }
 
 impl SematicsError {
-    pub(crate) fn new(filename: &str, err: String) -> Self {
-        Self {
-            filename: filename.to_owned(),
-            err,
-        }
+    pub(crate) fn new(filename: String, err: String) -> Self {
+        Self { filename, err }
     }
 }
 

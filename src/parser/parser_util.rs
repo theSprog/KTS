@@ -65,26 +65,24 @@ impl Parser {
         if self.is_eos() {
             if self.kind_is(TokenKind::SemiColon) {
                 self.forward();
-                return Ok(());
             }
-            return Ok(());
+            Ok(())
         } else {
             Err(self.expect_error("EOS", "; or close-brace or newline"))
         }
     }
 
     pub(super) fn is_literal(&self) -> bool {
-        self.tokens
-            .get(self.index)
-            .map_or(false, |token| match token.peek_kind() {
+        self.tokens.get(self.index).map_or(false, |token| {
+            matches!(
+                token.peek_kind(),
                 TokenKind::String
-                | TokenKind::Number
-                | TokenKind::KeyWord(KeyWordKind::True)
-                | TokenKind::KeyWord(KeyWordKind::False)
-                | TokenKind::KeyWord(KeyWordKind::Null) => true,
-
-                _ => false,
-            })
+                    | TokenKind::Number
+                    | TokenKind::KeyWord(KeyWordKind::True)
+                    | TokenKind::KeyWord(KeyWordKind::False)
+                    | TokenKind::KeyWord(KeyWordKind::Null)
+            )
+        })
     }
 
     // 注意，该函数在 extract 的同时也会 eat Token
@@ -119,7 +117,7 @@ impl Parser {
                     }
                 }
                 // 处理其余进制
-                else if string_value.starts_with("0") {
+                else if string_value.starts_with('0') {
                     Literal::Integer(match string_value.as_bytes() {
                         // 只是单个 0
                         [b'0'] => 0i32,
@@ -218,7 +216,7 @@ impl Parser {
     }
 
     pub(super) fn next_kind(&self) -> TokenKind {
-        return self.lookahead(1);
+        self.lookahead(1)
     }
 
     pub(super) fn prekind_is(&self, kind: TokenKind) -> bool {

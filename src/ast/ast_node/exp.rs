@@ -1,4 +1,4 @@
-use std::cmp::PartialOrd;
+use std::cmp::{Ordering, PartialOrd};
 use std::collections::HashMap;
 
 use super::decl::{ArrowFuncExpDecl, ClassExp, FuncExpDecl, NamespaceName};
@@ -183,27 +183,24 @@ impl Op {
     }
 
     pub(crate) fn is_tenary_op(&self) -> bool {
-        match self {
-            Op::QuestionMark | Op::Colon => true,
-            _ => false,
-        }
+        matches!(self, Op::QuestionMark | Op::Colon)
     }
 
     pub(crate) fn is_unary_op(&self) -> bool {
-        match self {
+        matches!(
+            self,
             Op::PostInc
-            | Op::PostDec
-            | Op::PreInc
-            | Op::PreDec
-            | Op::UnaryPlus
-            | Op::UnaryMinus
-            | Op::BitNot
-            | Op::Not
-            | Op::New
-            | Op::Delete
-            | Op::Typeof => true,
-            _ => false,
-        }
+                | Op::PostDec
+                | Op::PreInc
+                | Op::PreDec
+                | Op::UnaryPlus
+                | Op::UnaryMinus
+                | Op::BitNot
+                | Op::Not
+                | Op::New
+                | Op::Delete
+                | Op::Typeof
+        )
     }
 }
 
@@ -268,17 +265,13 @@ impl Visualizable for Op {
 }
 
 impl PartialOrd for Op {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         let lhs = OP_PRIORITY.get(other).unwrap();
         let rhs = OP_PRIORITY.get(self).unwrap();
-
-        if lhs.1 < rhs.0 {
-            Some(std::cmp::Ordering::Greater)
-        } else if lhs.1 > rhs.0 {
-            Some(std::cmp::Ordering::Less)
-        } else {
-            // 即便是同一个的符号，其左右结合性也是不同的
-            unreachable!()
+        match lhs.1.cmp(&rhs.0) {
+            Ordering::Greater => Some(Ordering::Less),
+            Ordering::Less => Some(Ordering::Greater),
+            Ordering::Equal => unreachable!(), // 即便是同一个的符号，其左右结合性也是不同的
         }
     }
 }
