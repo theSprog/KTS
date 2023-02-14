@@ -67,18 +67,18 @@ impl Default for Stat {
 
 #[derive(Visualizable)]
 pub struct ImportStat {
-    import_block: ImportBlock,
+    import_block: ASTNode<ImportBlock>,
 }
 impl ImportStat {
-    pub(crate) fn new(import_block: ImportBlock) -> Self {
+    pub(crate) fn new(import_block: ASTNode<ImportBlock>) -> Self {
         Self { import_block }
     }
 }
 
 #[derive(Visualizable)]
 pub enum ImportBlock {
-    FromBlock(ASTNode<FromBlock>),
-    ImportAssign(ASTNode<ImportAssign>),
+    FromBlock(FromBlock),
+    ImportAssign(ImportAssign),
 }
 
 #[derive(Visualizable)]

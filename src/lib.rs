@@ -13,6 +13,6 @@ mod ast;
 mod ir;
 mod lexer;
 mod parser;
+mod sematics;
 mod symbol;
 mod utils;
-mod sematics;

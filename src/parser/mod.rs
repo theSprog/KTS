@@ -366,11 +366,16 @@ impl Parser {
         self.eat(TokenKind::KeyWord(KeyWordKind::Import))?;
 
         if self.kind_is(TokenKind::Identifier) && self.nextkind_is(TokenKind::Assign) {
-            let import_stat =
-                ImportStat::new(ImportBlock::ImportAssign(self.set_import_alias_decl()?));
+            let import_stat = ImportStat::new(ASTNode::new(
+                ImportBlock::ImportAssign(self.set_import_alias_decl()?),
+                Span::new(begin, self.mark_end()),
+            ));
             Ok(import_stat)
         } else {
-            let import_stat = ImportStat::new(ImportBlock::FromBlock(self.parse_from_block()?));
+            let import_stat = ImportStat::new(ASTNode::new(
+                ImportBlock::FromBlock(self.parse_from_block()?),
+                Span::new(begin, self.mark_end()),
+            ));
             Ok(import_stat)
         }
     }
@@ -380,18 +385,14 @@ impl Parser {
         : Identifier '=' namespaceName SemiColon
         ;
     */
-    fn set_import_alias_decl(&mut self) -> Result<ASTNode<ImportAssign>, ParserError> {
-        let begin = self.mark_begin();
-
+    fn set_import_alias_decl(&mut self) -> Result<ImportAssign, ParserError> {
         let identifier = self.parse_identifier()?;
         self.eat(TokenKind::Assign)?;
         let namespace_name = self.parse_namespace_name()?;
         let import_assign = ImportAssign::new(identifier, namespace_name);
         self.eat(TokenKind::SemiColon)?;
-        Ok(ASTNode::new(
-            import_assign,
-            Span::new(begin, self.mark_end()),
-        ))
+
+        Ok(import_assign)
     }
 
     /*
@@ -438,7 +439,7 @@ impl Parser {
         Ok(ASTNode::new(name_space, Span::new(begin, self.mark_end())))
     }
 
-    fn parse_from_block(&mut self) -> Result<ASTNode<FromBlock>, ParserError> {
+    fn parse_from_block(&mut self) -> Result<FromBlock, ParserError> {
         let begin = self.mark_begin();
 
         let mut from_block = FromBlock::default();
@@ -469,7 +470,7 @@ impl Parser {
                         self.forward();
                     }
                 }
-                // if it be "{a, b as c, ...}"
+                // if it be like "{a, b as c, ...}"
                 if self.kind_is(TokenKind::LeftBracket) {
                     self.eat(TokenKind::LeftBracket)?;
 
@@ -513,7 +514,7 @@ impl Parser {
         }
 
         self.eat_eos()?;
-        Ok(ASTNode::new(from_block, Span::new(begin, self.mark_end())))
+        Ok(from_block)
     }
 
     /*
@@ -546,7 +547,7 @@ impl Parser {
 
         // 尝试性地解析 from block
         if let Some(from_block) = self.try_to(Parser::parse_from_block) {
-            export_stat.set_from_block(from_block);
+            export_stat.set_from_block(ASTNode::new(from_block, Span::new(begin, self.mark_end())));
             return Ok(export_stat);
         }
 

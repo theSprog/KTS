@@ -1,6 +1,5 @@
 use crate::{
     ast::ast_node::literal::Literal,
-    compiler_internal_error,
     lexer::{
         token::Token,
         token_kind::{KeyWordKind, TokenKind},
@@ -147,7 +146,7 @@ impl Parser {
                     } else if let Ok(float) = string_value.parse::<f64>() {
                         Literal::Number(float)
                     } else {
-                        compiler_internal_error!("Why it can be here?")
+                        unreachable!()
                     }
                 }
             }
