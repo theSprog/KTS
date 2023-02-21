@@ -16,7 +16,7 @@ pub struct EvalError {
 }
 
 impl EvalError {
-    pub(crate) fn set_filename(filename: &String) {
+    pub(crate) fn set_filename(filename: &str) {
         FILENAME.lock().unwrap().clear();
         FILENAME.lock().unwrap().push_str(filename);
     }

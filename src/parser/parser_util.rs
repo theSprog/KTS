@@ -116,14 +116,14 @@ impl Parser {
                     }
                 }
                 // 处理其余进制
-                else if string_value.starts_with('0') {
+                else if let Some(stripped) = string_value.strip_prefix('0') {
                     Literal::Integer(match string_value.as_bytes() {
                         // 只是单个 0
                         [b'0'] => 0i32,
 
                         // 特殊的八进制
                         [b'0', b'0'..=b'7', _rest @ ..] => {
-                            i32::from_str_radix(&string_value[1..], 8).unwrap()
+                            i32::from_str_radix(stripped, 8).unwrap()
                         }
 
                         // 一般情况

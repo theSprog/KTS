@@ -32,9 +32,9 @@ impl Add for EvalObj {
             (EvalObj::Number(lhs), EvalObj::Integer(rhs)) => Ok(EvalObj::Number(lhs + rhs as f64)),
             (EvalObj::Integer(lhs), EvalObj::Number(rhs)) => Ok(EvalObj::Number(lhs as f64 + rhs)),
 
-            _ => Err(EvalError::type_error(format!(
-                "the type of lhs is not same to rhs"
-            ))),
+            _ => Err(EvalError::type_error(
+                "the type of lhs is not same to rhs".to_string(),
+            )),
         }
     }
 }
@@ -49,9 +49,9 @@ impl Sub for EvalObj {
             (EvalObj::Number(lhs), EvalObj::Integer(rhs)) => Ok(EvalObj::Number(lhs - rhs as f64)),
             (EvalObj::Integer(lhs), EvalObj::Number(rhs)) => Ok(EvalObj::Number(lhs as f64 - rhs)),
 
-            _ => Err(EvalError::type_error(format!(
-                "the type of lhs is not same to rhs"
-            ))),
+            _ => Err(EvalError::type_error(
+                "the type of lhs is not same to rhs".to_string(),
+            )),
         }
     }
 }
@@ -66,9 +66,9 @@ impl Mul for EvalObj {
             (EvalObj::Number(lhs), EvalObj::Integer(rhs)) => Ok(EvalObj::Number(lhs * rhs as f64)),
             (EvalObj::Integer(lhs), EvalObj::Number(rhs)) => Ok(EvalObj::Number(lhs as f64 * rhs)),
 
-            _ => Err(EvalError::type_error(format!(
-                "the type of lhs is not same to rhs"
-            ))),
+            _ => Err(EvalError::type_error(
+                "the type of lhs is not same to rhs".to_string(),
+            )),
         }
     }
 }
@@ -79,9 +79,8 @@ impl Div for EvalObj {
     fn div(self, rhs: Self) -> Self::Output {
         match (self, rhs) {
             (EvalObj::NONE, EvalObj::NONE) => Ok(EvalObj::NONE),
-            (_, EvalObj::Integer(0)) | (_, EvalObj::Number(0.0)) => {
-                Err(EvalError::divide_zero_error())
-            }
+            (_, EvalObj::Integer(0)) => Err(EvalError::divide_zero_error()),
+            (_, EvalObj::Number(n)) if n == 0.0 => Err(EvalError::divide_zero_error()),
 
             (EvalObj::Integer(lhs), EvalObj::Integer(rhs)) => {
                 let res1 = lhs as f64 / rhs as f64;
@@ -96,9 +95,9 @@ impl Div for EvalObj {
             (EvalObj::Number(lhs), EvalObj::Integer(rhs)) => Ok(EvalObj::Number(lhs / rhs as f64)),
             (EvalObj::Integer(lhs), EvalObj::Number(rhs)) => Ok(EvalObj::Number(lhs as f64 / rhs)),
 
-            _ => Err(EvalError::type_error(format!(
-                "the type of lhs is not same to rhs"
-            ))),
+            _ => Err(EvalError::type_error(
+                "the type of lhs is not same to rhs".to_string(),
+            )),
         }
     }
 }
@@ -112,9 +111,9 @@ impl Rem for EvalObj {
             (_, EvalObj::Integer(0)) => Err(EvalError::divide_zero_error()),
             (EvalObj::Integer(lhs), EvalObj::Integer(rhs)) => Ok(EvalObj::Integer(lhs % rhs)),
 
-            _ => Err(EvalError::type_error(format!(
-                "the type of lhs is not same to rhs"
-            ))),
+            _ => Err(EvalError::type_error(
+                "the type of lhs is not same to rhs".to_string(),
+            )),
         }
     }
 }

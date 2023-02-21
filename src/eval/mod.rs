@@ -38,7 +38,7 @@ impl Eval {
             // unimplemented!()
             res = Eval::walk_stat(stat)?;
         }
-        return Ok(res);
+        Ok(res)
     }
 
     fn walk_stat(stat: &ASTNode<Stat>) -> Result<EvalObj, EvalError> {
@@ -81,7 +81,7 @@ impl Eval {
         for exp in exps {
             res = Eval::walk_exp(exp.ctx_ref())?;
         }
-        return Ok(res);
+        Ok(res)
     }
 
     fn walk_exp(exp: &Exp) -> Result<EvalObj, EvalError> {

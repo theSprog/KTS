@@ -57,6 +57,6 @@ impl Compiler {
     }
 
     fn eval(&self, ast: &AST) -> Result<(), TSError> {
-        Ok(println!("{:?}", Eval::walk(&ast)?))
+        Ok(println!("{:?}", Eval::walk(ast)?))
     }
 }
