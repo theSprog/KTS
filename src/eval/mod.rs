@@ -20,7 +20,6 @@ pub(super) struct Eval {}
 
 impl Eval {
     pub(super) fn walk(ast: &AST) -> Result<EvalObj, EvalError> {
-        EvalError::set_filename(&ast.filename);
         let node = ast.get_program_ref();
         let Program { source_elements } = node.ctx_ref();
         if let Some(source_elements) = source_elements {

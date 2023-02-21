@@ -1,4 +1,4 @@
-use self::compiler_internal_error::CompilerInternalError;
+use crate::compiler::Compiler;
 use crate::eval::error::EvalError;
 use crate::parser::error::ParserError;
 use crate::{lexer::error::LexerError, sematics::error::SematicsError};
@@ -10,8 +10,6 @@ use std::{
     process,
 };
 
-pub mod compiler_internal_error;
-
 pub fn err_exit<E: Error>(err: E) -> ! {
     eprintln!("Error: {}", format!("{}", err).red());
     process::exit(0);
@@ -20,7 +18,6 @@ pub fn err_exit<E: Error>(err: E) -> ! {
 // 定义抽象的解析错误
 #[derive(Debug)]
 pub enum TSError {
-    CompilerInternalError(CompilerInternalError),
     LexerError(LexerError),
     ParserError(ParserError),
     SematicsError(SematicsError),
@@ -32,11 +29,10 @@ impl Error for TSError {}
 impl Display for TSError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            TSError::LexerError(e) => Display::fmt(&e, f),
-            TSError::ParserError(e) => Display::fmt(&e, f),
-            TSError::CompilerInternalError(e) => Display::fmt(&e, f),
-            TSError::SematicsError(e) => Display::fmt(&e, f),
-            TSError::EvalError(e) => Display::fmt(&e, f),
+            TSError::LexerError(e) => write!(f, "{}:\n{}", Compiler::filename(), e),
+            TSError::ParserError(e) => write!(f, "{}:\n{}", Compiler::filename(), e),
+            TSError::SematicsError(e) => write!(f, "{}:\n{}", Compiler::filename(), e),
+            TSError::EvalError(e) => write!(f, "{}:\n{}", Compiler::filename(), e),
         }
     }
 }
@@ -63,11 +59,5 @@ impl From<SematicsError> for TSError {
 impl From<EvalError> for TSError {
     fn from(s: EvalError) -> Self {
         TSError::EvalError(s)
-    }
-}
-
-impl From<CompilerInternalError> for TSError {
-    fn from(s: CompilerInternalError) -> Self {
-        TSError::CompilerInternalError(s)
     }
 }

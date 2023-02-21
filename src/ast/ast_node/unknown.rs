@@ -1,8 +1,5 @@
 use crate::ast::visulize::AstGraph;
-use crate::{
-    ast::{visulize::Visualizable, NodeInfo},
-    compiler_internal_error,
-};
+use crate::ast::{visulize::Visualizable, NodeInfo};
 
 pub struct Unknown {}
 
@@ -14,6 +11,6 @@ impl Unknown {
 
 impl Visualizable for Unknown {
     fn draw(&self, self_info: NodeInfo, graph: &mut AstGraph) {
-        compiler_internal_error!("Cannot draw unknown node, you must be wrong on something");
+        unreachable!()
     }
 }

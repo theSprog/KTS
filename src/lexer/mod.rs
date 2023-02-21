@@ -1,4 +1,3 @@
-use crate::compiler_internal_error;
 use crate::lexer::token_kind::{KeyWordKind, TokenKind};
 use lazy_static::lazy_static;
 use regex::Regex;
@@ -92,15 +91,13 @@ lazy_static! {
 pub(crate) struct Lexer<'a> {
     bytes: &'a [u8],
     line: usize,
-    filename: String,
 }
 
 impl<'a> Lexer<'a> {
-    pub(crate) fn new(chars: &'a str, filename: &str) -> Self {
+    pub(crate) fn new(chars: &'a str) -> Self {
         Self {
             bytes: chars.as_bytes(),
             line: 1,
-            filename: filename.to_owned(),
         }
     }
 
@@ -127,10 +124,7 @@ impl<'a> Lexer<'a> {
     }
 
     fn report_error(&self, msg: &str) -> LexerError {
-        LexerError::new(
-            self.filename.clone(),
-            format!("Line[{}]:\n{}", self.line, msg),
-        )
+        LexerError::new(format!("Line[{}]: {}", self.line, msg))
     }
 
     pub(crate) fn next_token(&mut self) -> Result<Token, LexerError> {
@@ -312,9 +306,7 @@ impl<'a> Lexer<'a> {
                 (false, false) => break,
                 (true, false) => self.skip_ws(),
                 (false, true) => self.skip_comment(),
-                (true, true) => {
-                    compiler_internal_error!(" Why it could be both whitespace and comment?")
-                }
+                (true, true) => unreachable!(),
             }
         }
     }
@@ -366,7 +358,7 @@ impl<'a> Lexer<'a> {
                     }
                     self.forward(len);
                 }
-                (Some(_), Some(_)) => compiler_internal_error!("Why it can be captures twice?"),
+                (Some(_), Some(_)) => unreachable!(),
             }
         }
     }
@@ -494,7 +486,7 @@ impl<'a> Lexer<'a> {
                     None => Token::new(identifier, self.line, TokenKind::Identifier),
                 }
             }
-            None => compiler_internal_error!("Why it can be here?"),
+            None => unreachable!(),
         }
     }
 

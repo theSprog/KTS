@@ -12,6 +12,7 @@ use crate::ast::Span;
 
 use crate::ast::visulize::Visualizable;
 use crate::ast::ASTNode;
+use crate::compiler::Compiler;
 use lazy_static::lazy_static;
 
 use crate::ast::ast_node::block::*;
@@ -28,7 +29,6 @@ use crate::ast::ast_node::stat::*;
 use crate::ast::ast_node::type_::*;
 
 use crate::ast::ast_node::unknown::Unknown;
-use crate::compiler_internal_error;
 use crate::lexer::token::Token;
 use crate::lexer::token_kind::{KeyWordKind, TokenKind};
 use crate::{ast::AST, error::TSError};
@@ -36,7 +36,6 @@ use crate::{ast::AST, error::TSError};
 use self::error::ParserError;
 
 pub(crate) struct Parser {
-    filename: String,
     tokens: Vec<Token>,
     index: usize,
 
@@ -44,9 +43,8 @@ pub(crate) struct Parser {
     try_most_forward: usize,
 }
 impl Parser {
-    pub(crate) fn new(tokens: Vec<Token>, filename: &str) -> Self {
+    pub(crate) fn new(tokens: Vec<Token>) -> Self {
         Self {
-            filename: filename.to_owned(),
             tokens,
             index: 0,
             error_most_possible: None,
@@ -63,10 +61,7 @@ impl Parser {
             return self.error_most_possible.clone().unwrap();
         }
 
-        ParserError::new(
-            self.filename.clone(),
-            format!("near Line[{}]:\n{}", cur.peek_line(), msg),
-        )
+        ParserError::new(format!("near Line[{}]:\n{}", cur.peek_line(), msg))
     }
 
     fn mark_begin(&self) -> usize {
@@ -114,7 +109,7 @@ impl Parser {
     }
 
     pub(crate) fn parse(&mut self) -> Result<AST, TSError> {
-        Ok(AST::new(self.parse_program()?, self.filename.clone()))
+        Ok(AST::new(self.parse_program()?, Compiler::filename()))
     }
 
     fn parse_program(&mut self) -> Result<ASTNode<Program>, ParserError> {
