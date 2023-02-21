@@ -382,6 +382,7 @@ impl Parser {
             TokenKind::Minus => Op::Minus,
             TokenKind::Multiply => Op::Multiply,
             TokenKind::Divide => Op::Divide,
+            TokenKind::Modulus => Op::Mod,
 
             TokenKind::Or => Op::Or,
             TokenKind::And => Op::And,
@@ -542,6 +543,7 @@ impl Parser {
             | TokenKind::Minus
             | TokenKind::Multiply
             | TokenKind::Divide
+            | TokenKind::Modulus
 
             // || && | ^ &
             | TokenKind::Or

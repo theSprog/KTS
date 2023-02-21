@@ -88,6 +88,7 @@ lazy_static! {
     };
 }
 
+#[derive(Default)]
 pub(crate) struct Lexer<'a> {
     bytes: &'a [u8],
     line: usize,
@@ -514,6 +515,7 @@ impl<'a> Lexer<'a> {
                 Some(b'\\') => {
                     match self.bytes {
                         [b'\\', b'n', _rest @ ..] => value.push(b'\n'),
+                        [b'\\', b'\n', _rest @ ..] => self.inc_line(),
                         [b'\\', b'\\', _rest @ ..] => value.push(b'\\'),
                         [b'\\', b't', _rest @ ..] => value.push(b'\t'),
                         [b'\\', b'r', _rest @ ..] => value.push(b'\r'),

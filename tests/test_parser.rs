@@ -3,7 +3,7 @@ use kts::compiler::Compiler;
 use kts::error::err_exit;
 
 fn test_parser(filename: &str) {
-    let compiler = Compiler::new(filename);
+    let compiler = Compiler::new(filename).set_show_ast();
     let res = compiler.run();
     if let Err(err) = res {
         err_exit(err);
@@ -50,13 +50,9 @@ fn test_parser(filename: &str) {
 // #[test]
 // fn test_iter() {
 //     test_parser("resource/parser/iter/dowhile/01.ts");
-
 //     test_parser("resource/parser/iter/whiledo/01.ts");
-
 //     test_parser("resource/parser/iter/for/01.ts");
-
 //     test_parser("resource/parser/iter/forvar/01.ts");
-
 //     test_parser("resource/parser/iter/forin/01.ts");
 // }
 

@@ -72,19 +72,19 @@ pub struct TypeArg {
 
 #[derive(Visualizable)]
 pub enum Type {
-    PrimaryType(ASTNode<PrimaryType>),
-    FunctionType(ASTNode<FunctionType>),
+    PrimaryType(PrimaryType),
+    FunctionType(FunctionType),
 }
 
 #[derive(Visualizable)]
 pub enum PrimaryType {
-    PredefinedType(ASTNode<PredefinedType>),
-    TypeRef(ASTNode<TypeRef>),
-    ArrayPredefinedType(ASTNode<ArrayPredefinedType>),
-    ArrayTypeRef(ASTNode<ArrayTypeRef>),
-    TupleType(ASTNode<TupleElementTypes>),
-    ObjectType(ASTNode<ObjectType>),
-    TypeQuery(ASTNode<TypeQuery>),
+    PredefinedType(PredefinedType),
+    TypeRef(TypeRef),
+    ArrayPredefinedType(ArrayPredefinedType),
+    ArrayTypeRef(ArrayTypeRef),
+    TupleType(TupleElementTypes),
+    ObjectType(ObjectType),
+    TypeQuery(TypeQuery),
 }
 
 #[derive(Visualizable)]

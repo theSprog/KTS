@@ -114,7 +114,7 @@ impl Parser {
     }
 
     pub(crate) fn parse(&mut self) -> Result<AST, TSError> {
-        Ok(AST::new(self.parse_program()?))
+        Ok(AST::new(self.parse_program()?, self.filename.clone()))
     }
 
     fn parse_program(&mut self) -> Result<ASTNode<Program>, ParserError> {
@@ -2013,7 +2013,7 @@ impl Parser {
         | typeQuery                                 #QueryPrimType
         | objectType								# ObjectPrimType;
     */
-    fn parse_primary_type(&mut self) -> Result<ASTNode<PrimaryType>, ParserError> {
+    fn parse_primary_type(&mut self) -> Result<PrimaryType, ParserError> {
         let begin = self.mark_begin();
 
         // [
@@ -2021,15 +2021,12 @@ impl Parser {
             self.eat(TokenKind::LeftBrace)?;
             let tuple_type = PrimaryType::TupleType(self.parse_tuple_type()?);
             self.eat(TokenKind::RightBrace)?;
-            return Ok(ASTNode::new(tuple_type, Span::new(begin, self.mark_end())));
+            return Ok(tuple_type);
         }
 
         // {
         if self.kind_is(TokenKind::LeftBracket) {
-            return Ok(ASTNode::new(
-                PrimaryType::ObjectType(self.parse_object_type()?),
-                Span::new(begin, self.mark_end()),
-            ));
+            return Ok(PrimaryType::ObjectType(self.parse_object_type()?));
         }
 
         /*
@@ -2050,12 +2047,9 @@ impl Parser {
                 }
                 self.forward();
             }
-            let type_query = ASTNode::new(type_query, Span::new(type_query_begin, self.mark_end()));
+            // let type_query = ASTNode::new(type_query, Span::new(type_query_begin, self.mark_end()));
 
-            return Ok(ASTNode::new(
-                PrimaryType::TypeQuery(type_query),
-                Span::new(begin, self.mark_end()),
-            ));
+            return Ok(PrimaryType::TypeQuery(type_query));
         }
 
         if self.kind_is(TokenKind::Identifier) {
@@ -2074,20 +2068,11 @@ impl Parser {
                 }
 
                 let type_ref = ASTNode::new(type_ref, Span::new(begin, self.mark_end()));
-                let array_type_ref = ASTNode::new(
-                    ArrayTypeRef::new(type_ref),
-                    Span::new(begin, self.mark_end()),
-                );
+                let array_type_ref = ArrayTypeRef::new(type_ref);
 
-                return Ok(ASTNode::new(
-                    PrimaryType::ArrayTypeRef(array_type_ref),
-                    Span::new(begin, self.mark_end()),
-                ));
+                return Ok(PrimaryType::ArrayTypeRef(array_type_ref));
             } else {
-                return Ok(ASTNode::new(
-                    PrimaryType::TypeRef(ASTNode::new(type_ref, Span::new(begin, self.mark_end()))),
-                    Span::new(begin, self.mark_end()),
-                ));
+                return Ok(PrimaryType::TypeRef(type_ref));
             }
         }
 
@@ -2117,29 +2102,22 @@ impl Parser {
 
             let type_ = ASTNode::new(type_, Span::new(begin, self.mark_end()));
 
-            Ok(ASTNode::new(
-                PrimaryType::ArrayPredefinedType(ASTNode::new(
-                    ArrayPredefinedType::new(type_),
-                    Span::new(begin, self.mark_end()),
-                )),
-                Span::new(begin, self.mark_end()),
-            ))
+            Ok(PrimaryType::ArrayPredefinedType(ArrayPredefinedType::new(
+                type_,
+            )))
         } else {
-            Ok(ASTNode::new(
-                PrimaryType::PredefinedType(ASTNode::new(type_, Span::new(begin, self.mark_end()))),
-                Span::new(begin, self.mark_end()),
-            ))
+            Ok(PrimaryType::PredefinedType(type_))
         }
     }
 
-    fn parse_tuple_type(&mut self) -> Result<ASTNode<TupleElementTypes>, ParserError> {
+    fn parse_tuple_type(&mut self) -> Result<TupleElementTypes, ParserError> {
         todo!()
     }
 
     /*
     functionType: '(' parameterList? ')' '=>' type_;
     */
-    fn parse_func_type(&mut self) -> Result<ASTNode<FunctionType>, ParserError> {
+    fn parse_func_type(&mut self) -> Result<FunctionType, ParserError> {
         let begin = self.mark_begin();
 
         let type_;
@@ -2152,10 +2130,7 @@ impl Parser {
         self.eat(TokenKind::Arrow)?;
         type_ = self.parse_type()?;
 
-        Ok(ASTNode::new(
-            FunctionType::new(para_list, type_),
-            Span::new(begin, self.mark_end()),
-        ))
+        Ok(FunctionType::new(para_list, type_))
     }
 
     fn parse_decorators(&mut self) -> Result<ASTNode<Decorators>, ParserError> {
@@ -2219,7 +2194,11 @@ impl Parser {
             }
         }
 
-        interface_decl.set_object_type(self.parse_object_type()?);
+        interface_decl.set_object_type(ASTNode::new(
+            self.parse_object_type()?,
+            Span::new(begin, self.mark_end()),
+        ));
+
         if self.kind_is(TokenKind::SemiColon) {
             self.forward();
         }
@@ -2239,7 +2218,7 @@ impl Parser {
             )?
         )? '}';
     */
-    fn parse_object_type(&mut self) -> Result<ASTNode<ObjectType>, ParserError> {
+    fn parse_object_type(&mut self) -> Result<ObjectType, ParserError> {
         let begin = self.mark_begin();
 
         let mut object_type = ObjectType::default();
@@ -2264,7 +2243,7 @@ impl Parser {
             }
         }
         self.eat(TokenKind::RightBracket)?;
-        Ok(ASTNode::new(object_type, Span::new(begin, self.mark_end())))
+        Ok(object_type)
     }
 
     /*

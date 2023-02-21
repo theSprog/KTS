@@ -19,6 +19,10 @@ impl ExpSeq {
     pub(crate) fn push_exp(&mut self, single_exp: ASTNode<Exp>) {
         self.exps.push(single_exp);
     }
+
+    pub(crate) fn get_exps(&self) -> &Vec<ASTNode<Exp>> {
+        &self.exps
+    }
 }
 
 lazy_static! {
@@ -342,14 +346,18 @@ impl Visualizable for UnaryExp {
 
 #[derive(Visualizable)]
 pub struct BinaryExp {
-    left: ASTNode<Exp>,
-    op: Op,
-    right: ASTNode<Exp>,
+    pub(crate) left: ASTNode<Exp>,
+    pub(crate) op: Op,
+    pub(crate) right: ASTNode<Exp>,
 }
 
 impl BinaryExp {
     pub fn new(left: ASTNode<Exp>, op: Op, right: ASTNode<Exp>) -> Self {
         Self { left, op, right }
+    }
+
+    pub(crate) fn get_op(&self) -> &Op {
+        &self.op
     }
 }
 
@@ -388,9 +396,9 @@ impl TernaryExp {
 
 #[derive(Visualizable)]
 pub struct GroupExp {
-    left_paren: ASTNode<TokenKind>,
-    exp: ASTNode<Exp>,
-    right_paren: ASTNode<TokenKind>,
+    pub(crate) left_paren: ASTNode<TokenKind>,
+    pub(crate) exp: ASTNode<Exp>,
+    pub(crate) right_paren: ASTNode<TokenKind>,
 }
 impl GroupExp {
     pub(crate) fn new(exp: ASTNode<Exp>) -> Self {

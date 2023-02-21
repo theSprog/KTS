@@ -1,4 +1,5 @@
 use self::compiler_internal_error::CompilerInternalError;
+use crate::eval::error::EvalError;
 use crate::parser::error::ParserError;
 use crate::{lexer::error::LexerError, sematics::error::SematicsError};
 use colored::Colorize;
@@ -23,6 +24,7 @@ pub enum TSError {
     LexerError(LexerError),
     ParserError(ParserError),
     SematicsError(SematicsError),
+    EvalError(EvalError),
 }
 impl Error for TSError {}
 
@@ -34,6 +36,7 @@ impl Display for TSError {
             TSError::ParserError(e) => Display::fmt(&e, f),
             TSError::CompilerInternalError(e) => Display::fmt(&e, f),
             TSError::SematicsError(e) => Display::fmt(&e, f),
+            TSError::EvalError(e) => Display::fmt(&e, f),
         }
     }
 }
@@ -54,6 +57,12 @@ impl From<ParserError> for TSError {
 impl From<SematicsError> for TSError {
     fn from(s: SematicsError) -> Self {
         TSError::SematicsError(s)
+    }
+}
+
+impl From<EvalError> for TSError {
+    fn from(s: EvalError) -> Self {
+        TSError::EvalError(s)
     }
 }
 

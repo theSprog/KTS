@@ -20,11 +20,12 @@ use self::visulize::{AstGraph, Visualizable, COUNTER};
 
 pub struct AST {
     pub program: ASTNode<Program>,
+    pub filename: String,
 }
 
 impl AST {
-    pub fn new(program: ASTNode<Program>) -> AST {
-        AST { program }
+    pub fn new(program: ASTNode<Program>, filename: String) -> AST {
+        AST { program, filename }
     }
 
     pub fn gen_id() -> usize {
@@ -35,7 +36,7 @@ impl AST {
         &self.program
     }
 
-    pub fn vis(&mut self, to_path: &str) {
+    pub fn vis(&self, to_path: &str) {
         let mut writer = BufWriter::new(
             OpenOptions::new()
                 .write(true)

@@ -16,3 +16,4 @@ mod parser;
 mod sematics;
 mod symbol;
 mod utils;
+mod eval;
