@@ -10,10 +10,10 @@ use crate::{
     lexer::token_kind::{KeyWordKind, TokenKind},
 };
 
-use super::{error::ParserError, Parser};
+use super::{error::ParserError, Parser, ParseResult};
 
 impl Parser {
-    pub(super) fn parse_exp(&mut self) -> Result<ASTNode<Exp>, ParserError> {
+    pub(super) fn parse_exp(&mut self) -> ParseResult<ASTNode<Exp>> {
         let begin = self.mark_begin();
 
         let mut left = self.parse_single_exp()?;
@@ -64,7 +64,7 @@ impl Parser {
         | single_exp || single_exp
         | single_exp ? single_exp : single_exp   // 三元表达式
     */
-    fn parse_single_exp(&mut self) -> Result<ASTNode<Exp>, ParserError> {
+    fn parse_single_exp(&mut self) -> ParseResult<ASTNode<Exp>> {
         let mut exp_stack = Vec::new();
         let mut op_stack = Vec::new();
 
@@ -95,7 +95,7 @@ impl Parser {
     /*
     unary: base | prefixOp base | base postfixOp ;
     */
-    fn parse_unary_exp(&mut self) -> Result<ASTNode<Exp>, ParserError> {
+    fn parse_unary_exp(&mut self) -> ParseResult<ASTNode<Exp>> {
         let begin = self.mark_begin();
 
         let prefix = self.extract_prefix_op();
@@ -117,7 +117,7 @@ impl Parser {
     }
 
     // . [] ()
-    fn parse_base_exp(&mut self) -> Result<ASTNode<Exp>, ParserError> {
+    fn parse_base_exp(&mut self) -> ParseResult<ASTNode<Exp>> {
         let begin = self.mark_begin();
 
         let mut exp_stack = Vec::new();
@@ -167,7 +167,7 @@ impl Parser {
         self.extract_exp_from_stack(op_stack, exp_stack)
     }
 
-    fn parse_atom_exp(&mut self) -> Result<ASTNode<Exp>, ParserError> {
+    fn parse_atom_exp(&mut self) -> ParseResult<ASTNode<Exp>> {
         let begin = self.mark_begin();
 
         match self.peek_kind() {
@@ -287,7 +287,7 @@ impl Parser {
         }
     }
 
-    fn parse_group_exp(&mut self) -> Result<ASTNode<GroupExp>, ParserError> {
+    fn parse_group_exp(&mut self) -> ParseResult<ASTNode<GroupExp>> {
         let begin = self.mark_begin();
 
         self.eat(TokenKind::LeftParen)?;
@@ -301,7 +301,7 @@ impl Parser {
     }
 
     // New NamespaceName typeArguments? (' (exp (',' exp)*)? ')'
-    fn parse_new_exp_decl(&mut self) -> Result<ASTNode<NewExp>, ParserError> {
+    fn parse_new_exp_decl(&mut self) -> ParseResult<ASTNode<NewExp>> {
         let begin = self.mark_begin();
         let mut new_exp = NewExp::default();
         self.eat(TokenKind::KeyWord(KeyWordKind::New))?;
@@ -359,7 +359,7 @@ impl Parser {
         })
     }
 
-    fn extract_op(&mut self) -> Result<Op, ParserError> {
+    fn extract_op(&mut self) -> ParseResult<Op> {
         let op = match self.peek_kind() {
             TokenKind::Assign => Op::Assign,
             TokenKind::PlusAssign => Op::PlusAssign,
@@ -418,7 +418,7 @@ impl Parser {
         &mut self,
         mut op_stack: Vec<Op>,
         mut exp_stack: Vec<ASTNode<Exp>>,
-    ) -> Result<ASTNode<Exp>, ParserError> {
+    ) -> ParseResult<ASTNode<Exp>> {
         loop {
             if exp_stack.len() == 1 && op_stack.is_empty() {
                 return Ok(exp_stack.pop().unwrap());
@@ -434,7 +434,7 @@ impl Parser {
         op_stack: &mut Vec<Op>,
         exp_stack: &mut Vec<ASTNode<Exp>>,
         op: Op,
-    ) -> Result<(), ParserError> {
+    ) -> ParseResult<()> {
         loop {
             if op_stack.is_empty() {
                 op_stack.push(op);
@@ -458,7 +458,7 @@ impl Parser {
         &mut self,
         op_stack: &mut Vec<Op>,
         exp_stack: &mut Vec<ASTNode<Exp>>,
-    ) -> Result<(), ParserError> {
+    ) -> ParseResult<()> {
         let op = op_stack.last().unwrap();
 
         if op.is_bin_op() {

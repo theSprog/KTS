@@ -87,6 +87,8 @@ lazy_static! {
     };
 }
 
+type LexerResult<T> = Result<T, LexerError>;
+
 #[derive(Default)]
 pub(crate) struct Lexer<'a> {
     bytes: &'a [u8],
@@ -101,7 +103,7 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    pub(crate) fn get_token_stream(&mut self) -> Result<Vec<Token>, LexerError> {
+    pub(crate) fn get_token_stream(&mut self) -> LexerResult<Vec<Token>> {
         let mut tokens = Vec::new();
 
         loop {
@@ -127,7 +129,7 @@ impl<'a> Lexer<'a> {
         LexerError::new(format!("Line[{}]: {}", self.line, msg))
     }
 
-    pub(crate) fn next_token(&mut self) -> Result<Token, LexerError> {
+    pub(crate) fn next_token(&mut self) -> LexerResult<Token> {
         self.skip_unrelated();
 
         if self.bytes.is_empty() {
@@ -379,7 +381,7 @@ impl<'a> Lexer<'a> {
         Token::new("$", line, TokenKind::EOF)
     }
 
-    fn make_number_token(&mut self) -> Result<Token, LexerError> {
+    fn make_number_token(&mut self) -> LexerResult<Token> {
         lazy_static! {
             static ref HEX_RE: Regex = Regex::new(r"(^0[xX][0-9a-fA-F]+)").unwrap();
             static ref OCT_RE: Regex = Regex::new(r"(^0[oO][0-7]+)").unwrap();
@@ -430,7 +432,7 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn make_decimal_numbers_token(&mut self, src: &str) -> Result<Token, LexerError> {
+    fn make_decimal_numbers_token(&mut self, src: &str) -> LexerResult<Token> {
         lazy_static! {
             static ref DCLINT_RE: &'static str = "0|[1-9][0-9]*";
             static ref EXP_RE: &'static str = "[eE][+-]?[0-9]+";
@@ -490,7 +492,7 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn make_string_token(&mut self) -> Result<Token, LexerError> {
+    fn make_string_token(&mut self) -> LexerResult<Token> {
         let terminal = self.peek();
         let mut value = Vec::new();
 

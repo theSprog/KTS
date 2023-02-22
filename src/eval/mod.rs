@@ -16,10 +16,12 @@ use crate::ast::{
     ASTNode, AST,
 };
 
+type EvalResult<T> = Result<T, EvalError>;
+
 pub(super) struct Eval {}
 
 impl Eval {
-    pub(super) fn walk(ast: &AST) -> Result<EvalObj, EvalError> {
+    pub(super) fn walk(ast: &AST) -> EvalResult<EvalObj> {
         let node = ast.get_program_ref();
         let Program { source_elements } = node.ctx_ref();
         if let Some(source_elements) = source_elements {
@@ -28,9 +30,7 @@ impl Eval {
         Ok(EvalObj::NONE)
     }
 
-    fn walk_source_elements(
-        source_elements: &ASTNode<SourceElements>,
-    ) -> Result<EvalObj, EvalError> {
+    fn walk_source_elements(source_elements: &ASTNode<SourceElements>) -> EvalResult<EvalObj> {
         let SourceElements { stats } = source_elements.ctx_ref();
         let mut res = EvalObj::NONE;
         for stat in stats {
@@ -40,7 +40,7 @@ impl Eval {
         Ok(res)
     }
 
-    fn walk_stat(stat: &ASTNode<Stat>) -> Result<EvalObj, EvalError> {
+    fn walk_stat(stat: &ASTNode<Stat>) -> EvalResult<EvalObj> {
         match stat.ctx_ref() {
             Stat::ImportStat(import_stat) => todo!(),
             Stat::ExportStat(_) => todo!(),
@@ -74,7 +74,7 @@ impl Eval {
         }
     }
 
-    fn walk_exp_stat(exp_seq: &ExpSeq) -> Result<EvalObj, EvalError> {
+    fn walk_exp_stat(exp_seq: &ExpSeq) -> EvalResult<EvalObj> {
         let exps = exp_seq.get_exps();
         let mut res = EvalObj::NONE;
         for exp in exps {
@@ -83,7 +83,7 @@ impl Eval {
         Ok(res)
     }
 
-    fn walk_exp(exp: &Exp) -> Result<EvalObj, EvalError> {
+    fn walk_exp(exp: &Exp) -> EvalResult<EvalObj> {
         Eval::eval_exp(exp)
     }
 }

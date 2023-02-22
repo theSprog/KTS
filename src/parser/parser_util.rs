@@ -7,7 +7,7 @@ use crate::{
     },
 };
 
-use super::{error::ParserError, Parser};
+use super::{error::ParserError, Parser, ParseResult};
 
 impl Parser {
     // expect token error
@@ -26,7 +26,7 @@ impl Parser {
         self.report_error(&format!("Sorry, but now {} is not supported", unsupported))
     }
 
-    pub(super) fn eat(&mut self, kind: TokenKind) -> Result<(), ParserError> {
+    pub(super) fn eat(&mut self, kind: TokenKind) -> ParseResult<()> {
         if self.kind_is(kind) {
             self.forward();
             Ok(())
@@ -60,7 +60,7 @@ impl Parser {
         }
     }
 
-    pub(super) fn eat_eos(&mut self) -> Result<(), ParserError> {
+    pub(super) fn eat_eos(&mut self) -> ParseResult<()> {
         if self.is_eos() {
             if self.kind_is(TokenKind::SemiColon) {
                 self.forward();
@@ -85,7 +85,7 @@ impl Parser {
     }
 
     // 注意，该函数在 extract 的同时也会 eat Token
-    pub(super) fn extact_identifier(&mut self) -> Result<String, ParserError> {
+    pub(super) fn extact_identifier(&mut self) -> ParseResult<String> {
         if self.kind_is(TokenKind::Identifier) {
             let ident = self.peek().unwrap().peek_value().to_string();
             self.forward();
@@ -101,7 +101,7 @@ impl Parser {
     }
 
     // 注意，该函数在 extract 的同时也会 eat Token
-    pub(super) fn extact_literal(&mut self) -> Result<Literal, ParserError> {
+    pub(super) fn extact_literal(&mut self) -> ParseResult<Literal> {
         let literal = match self.peek_kind() {
             TokenKind::String => Literal::String(self.peek().unwrap().peek_value().to_string()),
 

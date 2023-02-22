@@ -35,6 +35,8 @@ use crate::{ast::AST, error::TSError};
 
 use self::error::ParserError;
 
+type ParseResult<T> = Result<T, ParserError>;
+
 pub(crate) struct Parser {
     tokens: Vec<Token>,
     index: usize,
@@ -83,7 +85,7 @@ impl Parser {
     fn try_to<T>(
         &mut self,
         // 函数指针大小固定为一个指针大小
-        func: fn(&mut Parser) -> Result<T, ParserError>,
+        func: fn(&mut Parser) -> ParseResult<T>,
     ) -> Option<T> {
         let current = self.index;
         match func(self) {
@@ -112,7 +114,7 @@ impl Parser {
         Ok(AST::new(self.parse_program()?, Compiler::filename()))
     }
 
-    fn parse_program(&mut self) -> Result<ASTNode<Program>, ParserError> {
+    fn parse_program(&mut self) -> ParseResult<ASTNode<Program>> {
         let begin = self.mark_begin();
         let mut programe = Program::default();
 
@@ -125,7 +127,7 @@ impl Parser {
     }
 
     // sourceElements: sourceElement+;
-    fn parse_source_elements(&mut self) -> Result<ASTNode<SourceElements>, ParserError> {
+    fn parse_source_elements(&mut self) -> ParseResult<ASTNode<SourceElements>> {
         let begin = self.mark_begin();
         let mut source_elements = SourceElements::default();
 
@@ -143,7 +145,7 @@ impl Parser {
         Ok(ASTNode::new(source_elements, Span::new(begin, end)))
     }
 
-    fn parse_stat(&mut self) -> Result<ASTNode<Stat>, ParserError> {
+    fn parse_stat(&mut self) -> ParseResult<ASTNode<Stat>> {
         let begin = self.mark_begin();
 
         let stat = match self.peek_kind() {
@@ -329,7 +331,7 @@ impl Parser {
     /*
     block: '{' statement* '}';
     */
-    fn parse_block(&mut self) -> Result<ASTNode<Block>, ParserError> {
+    fn parse_block(&mut self) -> ParseResult<ASTNode<Block>> {
         let begin = self.mark_begin();
 
         let mut block = Block::default();
@@ -355,7 +357,7 @@ impl Parser {
         | (Identifier ',')? '{' Import* '}';
     Import: Identifier (As Identifier)?;
     */
-    fn parse_import_stat(&mut self) -> Result<ImportStat, ParserError> {
+    fn parse_import_stat(&mut self) -> ParseResult<ImportStat> {
         let begin = self.mark_begin();
 
         self.eat(TokenKind::KeyWord(KeyWordKind::Import))?;
@@ -380,7 +382,7 @@ impl Parser {
         : Identifier '=' namespaceName SemiColon
         ;
     */
-    fn set_import_alias_decl(&mut self) -> Result<ImportAssign, ParserError> {
+    fn set_import_alias_decl(&mut self) -> ParseResult<ImportAssign> {
         let identifier = self.parse_identifier()?;
         self.eat(TokenKind::Assign)?;
         let namespace_name = self.parse_namespace_name()?;
@@ -395,7 +397,7 @@ impl Parser {
         : Namespace namespaceName '{' statementList? '}'
         ;
     */
-    fn parse_namespace_decl(&mut self) -> Result<ASTNode<NamespaceDecl>, ParserError> {
+    fn parse_namespace_decl(&mut self) -> ParseResult<ASTNode<NamespaceDecl>> {
         let begin = self.mark_begin();
 
         let mut name_space_decl = NamespaceDecl::default();
@@ -419,7 +421,7 @@ impl Parser {
         : Identifier ('.'+ Identifier)*
         ;
     */
-    fn parse_namespace_name(&mut self) -> Result<ASTNode<NamespaceName>, ParserError> {
+    fn parse_namespace_name(&mut self) -> ParseResult<ASTNode<NamespaceName>> {
         let begin = self.mark_begin();
 
         let mut name_space = NamespaceName::default();
@@ -434,7 +436,7 @@ impl Parser {
         Ok(ASTNode::new(name_space, Span::new(begin, self.mark_end())))
     }
 
-    fn parse_from_block(&mut self) -> Result<FromBlock, ParserError> {
+    fn parse_from_block(&mut self) -> ParseResult<FromBlock> {
         let begin = self.mark_begin();
 
         let mut from_block = FromBlock::default();
@@ -515,7 +517,7 @@ impl Parser {
     /*
         exportStatement: Export Default? (fromBlock | statement);
     */
-    fn parse_export_stat(&mut self) -> Result<ExportStat, ParserError> {
+    fn parse_export_stat(&mut self) -> ParseResult<ExportStat> {
         let begin = self.mark_begin();
 
         let mut export_stat = ExportStat::default();
@@ -558,7 +560,7 @@ impl Parser {
         Err(self.report_error("Expect [FromBlock] or [Statment] but there is no such match"))
     }
 
-    fn parse_empty_stat(&mut self) -> Result<EmptyStat, ParserError> {
+    fn parse_empty_stat(&mut self) -> ParseResult<EmptyStat> {
         let begin = self.mark_begin();
 
         self.eat(TokenKind::SemiColon)?;
@@ -571,7 +573,7 @@ impl Parser {
 
     for now typeParameters is not supported
     */
-    fn parse_class_decl(&mut self) -> Result<ASTNode<ClassDecl>, ParserError> {
+    fn parse_class_decl(&mut self) -> ParseResult<ASTNode<ClassDecl>> {
         let begin = self.mark_begin();
 
         let mut class_decl = ClassDecl::default();
@@ -600,7 +602,7 @@ impl Parser {
         Ok(ASTNode::new(class_decl, Span::new(begin, self.mark_end())))
     }
 
-    fn parse_class_heritage(&mut self) -> Result<ASTNode<ClassHeritage>, ParserError> {
+    fn parse_class_heritage(&mut self) -> ParseResult<ASTNode<ClassHeritage>> {
         let begin = self.mark_begin();
 
         let mut class_heritage = ClassHeritage::default();
@@ -640,7 +642,7 @@ impl Parser {
         }
     }
 
-    fn parse_type_ref(&mut self) -> Result<ASTNode<TypeRef>, ParserError> {
+    fn parse_type_ref(&mut self) -> ParseResult<ASTNode<TypeRef>> {
         let begin = self.mark_begin();
 
         let mut type_ref;
@@ -665,14 +667,14 @@ impl Parser {
     typeGeneric: '<' typeArgumentList '>';
     typeArgumentList: typeArgument (',' typeArgument)*;
     */
-    fn parse_type_generic(&mut self) -> Result<ASTNode<TypeGeneric>, ParserError> {
+    fn parse_type_generic(&mut self) -> ParseResult<ASTNode<TypeGeneric>> {
         Err(self.unsupported_error("Type Generic"))
     }
 
     /*
     classTail: '{' classElement* '}';
     */
-    fn parse_class_tail(&mut self) -> Result<ASTNode<ClassTail>, ParserError> {
+    fn parse_class_tail(&mut self) -> ParseResult<ASTNode<ClassTail>> {
         let begin = self.mark_begin();
 
         let mut class_tail = ClassTail::default();
@@ -700,7 +702,7 @@ impl Parser {
     constructorDeclaration 第一个是访问修饰符, 第二个必定是 constructor 关键字
     indexMemberDeclaration  以 [ 开头
     */
-    fn parse_class_element(&mut self) -> Result<ASTNode<ClassElement>, ParserError> {
+    fn parse_class_element(&mut self) -> ParseResult<ASTNode<ClassElement>> {
         let begin = self.mark_begin();
 
         match self.peek_kind() {
@@ -766,7 +768,7 @@ impl Parser {
     constructorDeclaration:
         accessibilityModifier? Constructor '(' formalParameterList? ')' '{' functionBody '}';
     */
-    fn parse_cons_decl(&mut self) -> Result<ConstructorDecl, ParserError> {
+    fn parse_cons_decl(&mut self) -> ParseResult<ConstructorDecl> {
         let begin = self.mark_begin();
 
         let mut cons_decl = ConstructorDecl::default();
@@ -803,7 +805,7 @@ impl Parser {
     | abstractDeclaration								# AbstractMemberDeclaration;
     ;
     */
-    fn parse_property_member_decl(&mut self) -> Result<PropertyMemberDecl, ParserError> {
+    fn parse_property_member_decl(&mut self) -> ParseResult<PropertyMemberDecl> {
         let begin = self.mark_begin();
 
         match self.peek_kind() {
@@ -842,7 +844,7 @@ impl Parser {
     /*
     accessibilityModifier? Static? ReadOnly? Identifier '?'? typeAnnotation? '=' singleExpression? SemiColon
     */
-    fn parse_property_decl_exp(&mut self) -> Result<PropertyDeclExp, ParserError> {
+    fn parse_property_decl_exp(&mut self) -> ParseResult<PropertyDeclExp> {
         let mut property_decl_exp = PropertyDeclExp::default();
 
         if let Some(access_modifier) = self.try_to(Parser::parse_access_modifier) {
@@ -882,7 +884,7 @@ impl Parser {
     /*
     accessibilityModifier? Static? Async? Identifier callSignature ( ('{' functionBody '}') | SemiColon )
         */
-    fn parse_method_decl_exp(&mut self) -> Result<MethodDeclExp, ParserError> {
+    fn parse_method_decl_exp(&mut self) -> ParseResult<MethodDeclExp> {
         let begin = self.mark_begin();
 
         let mut method_decl_exp = MethodDeclExp::default();
@@ -924,7 +926,7 @@ impl Parser {
     /*
     accessibilityModifier? Static? (getAccessor | setAccessor)
     */
-    fn parse_gettersetter_decl_exp(&mut self) -> Result<GetterSetterDeclExp, ParserError> {
+    fn parse_gettersetter_decl_exp(&mut self) -> ParseResult<GetterSetterDeclExp> {
         // it is ugly, but it is necessary
         let mut access_modifier_ = None;
         let mut static_ = false;
@@ -941,7 +943,7 @@ impl Parser {
         Ok(getter_setter_decl_exp)
     }
 
-    fn parse_accesser(&mut self) -> Result<ASTNode<Accesser>, ParserError> {
+    fn parse_accesser(&mut self) -> ParseResult<ASTNode<Accesser>> {
         let begin = self.mark_begin();
         let accesser = match self.peek_kind() {
             TokenKind::KeyWord(KeyWordKind::Get) => {
@@ -1002,7 +1004,7 @@ impl Parser {
     /*
     indexMemberDeclaration: indexSignature SemiColon;
     */
-    fn parse_index_member_decl(&mut self) -> Result<IndexMemberDecl, ParserError> {
+    fn parse_index_member_decl(&mut self) -> ParseResult<IndexMemberDecl> {
         let begin = self.mark_begin();
 
         let index_sig = self.parse_index_sig()?;
@@ -1014,7 +1016,7 @@ impl Parser {
     indexSignature:
         '[' Identifier ':' (Number | String) ']' typeAnnotation;
     */
-    fn parse_index_sig(&mut self) -> Result<ASTNode<IndexSig>, ParserError> {
+    fn parse_index_sig(&mut self) -> ParseResult<ASTNode<IndexSig>> {
         let begin = self.mark_begin();
 
         let type_;
@@ -1057,7 +1059,7 @@ impl Parser {
         AbstratcVar:
             variableStatement
     */
-    fn parse_abstract_decl(&mut self) -> Result<ASTNode<AbsDecl>, ParserError> {
+    fn parse_abstract_decl(&mut self) -> ParseResult<ASTNode<AbsDecl>> {
         let begin = self.mark_begin();
 
         let abs_method;
@@ -1088,7 +1090,7 @@ impl Parser {
     ifStatement:
         If '(' expressionSequence ')' statement (Else statement)?;
     */
-    fn parse_if_stat(&mut self) -> Result<IfStat, ParserError> {
+    fn parse_if_stat(&mut self) -> ParseResult<IfStat> {
         let begin = self.mark_begin();
 
         let mut if_stat = IfStat::default();
@@ -1120,7 +1122,7 @@ impl Parser {
         varModifier:Var | Let | Const;
 
     */
-    fn parse_iter_stat(&mut self) -> Result<IterStat, ParserError> {
+    fn parse_iter_stat(&mut self) -> ParseResult<IterStat> {
         let begin = self.mark_begin();
 
         // now thing to do
@@ -1179,7 +1181,7 @@ impl Parser {
     /*
     For '(' expressionSequence? SemiColon expressionSequence? SemiColon expressionSequence? ')' statement # ForStatement
     */
-    fn parse_for_stat(&mut self) -> Result<ASTNode<ForStat>, ParserError> {
+    fn parse_for_stat(&mut self) -> ParseResult<ASTNode<ForStat>> {
         let begin = self.mark_begin();
 
         let mut for_stat = ForStat::default();
@@ -1204,7 +1206,7 @@ impl Parser {
     /*
     For '(' identifier In expression ')' statement	# ForInStatement;
     */
-    fn parse_forin_stat(&mut self) -> Result<ASTNode<ForInStat>, ParserError> {
+    fn parse_forin_stat(&mut self) -> ParseResult<ASTNode<ForInStat>> {
         let begin = self.mark_begin();
         let var;
         let exp;
@@ -1230,7 +1232,7 @@ impl Parser {
     For '(' varModifier variableDeclarationList SemiColon expression? SemiColon expressionSequence? ')' statement							# ForVarStatement
     )?;
     */
-    fn parse_forvar_stat(&mut self) -> Result<ASTNode<ForVarStat>, ParserError> {
+    fn parse_forvar_stat(&mut self) -> ParseResult<ASTNode<ForVarStat>> {
         let begin = self.mark_begin();
 
         let var_modifier;
@@ -1268,7 +1270,7 @@ impl Parser {
     /*
     variableDeclarationList: variableDeclaration (',' variableDeclaration)*;
     */
-    fn parse_var_decl_list(&mut self) -> Result<ASTNode<VarDeclList>, ParserError> {
+    fn parse_var_decl_list(&mut self) -> ParseResult<ASTNode<VarDeclList>> {
         let begin = self.mark_begin();
 
         let mut var_decl_list = VarDeclList::default();
@@ -1288,7 +1290,7 @@ impl Parser {
     /*
     variableDeclaration: (Identifier | arrayLiteral | objectLiteral) typeAnnotation? ('=' expression)?;
     */
-    fn parse_var_decl(&mut self) -> Result<ASTNode<VarDecl>, ParserError> {
+    fn parse_var_decl(&mut self) -> ParseResult<ASTNode<VarDecl>> {
         let begin = self.mark_begin();
 
         match self.peek_kind() {
@@ -1313,7 +1315,7 @@ impl Parser {
     continueStatement:
         Continue (Identifier)? eos;
     */
-    fn parse_continue_stat(&mut self) -> Result<ContinueStat, ParserError> {
+    fn parse_continue_stat(&mut self) -> ParseResult<ContinueStat> {
         let mut continue_stat = ContinueStat::default();
         self.eat(TokenKind::KeyWord(KeyWordKind::Continue))?;
         if self.kind_is(TokenKind::Identifier) {
@@ -1327,7 +1329,7 @@ impl Parser {
     breakStatement:
         Break (Identifier)? eos;
     */
-    fn parse_break_stat(&mut self) -> Result<BreakStat, ParserError> {
+    fn parse_break_stat(&mut self) -> ParseResult<BreakStat> {
         let mut break_stat = BreakStat::default();
         self.eat(TokenKind::KeyWord(KeyWordKind::Break))?;
 
@@ -1341,7 +1343,7 @@ impl Parser {
     /*
     Return (expressionSequence)? eos;
     */
-    fn parse_return_stat(&mut self) -> Result<ReturnStat, ParserError> {
+    fn parse_return_stat(&mut self) -> ParseResult<ReturnStat> {
         let mut return_stat = ReturnStat::default();
         self.eat(TokenKind::KeyWord(KeyWordKind::Return))?;
         if !self.is_eos() {
@@ -1354,7 +1356,7 @@ impl Parser {
     /*
     yieldStatement: Yield (expressionSequence)? eos;
     */
-    fn parse_yield_stat(&mut self) -> Result<YieldStat, ParserError> {
+    fn parse_yield_stat(&mut self) -> ParseResult<YieldStat> {
         let mut yield_stat = YieldStat::default();
         self.eat(TokenKind::KeyWord(KeyWordKind::Yield))?;
         yield_stat.set_exp_seq(self.parse_exp_seq()?);
@@ -1363,7 +1365,7 @@ impl Parser {
     }
 
     //    : With '(' expressionSequence ')' statement
-    fn parse_with_stat(&mut self) -> Result<WithStat, ParserError> {
+    fn parse_with_stat(&mut self) -> ParseResult<WithStat> {
         self.eat(TokenKind::KeyWord(KeyWordKind::With))?;
         self.eat(TokenKind::LeftParen)?;
         let exp_seq = self.parse_exp_seq()?;
@@ -1373,7 +1375,7 @@ impl Parser {
     }
 
     // Identifier ':' statement
-    fn parse_labelled_stat(&mut self) -> Result<LabelledStat, ParserError> {
+    fn parse_labelled_stat(&mut self) -> ParseResult<LabelledStat> {
         let identifier = &self.extact_identifier()?;
         self.eat(TokenKind::Colon)?;
         let stat = self.parse_stat()?;
@@ -1382,7 +1384,7 @@ impl Parser {
     }
 
     // Switch '(' expression ')' caseBlock
-    fn parse_switch_stat(&mut self) -> Result<SwitchStat, ParserError> {
+    fn parse_switch_stat(&mut self) -> ParseResult<SwitchStat> {
         let begin = self.mark_begin();
 
         self.eat(TokenKind::KeyWord(KeyWordKind::Switch))?;
@@ -1396,7 +1398,7 @@ impl Parser {
     /*
     caseBlock: '{' caseClauses? (defaultClause)? '}';
     */
-    fn parse_case_block(&mut self) -> Result<ASTNode<CaseBlock>, ParserError> {
+    fn parse_case_block(&mut self) -> ParseResult<ASTNode<CaseBlock>> {
         let begin = self.mark_begin();
 
         let mut case_block = CaseBlock::default();
@@ -1413,7 +1415,7 @@ impl Parser {
     }
 
     // caseClause+
-    fn parse_case_clauses(&mut self) -> Result<ASTNode<CaseClauses>, ParserError> {
+    fn parse_case_clauses(&mut self) -> ParseResult<ASTNode<CaseClauses>> {
         let begin = self.mark_begin();
 
         let mut case_clauses = CaseClauses::default();
@@ -1435,7 +1437,7 @@ impl Parser {
     /*
      * Case expression ':' sourceElements?
      */
-    fn parse_case_clause(&mut self) -> Result<ASTNode<CaseClause>, ParserError> {
+    fn parse_case_clause(&mut self) -> ParseResult<ASTNode<CaseClause>> {
         let begin = self.mark_begin();
 
         let mut stats = None;
@@ -1454,7 +1456,7 @@ impl Parser {
     /*
     defaultClause: Default ':' sourceElements?;
     */
-    fn parse_default_clause(&mut self) -> Result<ASTNode<DefaultClause>, ParserError> {
+    fn parse_default_clause(&mut self) -> ParseResult<ASTNode<DefaultClause>> {
         let begin = self.mark_begin();
 
         let mut stats = None;
@@ -1470,7 +1472,7 @@ impl Parser {
     }
 
     // Throw {this.notLineTerminator()}? expressionSequence eos
-    fn parse_throw_stat(&mut self) -> Result<ThrowStat, ParserError> {
+    fn parse_throw_stat(&mut self) -> ParseResult<ThrowStat> {
         self.eat(TokenKind::KeyWord(KeyWordKind::Throw))?;
         let exp_seq = self.parse_exp_seq()?;
         self.eat_eos()?;
@@ -1478,7 +1480,7 @@ impl Parser {
     }
 
     // Try block (catchProduction finallyProduction? | finallyProduction)
-    fn parse_try_stat(&mut self) -> Result<TryStat, ParserError> {
+    fn parse_try_stat(&mut self) -> ParseResult<TryStat> {
         let mut try_stat = TryStat::default();
         self.eat(TokenKind::KeyWord(KeyWordKind::Try))?;
         try_stat.set_block(self.parse_block()?);
@@ -1488,7 +1490,7 @@ impl Parser {
         todo!()
     }
 
-    fn parse_debugger_stat(&mut self) -> Result<DebuggerStat, ParserError> {
+    fn parse_debugger_stat(&mut self) -> ParseResult<DebuggerStat> {
         Err(self.unsupported_error("debugger"))
     }
 
@@ -1496,7 +1498,7 @@ impl Parser {
     functionDeclaration
         : Function Identifier callSignature ( ('{' functionBody '}') | SemiColon);
     */
-    fn parse_func_decl(&mut self) -> Result<ASTNode<FuncDecl>, ParserError> {
+    fn parse_func_decl(&mut self) -> ParseResult<ASTNode<FuncDecl>> {
         let begin = self.mark_begin();
 
         let mut func_body = None;
@@ -1517,7 +1519,7 @@ impl Parser {
 
     // functionExpressionDeclaration:
     // Function_ Identifier? '(' formalParameterList? ')' typeAnnotation? '{' functionBody '}';
-    fn parse_func_exp_decl(&mut self) -> Result<ASTNode<FuncExpDecl>, ParserError> {
+    fn parse_func_exp_decl(&mut self) -> ParseResult<ASTNode<FuncExpDecl>> {
         let begin = self.mark_begin();
 
         let mut func_exp_decl = FuncExpDecl::default();
@@ -1549,7 +1551,7 @@ impl Parser {
     arrowFunctionDeclaration:
         Async? '(' formalParameterList? ')' typeAnnotation? '=>' arrowFunctionBody;
     */
-    fn parse_arrow_func(&mut self) -> Result<ASTNode<ArrowFuncExpDecl>, ParserError> {
+    fn parse_arrow_func(&mut self) -> ParseResult<ASTNode<ArrowFuncExpDecl>> {
         let begin = self.mark_begin();
 
         let mut arrow_func = ArrowFuncExpDecl::default();
@@ -1618,7 +1620,7 @@ impl Parser {
     callSignature:
         typeParameters? '(' parameterList? ')' typeAnnotation?;
     */
-    fn parse_call_sig(&mut self) -> Result<ASTNode<CallSig>, ParserError> {
+    fn parse_call_sig(&mut self) -> ParseResult<ASTNode<CallSig>> {
         let begin = self.mark_begin();
 
         let mut call_sig = CallSig::default();
@@ -1653,7 +1655,7 @@ impl Parser {
     constructSignature:
         'new' typeParameters? '(' parameterList? ')' typeAnnotation?;
     */
-    fn parse_construct_sig(&mut self) -> Result<ASTNode<ConstructSig>, ParserError> {
+    fn parse_construct_sig(&mut self) -> ParseResult<ASTNode<ConstructSig>> {
         let begin = self.mark_begin();
 
         let mut construct_sig = ConstructSig::default();
@@ -1683,7 +1685,7 @@ impl Parser {
     propertySignature:
         ReadOnly? Identifier '?'? typeAnnotation?;
     */
-    fn parse_property_sig(&mut self) -> Result<ASTNode<PropertySig>, ParserError> {
+    fn parse_property_sig(&mut self) -> ParseResult<ASTNode<PropertySig>> {
         let begin = self.mark_begin();
 
         let mut property_sig = PropertySig::default();
@@ -1712,7 +1714,7 @@ impl Parser {
     /*
     methodSignature: Identifier '?'? callSignature;
     */
-    fn parse_method_sig(&mut self) -> Result<ASTNode<MethodSig>, ParserError> {
+    fn parse_method_sig(&mut self) -> ParseResult<ASTNode<MethodSig>> {
         let begin = self.mark_begin();
 
         let mut method_sig = MethodSig::default();
@@ -1733,7 +1735,7 @@ impl Parser {
         ;
     functionBody 左右必是被 { } 包围
     */
-    fn parse_func_body(&mut self) -> Result<ASTNode<FuncBody>, ParserError> {
+    fn parse_func_body(&mut self) -> ParseResult<ASTNode<FuncBody>> {
         // prekind is {
         let begin = self.prepeek().peek_line();
 
@@ -1754,7 +1756,7 @@ impl Parser {
     生成器函数声明
     Function_ '*' Identifier? '(' formalParameterList? ')' '{' functionBody '}'
      */
-    fn parse_generator_func_decl(&mut self) -> Result<ASTNode<GenFuncDecl>, ParserError> {
+    fn parse_generator_func_decl(&mut self) -> ParseResult<ASTNode<GenFuncDecl>> {
         let begin = self.mark_begin();
 
         self.eat(TokenKind::KeyWord(KeyWordKind::Function))?;
@@ -1779,7 +1781,7 @@ impl Parser {
         formalParameterArg (',' formalParameterArg)* (',' lastFormalParameterArg)?
         | lastFormalParameterArg;
     */
-    fn parse_formal_parameters(&mut self) -> Result<ASTNode<FormalParas>, ParserError> {
+    fn parse_formal_parameters(&mut self) -> ParseResult<ASTNode<FormalParas>> {
         let begin = self.mark_begin();
 
         let mut formal_paras = FormalParas::default();
@@ -1815,7 +1817,7 @@ impl Parser {
     formalParameterArg:
         decorator? accessibilityModifier? Identifier '?'? typeAnnotation?;
     */
-    fn parse_formal_parameter_arg(&mut self) -> Result<ASTNode<FormalPara>, ParserError> {
+    fn parse_formal_parameter_arg(&mut self) -> ParseResult<ASTNode<FormalPara>> {
         let begin = self.mark_begin();
 
         let mut formal_para = FormalPara::default();
@@ -1843,7 +1845,7 @@ impl Parser {
     }
 
     // expression (',' expression)*
-    fn parse_exp_seq(&mut self) -> Result<ASTNode<ExpSeq>, ParserError> {
+    fn parse_exp_seq(&mut self) -> ParseResult<ASTNode<ExpSeq>> {
         let begin = self.mark_begin();
         let mut exp_seq = ExpSeq::default();
         loop {
@@ -1860,7 +1862,7 @@ impl Parser {
     typeParameters: '<' typeParameterList? '>';
     typeParameterList: typeParameter (',' typeParameter)*;
     */
-    fn parse_type_paras(&mut self) -> Result<ASTNode<TypeParas>, ParserError> {
+    fn parse_type_paras(&mut self) -> ParseResult<ASTNode<TypeParas>> {
         Err(self.unsupported_error("type parameters"))
     }
 
@@ -1868,7 +1870,7 @@ impl Parser {
     typeArguments: '<' typeArgumentList? '>';
     typeArgumentList: typeArgument (',' typeArgument)*;
     */
-    fn parse_type_args(&mut self) -> Result<ASTNode<TypeArgs>, ParserError> {
+    fn parse_type_args(&mut self) -> ParseResult<ASTNode<TypeArgs>> {
         Err(self.unsupported_error("type arguments"))
     }
 
@@ -1877,7 +1879,7 @@ impl Parser {
         restParameter
         | parameter (',' parameter)* (',' restParameter)?;
     */
-    fn parse_para_list(&mut self) -> Result<ASTNode<ParaList>, ParserError> {
+    fn parse_para_list(&mut self) -> ParseResult<ASTNode<ParaList>> {
         let begin = self.mark_begin();
 
         let mut para_list = ParaList::default();
@@ -1913,7 +1915,7 @@ impl Parser {
     /*
     注意调用 type_annotation 不能吃掉 :, : 是该函数内部吃掉的
     */
-    fn parse_type_annotation(&mut self) -> Result<ASTNode<TypeAnnotation>, ParserError> {
+    fn parse_type_annotation(&mut self) -> ParseResult<ASTNode<TypeAnnotation>> {
         let begin = self.mark_begin();
         self.eat(TokenKind::Colon)?;
         let type_ = self.parse_type()?;
@@ -1923,7 +1925,7 @@ impl Parser {
         ))
     }
 
-    fn parse_rest_para(&mut self) -> Result<ASTNode<RestPara>, ParserError> {
+    fn parse_rest_para(&mut self) -> ParseResult<ASTNode<RestPara>> {
         Err(self.unsupported_error("rest parameter"))
     }
 
@@ -1935,7 +1937,7 @@ impl Parser {
             )?
         ;
     */
-    fn parse_para(&mut self) -> Result<ASTNode<Para>, ParserError> {
+    fn parse_para(&mut self) -> ParseResult<ASTNode<Para>> {
         let begin = self.mark_begin();
 
         if self.kind_is(TokenKind::LeftBrace) || self.kind_is(TokenKind::LeftBracket) {
@@ -1977,14 +1979,14 @@ impl Parser {
         Ok(ASTNode::new(para, Span::new(begin, self.mark_end())))
     }
 
-    fn parse_initializer(&mut self) -> Result<ASTNode<Initializer>, ParserError> {
+    fn parse_initializer(&mut self) -> ParseResult<ASTNode<Initializer>> {
         let begin = self.mark_begin();
         self.eat(TokenKind::Assign)?;
         let initializer = Initializer::new(self.parse_exp()?);
         Ok(ASTNode::new(initializer, Span::new(begin, self.mark_end())))
     }
 
-    fn parse_type(&mut self) -> Result<ASTNode<Type>, ParserError> {
+    fn parse_type(&mut self) -> ParseResult<ASTNode<Type>> {
         let begin = self.mark_begin();
 
         if self.kind_is(TokenKind::LeftParen) {
@@ -2008,7 +2010,7 @@ impl Parser {
         | typeQuery                                 #QueryPrimType
         | objectType								# ObjectPrimType;
     */
-    fn parse_primary_type(&mut self) -> Result<PrimaryType, ParserError> {
+    fn parse_primary_type(&mut self) -> ParseResult<PrimaryType> {
         let begin = self.mark_begin();
 
         // [
@@ -2105,14 +2107,14 @@ impl Parser {
         }
     }
 
-    fn parse_tuple_type(&mut self) -> Result<TupleElementTypes, ParserError> {
+    fn parse_tuple_type(&mut self) -> ParseResult<TupleElementTypes> {
         todo!()
     }
 
     /*
     functionType: '(' parameterList? ')' '=>' type_;
     */
-    fn parse_func_type(&mut self) -> Result<FunctionType, ParserError> {
+    fn parse_func_type(&mut self) -> ParseResult<FunctionType> {
         let begin = self.mark_begin();
 
         let type_;
@@ -2128,11 +2130,11 @@ impl Parser {
         Ok(FunctionType::new(para_list, type_))
     }
 
-    fn parse_decorators(&mut self) -> Result<ASTNode<Decorators>, ParserError> {
+    fn parse_decorators(&mut self) -> ParseResult<ASTNode<Decorators>> {
         Err(self.unsupported_error("decorators"))
     }
 
-    fn parse_access_modifier(&mut self) -> Result<ASTNode<AccessModifier>, ParserError> {
+    fn parse_access_modifier(&mut self) -> ParseResult<ASTNode<AccessModifier>> {
         let begin = self.mark_begin();
 
         let access_modifier = match self.peek_kind() {
@@ -2155,7 +2157,7 @@ impl Parser {
         Extends typeReference (',' typeReference)*
     )? objectType SemiColon?;
     */
-    fn parse_interface_decl(&mut self) -> Result<ASTNode<InterfaceDecl>, ParserError> {
+    fn parse_interface_decl(&mut self) -> ParseResult<ASTNode<InterfaceDecl>> {
         let begin = self.mark_begin();
 
         let mut interface_decl = InterfaceDecl::default();
@@ -2213,7 +2215,7 @@ impl Parser {
             )?
         )? '}';
     */
-    fn parse_object_type(&mut self) -> Result<ObjectType, ParserError> {
+    fn parse_object_type(&mut self) -> ParseResult<ObjectType> {
         let begin = self.mark_begin();
 
         let mut object_type = ObjectType::default();
@@ -2249,7 +2251,7 @@ impl Parser {
         | indexSignature
         | methodSignature;
         */
-    fn parse_type_member(&mut self) -> Result<ASTNode<TypeMember>, ParserError> {
+    fn parse_type_member(&mut self) -> ParseResult<ASTNode<TypeMember>> {
         let begin = self.mark_begin();
 
         match self.peek_kind() {
@@ -2288,7 +2290,7 @@ impl Parser {
     enumDeclaration:
         Const? Enum Identifier enumBody;
     */
-    fn parse_enum_stat(&mut self) -> Result<EnumStat, ParserError> {
+    fn parse_enum_stat(&mut self) -> ParseResult<EnumStat> {
         let mut enum_decl = EnumStat::default();
         if self.kind_is(TokenKind::KeyWord(KeyWordKind::Const)) {
             enum_decl.set_const();
@@ -2306,7 +2308,7 @@ impl Parser {
     enumBody 内部可能没有元素
     enumBody: '{' (enumMember (',' enumMember)* ','?)? '}';
     */
-    fn parse_enum_body(&mut self) -> Result<ASTNode<EnumBody>, ParserError> {
+    fn parse_enum_body(&mut self) -> ParseResult<ASTNode<EnumBody>> {
         let begin = self.mark_begin();
 
         let mut enum_body = EnumBody::default();
@@ -2328,7 +2330,7 @@ impl Parser {
     /*
     enumMember: Identifier initializer?;
     */
-    fn parse_enum_member(&mut self) -> Result<ASTNode<EnumMember>, ParserError> {
+    fn parse_enum_member(&mut self) -> ParseResult<ASTNode<EnumMember>> {
         let begin = self.mark_begin();
         let mut enum_member = EnumMember::default();
         enum_member.set_enum_member_name(self.parse_identifier()?);
@@ -2345,7 +2347,7 @@ impl Parser {
     accessibilityModifier? varModifier? ReadOnly? variableDeclarationList SemiColon?
     | Declare varModifier? variableDeclarationList SemiColon?;
     */
-    fn parse_var_stat(&mut self) -> Result<ASTNode<VarStat>, ParserError> {
+    fn parse_var_stat(&mut self) -> ParseResult<ASTNode<VarStat>> {
         if self.kind_is(TokenKind::KeyWord(KeyWordKind::Declare)) {
             self.parse_var_stat2()
         } else {
@@ -2356,7 +2358,7 @@ impl Parser {
     /*
     accessibilityModifier? varModifier? ReadOnly? variableDeclarationList SemiColon?
     */
-    fn parse_var_stat1(&mut self) -> Result<ASTNode<VarStat>, ParserError> {
+    fn parse_var_stat1(&mut self) -> ParseResult<ASTNode<VarStat>> {
         let begin = self.mark_begin();
 
         let mut var_stat = VarStat::default();
@@ -2385,7 +2387,7 @@ impl Parser {
     /*
     Declare varModifier? variableDeclarationList SemiColon?;
     */
-    fn parse_var_stat2(&mut self) -> Result<ASTNode<VarStat>, ParserError> {
+    fn parse_var_stat2(&mut self) -> ParseResult<ASTNode<VarStat>> {
         let begin = self.mark_begin();
 
         let mut var_stat = VarStat::default();
@@ -2407,7 +2409,7 @@ impl Parser {
         Ok(ASTNode::new(var_stat, Span::new(begin, self.mark_end())))
     }
 
-    fn parse_var_modifier(&mut self) -> Result<ASTNode<VarModifier>, ParserError> {
+    fn parse_var_modifier(&mut self) -> ParseResult<ASTNode<VarModifier>> {
         let begin = self.mark_begin();
 
         let var_modifier = match self.peek_kind() {
@@ -2429,7 +2431,7 @@ impl Parser {
         : 'type' Identifier typeParameters? '=' type_ SemiColon
     ;
     */
-    fn parse_typealias_stat(&mut self) -> Result<TypeAlias, ParserError> {
+    fn parse_typealias_stat(&mut self) -> ParseResult<TypeAlias> {
         let new_type;
         let mut type_paras = None;
         let type_;
@@ -2447,7 +2449,7 @@ impl Parser {
         Ok(typealias)
     }
 
-    fn parse_identifier(&mut self) -> Result<ASTNode<Identifier>, ParserError> {
+    fn parse_identifier(&mut self) -> ParseResult<ASTNode<Identifier>> {
         let begin = self.mark_begin();
         Ok(ASTNode::new(
             Identifier::new(&self.extact_identifier()?),

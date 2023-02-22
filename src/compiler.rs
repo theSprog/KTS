@@ -15,6 +15,9 @@ use crate::{
 lazy_static! {
     pub static ref FILENAME: Mutex<String> = Mutex::new(String::new());
 }
+
+pub type IResult<T> = Result<T, TSError>;
+
 pub struct Compiler {
     pub(crate) filename: String,
     show_ast: bool,
@@ -40,12 +43,14 @@ impl Compiler {
         self
     }
 
-    pub fn run(&self) -> Result<(), TSError> {
+    pub fn run(&self) -> IResult<()> {
         let ast = self.gen_ast()?;
         if self.show_ast {
             self.visualize(&ast);
+        } else {
+            // because eval is not finished
+            self.eval(&ast)?;
         }
-        self.eval(&ast)?;
 
         // let env = SematicsWalker::walk(ast.get_program_ref())?;
         // let ir = IR::gen_ir(ast, IRKind::LLVM);
@@ -54,7 +59,7 @@ impl Compiler {
     }
 
     // front part
-    fn gen_ast(&self) -> Result<AST, TSError> {
+    fn gen_ast(&self) -> IResult<AST> {
         let char_stream = get_char_stream(&self.filename);
         let mut lexer = Lexer::new(&char_stream);
         let token_stream = lexer.get_token_stream()?;
@@ -67,7 +72,7 @@ impl Compiler {
         ast.vis(&format!("{}.dot", self.filename.replace(".ts", "")));
     }
 
-    fn eval(&self, ast: &AST) -> Result<(), TSError> {
+    fn eval(&self, ast: &AST) -> IResult<()> {
         Ok(println!("{:?}", Eval::walk(ast)?))
     }
 }
